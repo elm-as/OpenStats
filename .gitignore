@@ -1,0 +1,29 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+uploads/
+data/
+reports/
+*.egg-info/
+dist/
+build/
+node_modules/
+frontend/dist/
+.DS_Store
+
+# Python / Pytest
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Frontend tooling outputs
+**/*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
+frontend/.vite/
+
+# Local Netlify folder
+.netlify
