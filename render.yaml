@@ -34,7 +34,8 @@ services:
         sync: false
 
   # ── FRONTEND ─────────────────────────────────────
-  - type: static
+  - type: web
+    env: static
     name: openstats-frontend
     rootDir: frontend
     buildCommand: npm install && npm run build
