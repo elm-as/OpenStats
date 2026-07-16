@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  base = "frontend"
+
+[build.environment]
+  NODE_VERSION = "20"
+  VITE_API_URL = "stats-production-4e1d.up.railway.app"
+
+# Fallback pour React Router (SPA)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,165 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap');
+
+:root {
+  --bg-dark: #0f172a;
+  --bg-panel: rgba(30, 41, 59, 0.7);
+  --border-light: rgba(255, 255, 255, 0.1);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  
+  --node-dataset: #10b981;
+  --node-ai: #8b5cf6;
+  --node-timeseries: #f59e0b;
+  --node-output: #ef4444;
+}
+
+body, html, #root {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  overflow: hidden;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.canvas-layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  z-index: 10;
+  border-right: 1px solid var(--border-light);
+}
+
+.sidebar h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 24px;
+  margin-top: 0;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dndnode {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: grab;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border-light);
+}
+
+.dndnode:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.dndnode.dataset { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); }
+.dndnode.timeseries { background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); }
+.dndnode.ai { background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.3); }
+.dndnode.output { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+
+.reactflow-wrapper {
+  flex-grow: 1;
+  height: 100%;
+}
+
+/* Custom Nodes */
+.custom-node {
+  padding: 16px;
+  border-radius: 12px;
+  min-width: 200px;
+  font-size: 14px;
+}
+
+.custom-node .header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-node select, .custom-node input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.custom-node select:focus, .custom-node input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.run-btn {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  padding: 14px 28px;
+  border-radius: 30px;
+  background: var(--accent);
+  color: var(--bg-dark);
+  font-weight: bold;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.run-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
+}
+
+/* React Flow overwrites */
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: var(--text-main);
+  border: 2px solid var(--bg-dark);
+}

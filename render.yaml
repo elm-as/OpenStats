@@ -1,0 +1,47 @@
+services:
+  # ── BACKEND ──────────────────────────────────────
+  - type: web
+    name: openstats-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn_conf.py run:app
+    disk:
+      name: openstats-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        value: sqlite:////data/openstats.db
+      - key: DATA_DIR
+        value: /data/datasets
+      - key: REPORTS_DIR
+        value: /data/reports
+      - key: UPLOAD_FOLDER
+        value: /data/uploads
+      # À METTRE À JOUR avec l'URL de votre frontend une fois déployé
+      - key: CORS_ORIGINS
+        value: "https://openstats-frontend.onrender.com"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  # ── FRONTEND ─────────────────────────────────────
+  - type: static
+    name: openstats-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      # À METTRE À JOUR avec l'URL de votre backend une fois déployé
+      - key: VITE_API_URL
+        value: "https://openstats-backend.onrender.com/api/v1"
