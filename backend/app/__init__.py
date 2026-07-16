@@ -92,18 +92,25 @@ def create_app(config_class=Config):
     if app.config.get("LOCAL_DEV_MODE", False) and os.getenv("FLASK_ENV") == "production":
         raise RuntimeError("LOCAL_DEV_MODE=true est interdit avec FLASK_ENV=production.")
 
-    # CORS : en LOCAL_DEV_MODE, accepter tous les localhost (quel que soit le port)
     if app.config.get("LOCAL_DEV_MODE", False):
         import re
         CORS(app, resources={
             r"/api/*": {
                 "origins": re.compile(r"https?://localhost(:\d+)?$"),
+                "allow_headers": ["*"],
+                "expose_headers": ["Content-Disposition"]
             }
         })
     else:
         allowed_origins_raw = os.getenv("CORS_ORIGINS", "http://localhost:5173")
         allowed_origins = [o.strip() for o in allowed_origins_raw.split(",") if o.strip()]
-        CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
+        CORS(app, resources={
+            r"/api/*": {
+                "origins": allowed_origins,
+                "allow_headers": ["*"],
+                "expose_headers": ["Content-Disposition"]
+            }
+        })
 
     # Ensure directories exist
     for d in [app.config["UPLOAD_FOLDER"], app.config["DATA_DIR"], app.config["REPORTS_DIR"]]:
