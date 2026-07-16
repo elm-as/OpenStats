@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useMemo } from 'react';
-import type { Layout, Config, Data } from 'plotly.js';
+import type { Layout, Config } from 'plotly.js';
 import {
   SlidersHorizontal,
   Download,
@@ -117,7 +117,7 @@ function getLinearRegression(x: number[], y: number[]) {
 }
 
 // ── Aide à l'interprétation automatique pour non-codeurs ──
-function getChartInterpretation(chartType: string, title?: string, data?: Data[]): string {
+function getChartInterpretation(chartType: string, title?: string, data?: any[]): string {
   const lowerTitle = (title || '').toLowerCase();
   
   if (lowerTitle.includes('corrélation') || chartType === 'heatmap') {
@@ -164,7 +164,7 @@ function getChartInterpretation(chartType: string, title?: string, data?: Data[]
 const HeavyPlotlyChart = lazy(() => import('./PlotlyHeavy'));
 
 interface PlotlyChartProps {
-  data: Data[];
+  data: any[];
   layout?: Partial<Layout>;
   config?: Partial<Config>;
   height?: number | string;
@@ -268,7 +268,7 @@ export function PlotlyChart({ data, layout = {}, config = {}, height = 400, clas
             name: 'Tendance linéaire',
             line: { color: '#ef4444', width: 2, dash: 'dash' },
             hovertemplate: `y = ${reg.slope.toFixed(3)}x + ${reg.intercept.toFixed(3)}<extra></extra>`,
-          } as Data);
+          } as any);
         }
       }
     }

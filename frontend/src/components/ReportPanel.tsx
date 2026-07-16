@@ -12,8 +12,8 @@ type ExportFormat = 'pdf' | 'excel' | 'json' | 'html';
 
 export default function ReportPanel({ datasetId }: Props) {
   const [generateReport, { isLoading }] = useGenerateReportMutation();
-  const accessToken = useAppSelector((state) => state.auth.accessToken);
-  const authEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true';
+  const authEnabled = false;
+  const accessToken = null;
   const [title, setTitle] = useState("Rapport d'Analyse");
   const [organization, setOrganization] = useState('');
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
