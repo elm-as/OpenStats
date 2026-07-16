@@ -45,4 +45,4 @@ services:
         value: 20
       # À METTRE À JOUR avec l'URL de votre backend une fois déployé
       - key: VITE_API_URL
-        value: "https://openstats-backend.onrender.com/api/v1"
+        value: "https://openstats-backend.onrender.com"
