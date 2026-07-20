@@ -102,9 +102,13 @@ def create_app(config_class=Config):
             }
         })
     else:
+        cors_origins = app.config.get("CORS_ORIGINS", "*")
+        if isinstance(cors_origins, str) and cors_origins != "*":
+            cors_origins = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+            
         CORS(app, resources={
             r"/api/*": {
-                "origins": "*",
+                "origins": cors_origins,
                 "allow_headers": ["*"],
                 "expose_headers": ["Content-Disposition"]
             }

@@ -49,4 +49,6 @@ class Config:
 
     # Reports output
     REPORTS_DIR = os.path.abspath(os.getenv("REPORTS_DIR", os.path.join(_BASE_DIR, "reports")))
+    
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
 
