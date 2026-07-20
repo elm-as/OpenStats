@@ -15,7 +15,7 @@ import {
   getBezierPath
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Play, Loader2, CheckCircle2, XCircle, AlertCircle, Share2, Copy } from 'lucide-react';
+import { Play, Loader2, CheckCircle2, XCircle, AlertCircle, Share2, Copy, Eye, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
 
@@ -600,23 +600,23 @@ function DnDFlow() {
 
         {/* ── Results Panel ── */}
         {showResults && pipelineResults && (
-          <div className="absolute top-4 right-4 w-[380px] max-h-[calc(100vh-120px)] overflow-auto z-20 rounded-2xl border border-white/[0.08] bg-surface-900/95 backdrop-blur-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)]">
+          <div className="absolute top-4 right-4 w-[380px] max-h-[calc(100vh-120px)] overflow-y-auto z-20 rounded-2xl card !p-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-white/[0.01]">
               <div className="flex items-center gap-3">
                 {summary && summary.error > 0 ? (
-                  <div className="w-8 h-8 rounded-xl bg-red-500/15 flex items-center justify-center">
-                    <XCircle size={16} className="text-red-400" />
+                  <div className="w-8 h-8 rounded-xl bg-danger-50 flex items-center justify-center border border-danger/10">
+                    <XCircle size={16} className="text-danger" />
                   </div>
                 ) : (
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-                    <CheckCircle2 size={16} className="text-emerald-400" />
+                  <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center border border-green/10">
+                    <CheckCircle2 size={16} className="text-green-500" />
                   </div>
                 )}
                 <div>
-                  <h3 className="text-sm font-bold text-surface-100">Résultats du Pipeline</h3>
+                  <h3 className="text-sm font-bold text-strong">Résultats du Pipeline</h3>
                   {summary && (
-                    <p className="text-[11px] text-surface-400 mt-0.5">
+                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mt-0.5">
                       {summary.success} OK · {summary.error > 0 ? `${summary.error} FAIL · ` : ''}{summary.skipped > 0 ? `${summary.skipped} SKIP` : ''}
                     </p>
                   )}
@@ -624,56 +624,70 @@ function DnDFlow() {
               </div>
               <button
                 onClick={resetResults}
-                className="text-surface-400 hover:text-surface-200 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+                className="text-muted hover:text-strong text-xs font-semibold p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                title="Fermer"
               >
-                Fermer
+                <X size={16} />
               </button>
             </div>
 
             {/* Global error */}
             {pipelineResults._global && (
-              <div className="px-5 py-3 bg-red-500/10 border-b border-red-500/20">
-                <p className="text-xs text-red-300 font-medium">{pipelineResults._global.error}</p>
+              <div className="px-5 py-3 bg-danger-50 border-b border-danger/10">
+                <p className="text-xs text-danger font-medium">{pipelineResults._global.error}</p>
               </div>
             )}
 
             {/* Per-node results */}
-            <div className="divide-y divide-white/[0.04]">
+            <div className="p-3 space-y-2 max-h-[400px] overflow-y-auto">
               {Object.entries(pipelineResults)
                 .filter(([k]) => k !== '_global')
-                .map(([nodeId, result]) => (
-                <div key={nodeId} className="px-5 py-3 hover:bg-white/[0.02] transition-colors group flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2.5">
-                      {result.status === 'success' && <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />}
-                      {result.status === 'error' && <XCircle size={14} className="text-red-400 shrink-0" />}
-                      {result.status === 'skipped' && <AlertCircle size={14} className="text-amber-400 shrink-0" />}
-                      <span className="text-xs font-bold text-surface-200">{getNodeLabel(nodeId)}</span>
-                    </div>
-                    <p className={`text-[11px] mt-1 ml-6 leading-relaxed ${
-                      result.status === 'success' ? 'text-surface-400' :
-                      result.status === 'error' ? 'text-red-300/80' :
-                      'text-amber-300/70'
-                    }`}>
-                      {result.message || result.error || 'Terminé'}
-                    </p>
-                  </div>
-                  {result.status === 'success' && result.result !== undefined && (
-                    <button
-                      onClick={() => setSelectedResultNode({
-                        id: nodeId,
-                        type: nodes.find(n => n.id === nodeId)?.type || '',
-                        title: getNodeLabel(nodeId),
-                        result: result.result
-                      })}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-white/10 text-surface-400 hover:text-accent-400 transition-all shrink-0 mt-1"
-                      title="Voir les résultats"
+                .map(([nodeId, result]) => {
+                  const nodeName = getNodeLabel(nodeId);
+                  const nodeType = nodes.find(n => n.id === nodeId)?.type || '';
+                  
+                  return (
+                    <div 
+                      key={nodeId} 
+                      className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-start justify-between gap-3 ${
+                        result.status === 'success' ? 'bg-green-50/20 border-green/10 hover:border-green/20' :
+                        result.status === 'error' ? 'bg-danger-50/20 border-danger/10 hover:border-danger/20' :
+                        'bg-amber-50/20 border-amber/10 hover:border-amber/20'
+                      }`}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    </button>
-                  )}
-                </div>
-              ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {result.status === 'success' && <CheckCircle2 size={14} className="text-green-500 shrink-0" />}
+                          {result.status === 'error' && <XCircle size={14} className="text-danger shrink-0" />}
+                          {result.status === 'skipped' && <AlertCircle size={14} className="text-amber shrink-0" />}
+                          <span className="text-xs font-bold text-strong truncate">{nodeName}</span>
+                        </div>
+                        <p className={`text-[11px] mt-1 ml-5 leading-relaxed ${
+                          result.status === 'success' ? 'text-default' :
+                          result.status === 'error' ? 'text-danger font-medium' :
+                          'text-amber'
+                        }`}>
+                          {result.message || result.error || 'Exécuté avec succès'}
+                        </p>
+                      </div>
+                      
+                      {result.status === 'success' && result.result !== undefined && (
+                        <button
+                          onClick={() => setSelectedResultNode({
+                            id: nodeId,
+                            type: nodeType,
+                            title: nodeName,
+                            result: result.result
+                          })}
+                          className="p-1.5 rounded-lg bg-white/5 border border-white/5 text-muted hover:text-accent-400 hover:border-accent-500/30 transition-all shrink-0"
+                          title="Voir les résultats"
+                        >
+                          <Eye size={14} />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         )}
