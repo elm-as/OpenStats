@@ -622,13 +622,26 @@ function DnDFlow() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={resetResults}
-                className="text-muted hover:text-strong text-xs font-semibold p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                title="Fermer"
-              >
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setSelectedResultNode({
+                    id: 'global_report',
+                    type: 'global',
+                    title: 'Rapport Global du Pipeline',
+                    result: pipelineResults
+                  })}
+                  className="text-accent-400 hover:text-accent-300 text-[11px] font-bold px-2.5 py-1.5 rounded-lg hover:bg-accent-500/10 transition-colors border border-accent-500/10 shrink-0"
+                >
+                  Rapport global
+                </button>
+                <button
+                  onClick={resetResults}
+                  className="text-muted hover:text-strong text-xs font-semibold p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  title="Fermer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Global error */}
@@ -699,6 +712,8 @@ function DnDFlow() {
           nodeTitle={selectedResultNode?.title || ''}
           nodeType={selectedResultNode?.type || ''}
           resultData={selectedResultNode?.result}
+          nodes={nodes}
+          pipelineResults={pipelineResults}
         />
       </div>
     </div>

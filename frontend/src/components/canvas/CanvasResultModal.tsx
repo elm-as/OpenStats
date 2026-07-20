@@ -12,6 +12,8 @@ interface CanvasResultModalProps {
   nodeTitle: string;
   nodeType: string;
   resultData: any;
+  nodes?: any[];
+  pipelineResults?: any;
 }
 
 /* ─── Helpers ─── */
@@ -230,10 +232,24 @@ const SvgHeatmap = ({ matrix, labels, title, colorStart = '#1e293b', colorEnd = 
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════ */
 
-export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType, resultData }: CanvasResultModalProps) {
+const getNodeLabel = (nodeType: string, nodeId: string) => {
+  const labels: Record<string, string> = {
+    dataset: 'Source de données', typing: 'Détection de types', cleaning: 'Nettoyage', transform: 'Transformation',
+    computeVariable: 'Variable calculée', descriptiveNumeric: 'Stats numériques', descriptiveCategorical: 'Stats catégorielles',
+    correlation: 'Corrélation', vif: 'VIF', testCompareMeans: 'Comparaison de moyennes', testCorrelation: 'Test de corrélation',
+    testIndependence: 'Test d\'indépendance', testStationarity: 'Test de stationnarité',
+    pca: 'ACP', ca: 'AFC', mca: 'ACM',
+    clustering: 'Clustering', regression: 'Régression', classification: 'Classification',
+    timeseries: 'Séries temporelles', multivariateTimeseries: 'Séries temporelles multivariées', simulation: 'Simulation',
+    visualization: 'Graphique', ai: 'IA', extension: 'Extension', insights: 'Insights', output: 'Export de rapport',
+  };
+  return labels[nodeType] || nodeType || nodeId;
+};
+
+export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType, resultData, nodes, pipelineResults }: CanvasResultModalProps) {
   if (!isOpen) return null;
 
-  const renderContent = () => {
+  const renderNodeResult = (nodeType: string, resultData: any) => {
     if (!resultData) return <div className="text-surface-400 italic text-sm p-4">Aucun resultat disponible.</div>;
     if (resultData.error) {
       return (
@@ -949,6 +965,38 @@ export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType
     return renderJson(resultData);
   };
 
+  const renderContent = () => {
+    if (nodeType === 'global') {
+      const executedNodes = Object.entries(pipelineResults || {})
+        .filter(([k, r]: any) => k !== '_global' && r.status === 'success');
+
+      if (executedNodes.length === 0) {
+        return <div className="text-surface-400 italic text-sm p-4 text-center">Aucun résultat d'analyse disponible pour le moment.</div>;
+      }
+
+      return (
+        <div className="space-y-10 divide-y divide-white/[0.06]">
+          {executedNodes.map(([nodeId, r]: any, idx) => {
+            const node = nodes?.find(n => n.id === nodeId);
+            const type = node?.type || '';
+            const title = getNodeLabel(type, nodeId);
+            
+            return (
+              <div key={nodeId} className={idx > 0 ? 'pt-8' : ''}>
+                <div className="flex items-center gap-2.5 mb-5">
+                  <div className="w-1.5 h-5 bg-accent-500 rounded-full" />
+                  <h3 className="text-sm font-bold text-strong uppercase tracking-wider">{title}</h3>
+                </div>
+                {renderNodeResult(type, r.result)}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+    return renderNodeResult(nodeType, resultData);
+  };
+
   const renderJson = (data: any) => (
     <div className="bg-surface-900/80 rounded-xl border border-white/[0.04] p-4 overflow-auto max-h-[500px]">
       <pre className="text-xs font-mono text-surface-300 whitespace-pre-wrap break-all leading-relaxed">
@@ -1014,7 +1062,7 @@ export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType
         </div>
         <div className="p-6 overflow-y-auto flex-1 min-h-0">
           {renderContent()}
-          {nodeType !== 'insights' && renderInsightsBlock()}
+          {nodeType !== 'insights' && nodeType !== 'global' && renderInsightsBlock()}
         </div>
       </div>
     </div>
