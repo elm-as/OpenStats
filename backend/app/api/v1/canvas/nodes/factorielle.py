@@ -28,7 +28,7 @@ def execute_ca(data, dataset_id):
     if not row_col or not col_col:
         return {"status": "error", "error": "Variables en ligne et colonne requises"}
     from app.core.factor_analysis import run_ca
-    df = dataset_manager.get_df(dataset_id, respect_exclusions=False)
+    df = dataset_manager.get_df(dataset_id)
     result = run_ca(df, row_col, col_col)
     ds = dataset_manager.get(dataset_id)
     if ds:
@@ -43,7 +43,7 @@ def execute_ca(data, dataset_id):
 
 def execute_mca(data, dataset_id):
     from app.core.factor_analysis import run_mca
-    df = dataset_manager.get_df(dataset_id, respect_exclusions=False)
+    df = dataset_manager.get_df(dataset_id)
     result = run_mca(df)
     ds = dataset_manager.get(dataset_id)
     if ds:
