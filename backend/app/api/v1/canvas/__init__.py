@@ -79,45 +79,48 @@ def run_canvas_pipeline():
     
     import threading
     from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+    from flask import current_app
     
+    app = current_app._get_current_object()
     dataset_id_map_lock = threading.Lock()
     results_lock = threading.Lock()
 
     def process_node(node_id):
-        node = node_map.get(node_id)
-        if not node:
-            return node_id
-            
-        node_type = node.get("type", "")
-        node_data = node.get("data", {})
-
-        # Remove callback functions from data
-        clean_data = {k: v for k, v in node_data.items() if k not in ("onChange", "onDelete")}
-
-        # Resolve dataset_id from parents or from self
-        dataset_id = None
-        if node_type != "dataset":
-            # Walk parent chain to find the dataset_id
-            parent_ids = parents.get(node_id, [])
-            with dataset_id_map_lock:
-                for pid in parent_ids:
-                    if pid in dataset_id_map:
-                        dataset_id = dataset_id_map[pid]
-                        break
-
-        result = execute_node(node_type, clean_data, dataset_id)
-        
-        with results_lock:
-            results[node_id] = result
-
-        # Propagate dataset_id downstream
-        with dataset_id_map_lock:
-            if node_type == "dataset" and result.get("status") == "success":
-                dataset_id_map[node_id] = result.get("dataset_id")
-            elif dataset_id:
-                dataset_id_map[node_id] = dataset_id
+        with app.app_context():
+            node = node_map.get(node_id)
+            if not node:
+                return node_id
                 
-        return node_id
+            node_type = node.get("type", "")
+            node_data = node.get("data", {})
+
+            # Remove callback functions from data
+            clean_data = {k: v for k, v in node_data.items() if k not in ("onChange", "onDelete")}
+
+            # Resolve dataset_id from parents or from self
+            dataset_id = None
+            if node_type != "dataset":
+                # Walk parent chain to find the dataset_id
+                parent_ids = parents.get(node_id, [])
+                with dataset_id_map_lock:
+                    for pid in parent_ids:
+                        if pid in dataset_id_map:
+                            dataset_id = dataset_id_map[pid]
+                            break
+
+            result = execute_node(node_type, clean_data, dataset_id)
+            
+            with results_lock:
+                results[node_id] = result
+
+            # Propagate dataset_id downstream
+            with dataset_id_map_lock:
+                if node_type == "dataset" and result.get("status") == "success":
+                    dataset_id_map[node_id] = result.get("dataset_id")
+                elif dataset_id:
+                    dataset_id_map[node_id] = dataset_id
+                    
+            return node_id
 
     # DAG Execution
     ready = [nid for nid, d in in_degrees.items() if d == 0]
