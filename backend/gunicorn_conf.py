@@ -1,7 +1,8 @@
 import multiprocessing
+import os
 
 # Serveur Bind
-bind = "0.0.0.0:10000"
+bind = "0.0.0.0:" + os.getenv("PORT", "10000")
 
 # Configuration des workers
 # Formule standard: 2 * nombre de cœurs + 1
