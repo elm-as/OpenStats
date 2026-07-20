@@ -961,6 +961,118 @@ export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType
       );
     }
 
+    /* ── Transform ── */
+    if (nodeType === 'transform') {
+      if (Array.isArray(resultData)) {
+        return (
+          <Section title="Recommandations de transformation" icon={Zap} color="#6366f1">
+            <div className="space-y-3">
+              {resultData.map((rec: any, idx: number) => {
+                const severityColors: Record<string, string> = { high: '#ef4444', medium: '#f59e0b', low: '#10b981', info: '#3b82f6' };
+                const col = severityColors[rec.severity] || '#6b7280';
+                return (
+                  <div key={idx} className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] hover:border-white/10 transition-all">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-black text-strong">{rec.column}</span>
+                        <Badge color={col}>{rec.issue_label || rec.issue}</Badge>
+                        <span className="text-[10px] text-muted capitalize">({rec.category})</span>
+                      </div>
+                      <p className="text-xs text-default">{rec.detail}</p>
+                      {Array.isArray(rec.suggested_transforms) && rec.suggested_transforms.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                          <span className="text-[10px] text-muted font-semibold">Transformations suggérées :</span>
+                          {rec.suggested_transforms.map((t: string) => (
+                            <span key={t} className="text-[10px] font-mono font-bold bg-accent-500/10 text-accent-400 border border-accent-500/20 px-1.5 py-0.5 rounded">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+        );
+      } else {
+        const logs = resultData.logs || [];
+        const shape = resultData.shape || {};
+        return (
+          <Section title="Transformations appliquées" icon={CheckCircle2} color="#10b981">
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {shape.rows && <KpiCard label="Lignes après" value={shape.rows} icon={Database} color="#10b981" />}
+              {shape.columns && <KpiCard label="Colonnes après" value={shape.columns} icon={Layers} color="#8b5cf6" />}
+            </div>
+            <div className="space-y-1.5">
+              {logs.map((log: string, idx: number) => (
+                <div key={idx} className="bg-surface-800/30 p-2.5 rounded-lg text-xs text-default flex items-center gap-2 border border-white/[0.03]">
+                  <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
+                  {log}
+                </div>
+              ))}
+            </div>
+          </Section>
+        );
+      }
+    }
+
+    /* ── Compute Variable ── */
+    if (nodeType === 'computeVariable') {
+      return (
+        <Section title="Variable calculée" icon={Layers} color="#8b5cf6">
+          <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <KpiCard label="Variable créée" value={resultData.column || 'N/A'} icon={Layers} color="#8b5cf6" />
+              <KpiCard label="Statut" value={resultData.success ? 'Succès' : 'Échec'} icon={CheckCircle2} color={resultData.success ? '#10b981' : '#ef4444'} />
+            </div>
+            {resultData.formula && (
+              <div className="bg-black/20 p-3 rounded-lg border border-white/[0.06]">
+                <div className="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Formule appliquée</div>
+                <code className="text-xs font-mono text-accent-300">{resultData.formula}</code>
+              </div>
+            )}
+            {resultData.message && <p className="text-xs text-default">{resultData.message}</p>}
+          </div>
+        </Section>
+      );
+    }
+
+    /* ── SQL Node ── */
+    if (nodeType === 'sql') {
+      return (
+        <Section title="Résultat de la requête SQL" icon={Database} color="#3b82f6">
+          <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <KpiCard label="Lignes générées" value={resultData.rows ?? 0} icon={Database} color="#10b981" />
+              <KpiCard label="Colonnes" value={resultData.columns ?? 0} icon={Layers} color="#8b5cf6" />
+            </div>
+            {resultData.query && (
+              <div className="bg-black/20 p-3 rounded-lg border border-white/[0.06]">
+                <div className="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Requête exécutée</div>
+                <pre className="text-xs font-mono text-accent-300 whitespace-pre-wrap break-all">{resultData.query}</pre>
+              </div>
+            )}
+          </div>
+        </Section>
+      );
+    }
+
+    /* ── Python Node ── */
+    if (nodeType === 'python') {
+      return (
+        <Section title="Résultat du script Python" icon={Activity} color="#10b981">
+          <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <KpiCard label="Lignes générées" value={resultData.rows ?? 0} icon={Database} color="#10b981" />
+              <KpiCard label="Colonnes" value={resultData.columns ?? 0} icon={Layers} color="#8b5cf6" />
+            </div>
+          </div>
+        </Section>
+      );
+    }
+
     /* ── Generic Fallback ── */
     return renderJson(resultData);
   };
