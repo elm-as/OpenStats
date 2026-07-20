@@ -59,28 +59,28 @@ export default function HistoryPanel({ datasetId }: Props) {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <Clock size={20} className="text-blue-600" />
+    <div className="card shadow-sm border border-white/5 !p-6">
+      <h3 className="text-lg font-semibold text-strong mb-4 flex items-center gap-2">
+        <Clock size={20} className="text-accent-400" />
         Historique & Traçabilité
       </h3>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-4 bg-gray-50 rounded-lg p-1">
+      <div className="flex gap-1 mb-4 bg-white/[0.02] border border-white/5 rounded-lg p-1">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
               tab === t.key
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-accent-500/10 text-accent-300 shadow-sm border border-accent-500/20'
+                : 'text-muted hover:text-default'
             }`}
           >
             {t.icon}
             {t.label}
             {t.count != null && (
-              <span className="ml-1 bg-gray-200 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">
+              <span className="ml-1 bg-white/10 text-default text-xs px-1.5 py-0.5 rounded-full">
                 {t.count}
               </span>
             )}
@@ -122,44 +122,44 @@ function HistoryTab({
       {entries.map(e => {
         const expanded = expandedId === e.id;
         return (
-          <div key={e.id} className="border border-gray-100 rounded-lg overflow-hidden">
+          <div key={e.id} className="border border-white/5 rounded-lg overflow-hidden bg-white/[0.01]">
             <button
               onClick={() => onToggle(expanded ? null : e.id)}
-              className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 text-left"
+              className="w-full flex items-center gap-3 p-3 hover:bg-white/[0.02] text-left"
             >
               <StatusIcon status={e.status} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">
+                <p className="text-sm font-medium text-strong truncate">
                   {ANALYSIS_LABELS[e.analysis_type] ?? e.analysis_type}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   {formatDate(e.created_at)}
                   {e.duration_ms != null && ` · ${formatDuration(e.duration_ms)}`}
                   {` · v${e.dataset_version}`}
                 </p>
               </div>
-              {expanded ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+              {expanded ? <ChevronDown size={16} className="text-faint" /> : <ChevronRight size={16} className="text-faint" />}
             </button>
             {expanded && (
-              <div className="px-3 pb-3 pt-1 border-t border-gray-50">
+              <div className="px-3 pb-3 pt-1 border-t border-white/5 space-y-2">
                 {e.parameters && Object.keys(e.parameters).length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-xs font-medium text-gray-500 mb-1">Paramètres</p>
-                    <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                  <div>
+                    <p className="text-xs font-medium text-muted mb-1">Paramètres</p>
+                    <pre className="text-xs bg-white/[0.02] border border-white/5 text-default p-2 rounded overflow-x-auto">
                       {JSON.stringify(e.parameters, null, 2)}
                     </pre>
                   </div>
                 )}
                 {e.result_summary && (
                   <div>
-                    <p className="text-xs font-medium text-gray-500 mb-1">Résumé</p>
-                    <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                    <p className="text-xs font-medium text-muted mb-1">Résumé</p>
+                    <pre className="text-xs bg-white/[0.02] border border-white/5 text-default p-2 rounded overflow-x-auto">
                       {JSON.stringify(e.result_summary, null, 2)}
                     </pre>
                   </div>
                 )}
                 {e.error_message && (
-                  <p className="text-xs text-red-600 mt-1">{e.error_message}</p>
+                  <p className="text-xs text-red-500 mt-1">{e.error_message}</p>
                 )}
               </div>
             )}
@@ -187,30 +187,30 @@ function VersionsTab({
         <div
           key={v.id}
           className={`flex items-center gap-3 p-3 rounded-lg border ${
-            i === 0 ? 'border-blue-200 bg-blue-50/50' : 'border-gray-100'
+            i === 0 ? 'border-accent-500/30 bg-accent-500/5' : 'border-white/5 bg-white/[0.01]'
           }`}
         >
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-500/10 text-accent-400 flex items-center justify-center text-sm font-bold border border-accent-500/20">
             {v.version_number}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-800">
+            <p className="text-sm font-medium text-strong">
               {v.label === 'raw' ? 'Données brutes' :
                v.label === 'cleaned' ? 'Nettoyé' :
                v.label === 'transformed' ? 'Transformé' :
                v.label === 'restored' ? 'Restauré' : v.label}
-              {i === 0 && <span className="ml-2 text-xs text-blue-600">(actuelle)</span>}
+              {i === 0 && <span className="ml-2 text-xs text-accent-400">(actuelle)</span>}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               {v.rows} × {v.columns} · {formatDate(v.created_at)}
             </p>
-            {v.description && <p className="text-xs text-gray-400 mt-0.5">{v.description}</p>}
+            {v.description && <p className="text-xs text-faint mt-0.5">{v.description}</p>}
           </div>
           {i > 0 && (
             <button
               onClick={() => onRestore(v.version_number)}
               disabled={restoring}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors disabled:opacity-50"
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-accent-300 bg-accent-500/10 hover:bg-accent-500/20 rounded-md transition-colors disabled:opacity-50 border border-accent-500/20"
             >
               {restoring ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
               Restaurer
@@ -229,28 +229,28 @@ function AuditTab({ entries }: { entries: AuditLogEntry[] }) {
 
   return (
     <div className="relative pl-6">
-      <div className="absolute left-2.5 top-0 bottom-0 w-px bg-gray-200" />
+      <div className="absolute left-2.5 top-0 bottom-0 w-px bg-white/10" />
       <div className="space-y-3">
         {entries.map(e => (
           <div key={e.id} className="relative">
-            <div className="absolute -left-[14px] top-1.5 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white" />
-            <div className="bg-gray-50 rounded-lg p-3">
+            <div className="absolute -left-[14px] top-1.5 w-2.5 h-2.5 rounded-full bg-accent-500 border-2 border-surface-950" />
+            <div className="bg-white/[0.01] border border-white/5 rounded-lg p-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-800">
+                <span className="text-sm font-medium text-strong">
                   {ACTION_LABELS[e.action] ?? e.action}
                 </span>
                 {e.version_before != null && e.version_after != null && (
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-muted">
                     v{e.version_before} → v{e.version_after}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">{formatDate(e.created_at)}</p>
+              <p className="text-xs text-muted mt-0.5">{formatDate(e.created_at)}</p>
               {e.parameters && Object.keys(e.parameters).length > 0 && (
-                <div className="mt-1.5 text-xs text-gray-600">
+                <div className="mt-1.5 text-xs text-muted">
                   {Object.entries(e.parameters).map(([k, v]) => (
                     <span key={k} className="inline-block mr-3">
-                      <span className="text-gray-400">{k}:</span>{' '}
+                      <span className="text-faint">{k}:</span>{' '}
                       {typeof v === 'object' ? JSON.stringify(v) : String(v)}
                     </span>
                   ))}
@@ -272,7 +272,7 @@ function StatusIcon({ status }: { status: string }) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="text-center py-8 text-gray-400 text-sm">{message}</div>
+    <div className="text-center py-8 text-muted text-sm">{message}</div>
   );
 }
 

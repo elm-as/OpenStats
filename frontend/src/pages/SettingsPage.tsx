@@ -1,14 +1,22 @@
 import { Activity, Bell, Lock, Palette, User } from 'lucide-react';
-import PageHeader from '../components/ui/PageHeader';
-import Card from '../components/ui/Card';
+import { Card } from '../components/ui';
 
 export default function SettingsPage() {
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      <PageHeader 
-        title="Paramètres" 
-        description="Gérez vos préférences, votre profil et les configurations de l'application."
-      />
+      <section className="relative overflow-hidden rounded-2xl bg-surface-900 border border-white/5 shadow-sm">
+        <div className="relative z-10 px-6 py-6 md:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="max-w-xl">
+            <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mb-3">Configuration</p>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-[1.1] mb-2">
+              Paramètres
+            </h1>
+            <p className="text-surface-400 text-[13px] leading-relaxed max-w-lg">
+              Gérez vos préférences, votre profil et les configurations de l'application.
+            </p>
+          </div>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="md:col-span-1 space-y-1">

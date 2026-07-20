@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useMemo, useEffect } from 'react';
 import type { Layout, Config } from 'plotly.js';
 import {
   SlidersHorizontal,
@@ -49,6 +49,71 @@ export const DARK_TEMPLATE: Partial<Layout> = {
     font: { family: 'Inter, system-ui, sans-serif', color: '#dfe3ee' },
   },
 };
+
+// ── Thème light partagé pour tous les graphes scientifiques ──
+export const LIGHT_TEMPLATE: Partial<Layout> = {
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor: 'rgba(0,0,0,0)',
+  font: {
+    family: 'Inter, system-ui, sans-serif',
+    color: '#1e293b',
+    size: 12,
+  },
+  xaxis: {
+    gridcolor: 'rgba(0,0,0,0.06)',
+    zerolinecolor: 'rgba(0,0,0,0.12)',
+    linecolor: 'rgba(0,0,0,0.12)',
+    tickfont: { color: '#475569', size: 11 },
+    title: { font: { color: '#0f172a', size: 12 } },
+  },
+  yaxis: {
+    gridcolor: 'rgba(0,0,0,0.06)',
+    zerolinecolor: 'rgba(0,0,0,0.12)',
+    linecolor: 'rgba(0,0,0,0.12)',
+    tickfont: { color: '#475569', size: 11 },
+    title: { font: { color: '#0f172a', size: 12 } },
+  },
+  legend: {
+    bgcolor: 'rgba(255,255,255,0.8)',
+    bordercolor: 'rgba(0,0,0,0.1)',
+    borderwidth: 1,
+    font: { color: '#1e293b' },
+  },
+  margin: { l: 60, r: 20, t: 40, b: 50 },
+  hoverlabel: {
+    bgcolor: '#ffffff',
+    bordercolor: '#06b6d4',
+    font: { family: 'Inter, system-ui, sans-serif', color: '#0f172a' },
+  },
+};
+
+// Hook pour observer le changement de thème sur l'élément html
+function useCurrentTheme() {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return (document.documentElement.dataset.theme as 'dark' | 'light') || 'dark';
+  });
+
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme') {
+          const currentTheme = document.documentElement.dataset.theme as 'dark' | 'light';
+          setTheme(currentTheme || 'dark');
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  return theme;
+}
 
 export const DEFAULT_CONFIG: Partial<Config> = {
   displayModeBar: true,
@@ -187,6 +252,9 @@ function PlotlySkeleton({ height = 400, className = '' }: { height?: number | st
 
 /** Wrapper Plotly avec thème dark uniforme + lazy-load + personnalisation premium + exports. */
 export function PlotlyChart({ data, layout = {}, config = {}, height = 400, className = '' }: PlotlyChartProps) {
+  const theme = useCurrentTheme();
+  const activeTemplate = theme === 'light' ? LIGHT_TEMPLATE : DARK_TEMPLATE;
+
   // États de personnalisation locale
   const [showSettings, setShowSettings] = useState(false);
   const [showInterpretation, setShowInterpretation] = useState(false);
@@ -275,15 +343,15 @@ export function PlotlyChart({ data, layout = {}, config = {}, height = 400, clas
 
     // 4. Alignement du Layout
     const finalLayout: Partial<Layout> = {
-      ...DARK_TEMPLATE,
+      ...activeTemplate,
       ...layout,
       xaxis: {
-        ...DARK_TEMPLATE.xaxis,
+        ...activeTemplate.xaxis,
         ...layout.xaxis,
         showgrid: showGrid,
       },
       yaxis: {
-        ...DARK_TEMPLATE.yaxis,
+        ...activeTemplate.yaxis,
         ...layout.yaxis,
         showgrid: showGrid,
       },
@@ -296,7 +364,7 @@ export function PlotlyChart({ data, layout = {}, config = {}, height = 400, clas
     };
 
     return { customizedData: finalData, customizedLayout: finalLayout };
-  }, [data, layout, palette, showGrid, legendPos, pointSize, lineWidth, opacity, trendline, isScatterNumeric, showLabels]);
+  }, [data, layout, palette, showGrid, legendPos, pointSize, lineWidth, opacity, trendline, isScatterNumeric, showLabels, activeTemplate]);
 
   // Export CSV
   const handleExportCSV = () => {
