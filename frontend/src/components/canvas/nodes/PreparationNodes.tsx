@@ -9,7 +9,7 @@ import {
 
 export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { dsId, dataset, columns } = useConnectedColumns(id);
+  const { dsId, dataset, columns, columnTypes } = useConnectedColumns(id);
 
   const rawOverrides = data.typeOverrides;
   const typeOverrides: Record<string, string> = (() => {
@@ -108,7 +108,7 @@ export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
                   <div className="space-y-1.5">
                     {columns.map((col: any) => {
                       const colName = typeof col === 'string' ? col : (col.nom_brut || col.name || '');
-                      const detectedType = typeof col === 'string' ? '?' : (col.type_statistique || '?');
+                      const detectedType = columnTypes?.[colName] || '?';
                       const overrideVal = typeOverrides[colName] || 'auto';
                       const isExcluded = excludedColumns.includes(colName);
                       return (
