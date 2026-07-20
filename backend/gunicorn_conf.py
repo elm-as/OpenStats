@@ -1,14 +1,14 @@
-import multiprocessing
 import os
 
 # Serveur Bind
 bind = "0.0.0.0:" + os.getenv("PORT", "10000")
 
 # Configuration des workers
-# Formule standard: 2 * nombre de cœurs + 1
-workers = multiprocessing.cpu_count() * 2 + 1
+# Sur Render (surtout en Free/Starter avec 512MB RAM), cpu_count() peut renvoyer
+# un grand nombre et causer un OOM Kill (Out Of Memory). On limite donc à 1 ou 2.
+workers = int(os.getenv("WEB_CONCURRENCY", "1"))
 worker_class = "gthread"
-threads = 4
+threads = int(os.getenv("WEB_THREADS", "2"))
 
 # Optimisation pour les tâches d'analyse lourdes
 timeout = 120  # Laisse 2 minutes maximum pour une grosse analyse PCA/Séries temporelles
