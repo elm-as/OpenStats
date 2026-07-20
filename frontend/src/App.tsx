@@ -12,6 +12,7 @@ const AnalyzerResultsPage = lazy(() => import('./pages/AnalyzerResultsPage'));
 const SharedCanvasPage = lazy(() => import('./pages/SharedCanvasPage'));
 const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
 const DocsPage = lazy(() => import('./pages/DocsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 function PageLoader() {
   return (
@@ -59,6 +60,9 @@ export default function App() {
 
           {/* Documentation */}
           <Route path="docs" element={<DocsPage />} />
+
+          {/* Paramètres */}
+          <Route path="settings" element={<SettingsPage />} />
 
           {/* Workflow avec dataset → redirige vers l'étape profilage */}
           <Route path="workflow/:datasetId" element={<Navigate to="profile" replace />} />
