@@ -156,15 +156,17 @@ export function useConnectedColumns(id: string) {
       if (node) {
         if (node.type === 'typing') {
           typingNodeId = node.id;
-          const raw = node.data?.excludedColumns;
-          if (raw) {
-            let parsed: string[] = [];
-            if (typeof raw === 'string') {
-              try { parsed = JSON.parse(raw); } catch { parsed = []; }
-            } else if (Array.isArray(raw)) {
-              parsed = raw as string[];
+          if (node.id !== id) {
+            const raw = node.data?.excludedColumns;
+            if (raw) {
+              let parsed: string[] = [];
+              if (typeof raw === 'string') {
+                try { parsed = JSON.parse(raw); } catch { parsed = []; }
+              } else if (Array.isArray(raw)) {
+                parsed = raw as string[];
+              }
+              parsed.forEach(c => excludedCols.add(c));
             }
-            parsed.forEach(c => excludedCols.add(c));
           }
         }
         if (node.type === 'dataset' && node.data?.file) {
