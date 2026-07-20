@@ -335,43 +335,88 @@ export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType
     /* ── Descriptive Stats ── */
     if (nodeType === 'descriptiveNumeric' || nodeType === 'descriptiveCategorical') {
       if (typeof resultData !== 'object' || resultData === null) return renderJson(resultData);
-      const entries = Object.entries(resultData);
+      
+      const cols = Object.keys(resultData);
+      if (cols.length === 0) return <div className="text-surface-400 text-sm">Aucune donnée trouvée.</div>;
+      
+      // Get all unique metric keys (excluding name, type, top_values)
+      const allMetrics = new Set<string>();
+      cols.forEach(c => {
+        if (typeof resultData[c] === 'object' && resultData[c] !== null) {
+          Object.keys(resultData[c]).forEach(k => {
+            if (k !== 'name' && k !== 'type' && k !== 'top_values') {
+              allMetrics.add(k);
+            }
+          });
+        }
+      });
+      // Sort metrics logically
+      const orderedMetrics = ['count', 'mean', 'median', 'std', 'min', 'q1', 'q3', 'max', 'iqr', 'null_count', 'null_rate', 'unique_values', 'mode'];
+      const metricsList = Array.from(allMetrics).sort((a, b) => {
+        const ia = orderedMetrics.indexOf(a);
+        const ib = orderedMetrics.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b);
+      });
+
       return (
-        <div className="space-y-4">
-          <p className="text-xs text-surface-400">{entries.length} variable(s) analysee(s)</p>
-          {entries.map(([colName, colStats]: [string, any]) => {
-            if (typeof colStats !== 'object' || colStats === null) return null;
-            const statEntries = Object.entries(colStats).filter(([k]) => k !== 'name' && k !== 'top_values');
-            const topValues = colStats.top_values;
-            return (
-              <div key={colName} className="bg-surface-800/40 rounded-xl border border-white/[0.04] overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-white/[0.04] bg-surface-800/40 flex items-center gap-2">
-                  <span className="text-xs font-bold text-surface-100 uppercase tracking-wider">{colName}</span>
-                  {colStats.type && <Badge color={colStats.type === 'numeric' ? '#3b82f6' : '#8b5cf6'}>{colStats.type}</Badge>}
-                </div>
-                <div className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {statEntries.map(([key, val]) => (
-                    <div key={key} className="bg-surface-900/50 rounded-lg px-3 py-2">
-                      <div className="text-[9px] text-surface-500 uppercase font-bold tracking-wider truncate">{key.replace(/_/g, ' ')}</div>
-                      <div className="text-[13px] text-surface-200 font-mono mt-0.5 truncate">
-                        {typeof val === 'object' ? JSON.stringify(val) : fmt(val)}
-                      </div>
-                    </div>
+        <div className="space-y-4 overflow-hidden">
+          <p className="text-xs font-semibold text-surface-400">{cols.length} variable(s) analysée(s)</p>
+          
+          <div className="overflow-x-auto custom-scrollbar bg-surface-800/40 border border-white/[0.04] rounded-xl">
+            <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
+              <thead>
+                <tr className="border-b border-white/[0.04] bg-surface-800/80">
+                  <th className="p-3 font-semibold text-surface-300">Variable</th>
+                  {metricsList.map(m => (
+                    <th key={m} className="p-3 font-semibold text-surface-300 text-right capitalize">
+                      {m.replace(/_/g, ' ')}
+                    </th>
                   ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.02]">
+                {cols.map((colName) => {
+                  const colStats = resultData[colName];
+                  if (typeof colStats !== 'object' || colStats === null) return null;
+                  return (
+                    <tr key={colName} className="hover:bg-surface-800/50 transition-colors">
+                      <td className="p-3 text-surface-100 font-bold sticky left-0 bg-surface-800/80 shadow-[1px_0_0_0_rgba(255,255,255,0.02)]">
+                        {colName}
+                        {colStats.type && <span className="ml-2 text-[9px] text-surface-500 uppercase bg-surface-900/50 px-1 py-0.5 rounded">{colStats.type}</span>}
+                      </td>
+                      {metricsList.map(m => (
+                        <td key={m} className="p-3 text-surface-300 text-right font-mono text-[11px]">
+                          {colStats[m] !== undefined && colStats[m] !== null ? (typeof colStats[m] === 'object' ? JSON.stringify(colStats[m]) : fmt(colStats[m])) : '-'}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Top Values Charts (categorical) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {cols.map((colName) => {
+              const topValues = resultData[colName]?.top_values;
+              if (!topValues || typeof topValues !== 'object' || Object.keys(topValues).length === 0) return null;
+              return (
+                <div key={`${colName}-top`} className="bg-surface-800/40 rounded-xl p-3 border border-white/[0.04]">
+                  <p className="text-xs font-bold text-surface-200 mb-2 truncate">Top modalités : {colName}</p>
+                  <SvgBarChart
+                    values={Object.values(topValues) as number[]}
+                    labels={Object.keys(topValues)}
+                    title=""
+                    color="#8b5cf6"
+                  />
                 </div>
-                {topValues && typeof topValues === 'object' && Object.keys(topValues).length > 0 && (
-                  <div className="p-3 border-t border-white/[0.04]">
-                    <SvgBarChart
-                      values={Object.values(topValues) as number[]}
-                      labels={Object.keys(topValues)}
-                      title="Distribution des modalites principales"
-                      color="#8b5cf6"
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       );
     }
