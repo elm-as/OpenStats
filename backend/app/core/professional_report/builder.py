@@ -109,15 +109,27 @@ class ReportBuilder:
 
         n_rows = profile.get("n_rows", 0)
         n_cols = profile.get("n_cols", 0)
-        n_num = len(profile.get("numeric_cols", []))
-        n_cat = len(profile.get("categorical_cols", []))
+        n_num = len(profile.get("numeric_cols", [])) + len(profile.get("discrete_cols", []))
+        n_cat = len(profile.get("categorical_cols", [])) + len(profile.get("binary_cols", []))
         n_temp = len(profile.get("temporal_cols", []))
+        n_id = len(profile.get("id_cols", []))
+
+        # Build count details
+        details = []
+        if n_num > 0:
+            details.append(f"{n_num} numérique(s)")
+        if n_cat > 0:
+            details.append(f"{n_cat} catégorielle(s)")
+        if n_temp > 0:
+            details.append(f"{n_temp} temporelle(s)")
+        if n_id > 0:
+            details.append(f"{n_id} identifiant(s)")
 
         sec = ReportSection(
             title="Profil du dataset",
             body=(
                 f"Le dataset comporte **{n_rows:,} observations** réparties sur **{n_cols} variables** : "
-                f"{n_num} numérique(s), {n_cat} catégorielle(s), {n_temp} temporelle(s)."
+                f"{', '.join(details)}."
             ).replace(",", " "),
             bullets=profile.get("notes", []) or [],
         )

@@ -143,7 +143,18 @@ def professional_report(dataset_id, fmt):
     df = dataset_manager.get_df(dataset_id)
     if df is None or df.empty:
         return jsonify({"error": "Dataset vide ou introuvable"}), 404
-    analysis = ds.get("analysis_results") or {}
+
+    # Load analysis results and model results from DB/cache using get_export_bundle
+    try:
+        bundle = dataset_manager.get_export_bundle(dataset_id)
+    except Exception as e:
+        return jsonify({"error": f"Erreur lors de la récupération des données: {str(e)}"}), 500
+
+    analysis = bundle.get("analysis") or {}
+    model_results = bundle.get("modeling") or {}
+    ts_results = bundle.get("timeseries") or {}
+    mv_ts_results = bundle.get("multivariate_timeseries") or {}
+    factor = bundle.get("factor_analysis") or {}
 
     try:
         profile = detect_dataset_profile(df)
@@ -170,16 +181,15 @@ def professional_report(dataset_id, fmt):
     if analysis.get("vif"):
         try: all_ins.extend(narrate_vif(analysis["vif"]))
         except Exception: pass
-    if isinstance(ds.get("model_results"), dict):
-        try: all_ins.extend(narrate_modeling(ds["model_results"]))
+    if isinstance(model_results, dict) and model_results:
+        try: all_ins.extend(narrate_modeling(model_results))
         except Exception: pass
-    if isinstance(ds.get("timeseries_results"), dict):
-        try: all_ins.extend(narrate_timeseries(ds["timeseries_results"]))
+    if isinstance(ts_results, dict) and ts_results:
+        try: all_ins.extend(narrate_timeseries(ts_results))
         except Exception: pass
-    if isinstance(ds.get("multivariate_ts_results"), dict):
-        try: all_ins.extend(narrate_multivariate_timeseries(ds["multivariate_ts_results"]))
+    if isinstance(mv_ts_results, dict) and mv_ts_results:
+        try: all_ins.extend(narrate_multivariate_timeseries(mv_ts_results))
         except Exception: pass
-    factor = ds.get("factor_results") or {}
     if isinstance(factor, dict) and factor.get("pca"):
         try: all_ins.extend(narrate_pca(factor["pca"]))
         except Exception: pass
@@ -192,7 +202,7 @@ def professional_report(dataset_id, fmt):
         profile=profile.to_dict(),
         recipe=recipe.to_dict(),
         descriptive=analysis.get("descriptive_stats"),
-        model_results=ds.get("model_results"),
+        model_results=model_results,
         insights=insights_dict,
     )
 
