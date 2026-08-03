@@ -46,7 +46,16 @@ class StorageService:
     def save_dataframe(self, df: pd.DataFrame, dataset_id: str, version: int) -> str:
         """Sauvegarde un DataFrame en Parquet. Retourne le chemin relatif."""
         path = self._version_path(dataset_id, version)
-        df.to_parquet(path, engine="pyarrow", index=False)
+        try:
+            df.to_parquet(path, engine="pyarrow", index=False)
+        except Exception:
+            # Fallback : convertir les colonnes de type object/mixtes en chaines de caracteres
+            df_clean = df.copy()
+            for col in df_clean.columns:
+                if df_clean[col].dtype == object:
+                    df_clean[col] = df_clean[col].apply(lambda x: None if (x is None or pd.isna(x)) else str(x))
+            df_clean.to_parquet(path, engine="pyarrow", index=False)
+
         cache_key = f"{dataset_id}_v{version}"
         self._put_cache(cache_key, df)
         return str(path.relative_to(self.data_dir))
