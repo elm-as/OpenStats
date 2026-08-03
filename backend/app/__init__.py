@@ -3,6 +3,7 @@ import logging
 import uuid
 import time
 from flask import Flask, send_from_directory, request, g, jsonify
+from flask_cors import CORS
 
 from sqlalchemy import inspect, text
 from werkzeug.exceptions import HTTPException
