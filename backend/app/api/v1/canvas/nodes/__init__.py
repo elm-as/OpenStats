@@ -72,6 +72,12 @@ def execute_node(node_type, data, dataset_id):
     `dataset_id` est l'ID du dataset résolu depuis le nœud source.
     """
     if not dataset_id and node_type != "dataset":
+        from app.models.dataset import Dataset
+        latest = Dataset.query.order_by(Dataset.created_at.desc()).first()
+        if latest:
+            dataset_id = latest.id
+
+    if not dataset_id and node_type != "dataset":
         return {"status": "skipped", "message": "Aucun dataset connecté"}
 
     if node_type not in NODE_EXECUTORS:
