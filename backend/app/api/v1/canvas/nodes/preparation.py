@@ -2,13 +2,13 @@
 Nœuds de préparation — Typage, Nettoyage, Transformation, Calcul.
 """
 
+import json
 from app.services.dataset_service import dataset_manager
 from ._shared import _sanitize
 
 def execute_typing(data, dataset_id):
     overrides = data.get("typeOverrides", {})
     if isinstance(overrides, str):
-        import json
         try:
             overrides = json.loads(overrides)
         except (json.JSONDecodeError, ValueError):
