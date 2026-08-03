@@ -102,7 +102,6 @@ def create_app(config_class=Config):
     CORS(
         app,
         resources={r"/api/*": {"origins": cors_origins}},
-        supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "X-Client-Id", "X-Request-Id", "Accept", "Origin", "User-Agent", "*"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         expose_headers=["Content-Disposition", "X-Request-Id"],
@@ -171,8 +170,6 @@ def create_app(config_class=Config):
             res.headers["Access-Control-Allow-Origin"] = allow_origin
             res.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, Accept, Origin, User-Agent, *"
             res.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-            if allow_origin != "*":
-                res.headers["Access-Control-Allow-Credentials"] = "true"
             res.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
             return res, code
         if isinstance(err, HTTPException):
