@@ -115,10 +115,13 @@ def run_canvas_pipeline():
 
             # Propagate dataset_id downstream
             with dataset_id_map_lock:
-                if node_type == "dataset" and result.get("status") == "success":
-                    dataset_id_map[node_id] = result.get("dataset_id")
+                resolved_id = result.get("dataset_id") if isinstance(result, dict) else None
+                if node_type == "dataset" and resolved_id:
+                    dataset_id_map[node_id] = resolved_id
                 elif dataset_id:
                     dataset_id_map[node_id] = dataset_id
+                elif resolved_id:
+                    dataset_id_map[node_id] = resolved_id
                     
             return node_id
 
