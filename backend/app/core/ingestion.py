@@ -223,7 +223,21 @@ def ingest_file(filepath: str, **kwargs) -> pd.DataFrame:
     ext = Path(filepath).suffix.lstrip(".").lower()
     if ext == "jsonl":
         kwargs["jsonl"] = True
-    return adapter.read(filepath, **kwargs)
+    df = adapter.read(filepath, **kwargs)
+
+    # Sanitize column names: string conversion, strip, default naming for empty headers, deduplication
+    cleaned_cols = []
+    seen: dict[str, int] = {}
+    for i, c in enumerate(df.columns):
+        col_name = str(c).strip() if c is not None and not pd.isna(c) and str(c).strip() != "" else f"Colonne_{i+1}"
+        if col_name in seen:
+            seen[col_name] += 1
+            col_name = f"{col_name}_{seen[col_name]}"
+        else:
+            seen[col_name] = 0
+        cleaned_cols.append(col_name)
+    df.columns = cleaned_cols
+    return df
 
 
 def list_excel_sheets(filepath: str) -> list[str]:

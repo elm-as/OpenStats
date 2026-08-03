@@ -67,7 +67,7 @@ def upload_dataset():
             return jsonify({"error": "Type de fichier invalide : le contenu ne correspond pas à l'extension"}), 400
 
         try:
-            name = request.form.get("name", filename)
+            name = request.form.get("name") or Path(file.filename).stem
             sheet_name = request.form.get("sheet_name")
             dataset_id = dataset_manager.ingest(filepath, name=name, uploaded_by=user_id, sheet_name=sheet_name)
             ds = dataset_manager.get(dataset_id)
@@ -78,7 +78,8 @@ def upload_dataset():
                 "profile": ds["profile"],
             }), 201
         except Exception as e:
-            return jsonify({"error": str(e)}), 422
+            current_app.logger.exception("Erreur lors de l'ingestion du fichier: %s", e)
+            return jsonify({"error": f"Échec de l'analyse du fichier ({type(e).__name__}): {str(e)}"}), 422
     except Exception as e:
         current_app.logger.exception("Erreur upload_dataset: %s", e)
         return jsonify({"error": str(e)}), 500

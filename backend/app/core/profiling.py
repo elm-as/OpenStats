@@ -200,10 +200,11 @@ def generate_data_dictionary(df: pd.DataFrame) -> list[dict]:
     """
     dictionary = []
     for col in df.columns:
+        col_str = str(col)
         series = df[col]
-        stat_type = infer_statistical_type(series, col)
+        stat_type = infer_statistical_type(series, col_str)
         regex_type = detect_regex_type(series)
-        unit_info = detect_unit_from_column_name(col)
+        unit_info = detect_unit_from_column_name(col_str)
         col_stats = compute_column_stats(series)
 
         # Détection du format de date si temporel
@@ -212,8 +213,8 @@ def generate_data_dictionary(df: pd.DataFrame) -> list[dict]:
             _, date_format = try_parse_dates(series)
 
         entry = {
-            "nom_brut": col,
-            "nom_lisible": _humanize_column_name(col),
+            "nom_brut": col_str,
+            "nom_lisible": _humanize_column_name(col_str),
             "type_statistique": stat_type,
             "type_regex": regex_type,
             "unite_mesure": unit_info["unit"] if unit_info else None,
@@ -231,22 +232,29 @@ def generate_data_dictionary(df: pd.DataFrame) -> list[dict]:
 def profile_dataframe(df: pd.DataFrame) -> dict:
     """Profilage complet du DataFrame : structure + dictionnaire."""
     return {
-        "shape": {"rows": df.shape[0], "columns": df.shape[1]},
-        "memory_usage_mb": round(df.memory_usage(deep=True).sum() / 1024 / 1024, 2),
-        "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
+        "shape": {"rows": int(df.shape[0]), "columns": int(df.shape[1])},
+        "memory_usage_mb": round(float(df.memory_usage(deep=True).sum() / 1024 / 1024), 2),
+        "dtypes": {str(col): str(dtype) for col, dtype in df.dtypes.items()},
         "dictionary": generate_data_dictionary(df),
     }
 
 
-def _humanize_column_name(name: str) -> str:
+def _humanize_column_name(name: Any) -> str:
     """Convertit un nom technique en libellé lisible."""
-    name = re.sub(r"[_(].*[)_]$", "", name)
-    name = name.replace("_", " ").replace("-", " ")
-    name = re.sub(r"([a-z])([A-Z])", r"\1 \2", name)
-    return name.strip().title()
+    name_str = str(name)
+    name_str = re.sub(r"[_(].*[)_]$", "", name_str)
+    name_str = name_str.replace("_", " ").replace("-", " ")
+    name_str = re.sub(r"([a-z])([A-Z])", r"\1 \2", name_str)
+    return name_str.strip().title()
 
 
 def _safe_float(val) -> float | None:
-    if val is None or (isinstance(val, float) and np.isnan(val)):
+    if val is None or pd.isna(val):
         return None
-    return round(float(val), 6)
+    try:
+        fval = float(val)
+        if np.isnan(fval) or np.isinf(fval):
+            return None
+        return round(fval, 6)
+    except (ValueError, TypeError):
+        return None
