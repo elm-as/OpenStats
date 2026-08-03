@@ -1,4 +1,4 @@
-﻿import { Node, Edge } from '@xyflow/react';
+import { Node, Edge } from '@xyflow/react';
 
 export interface CanvasTemplate {
   id: string;
@@ -80,6 +80,38 @@ export const TEMPLATES: CanvasTemplate[] = [
       { id: 'e3-5', source: 'node_3', target: 'node_5', type: 'animatedDataEdge', data: { color: '#f59e0b', speed: '2s', speedOffset: '1s' } },
       { id: 'e4-5', source: 'node_4', target: 'node_5', type: 'animatedDataEdge', data: { color: '#ec4899', speed: '2s', speedOffset: '1s' } },
       { id: 'e5-6', source: 'node_5', target: 'node_6', type: 'animatedDataEdge', data: { color: '#10b981', speed: '1.5s', speedOffset: '0.75s' } },
+    ],
+  },
+  {
+    id: 'full_statistical_analysis',
+    name: 'Analyse Statistique Complète',
+    description: 'Pipeline exhaustif : détection de types, descriptif, corrélations, VIF, ACP, ACM, clustering, régression et classification.',
+    icon: '',
+    nodes: [
+      { id: 'node_1', type: 'dataset', position: { x: 50, y: 280 }, data: { label: 'Source de données' } },
+      { id: 'node_2', type: 'typing', position: { x: 300, y: 280 }, data: { label: 'Détection de types' } },
+      { id: 'node_3', type: 'descriptiveNumeric', position: { x: 560, y: 120 }, data: { label: 'Stats descriptives (num.)' } },
+      { id: 'node_4', type: 'descriptiveCategorical', position: { x: 560, y: 440 }, data: { label: 'Stats descriptives (cat.)' } },
+      { id: 'node_5', type: 'correlation', position: { x: 830, y: 60 }, data: { label: 'Matrice de corrélation', method: 'pearson' } },
+      { id: 'node_6', type: 'vif', position: { x: 830, y: 240 }, data: { label: 'VIF (Multicolinéarité)' } },
+      { id: 'node_7', type: 'pca', position: { x: 1100, y: 60 }, data: { label: 'ACP', nComponents: 'auto' } },
+      { id: 'node_8', type: 'mca', position: { x: 1100, y: 440 }, data: { label: 'ACM' } },
+      { id: 'node_9', type: 'clustering', position: { x: 1370, y: 250 }, data: { label: 'Clustering', method: 'kmeans' } },
+      { id: 'node_10', type: 'regression', position: { x: 1640, y: 150 }, data: { label: 'Régression', models: 'auto' } },
+      { id: 'node_11', type: 'classification', position: { x: 1640, y: 380 }, data: { label: 'Classification', models: 'auto' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: 'node_1', target: 'node_2', type: 'animatedDataEdge', data: { color: '#10b981', speed: '2s', speedOffset: '1s' } },
+      { id: 'e2-3', source: 'node_2', target: 'node_3', type: 'animatedDataEdge', data: { color: '#38bdf8', speed: '2s', speedOffset: '1s' } },
+      { id: 'e2-4', source: 'node_2', target: 'node_4', type: 'animatedDataEdge', data: { color: '#38bdf8', speed: '2s', speedOffset: '1s' } },
+      { id: 'e3-5', source: 'node_3', target: 'node_5', type: 'animatedDataEdge', data: { color: '#3b82f6', speed: '2.5s', speedOffset: '1.25s' } },
+      { id: 'e3-6', source: 'node_3', target: 'node_6', type: 'animatedDataEdge', data: { color: '#f97316', speed: '2.5s', speedOffset: '1.25s' } },
+      { id: 'e5-7', source: 'node_5', target: 'node_7', type: 'animatedDataEdge', data: { color: '#06b6d4', speed: '3s', speedOffset: '1.5s' } },
+      { id: 'e4-8', source: 'node_4', target: 'node_8', type: 'animatedDataEdge', data: { color: '#06b6d4', speed: '3s', speedOffset: '1.5s' } },
+      { id: 'e6-9', source: 'node_6', target: 'node_9', type: 'animatedDataEdge', data: { color: '#06b6d4', speed: '2.5s', speedOffset: '1.25s' } },
+      { id: 'e7-9', source: 'node_7', target: 'node_9', type: 'animatedDataEdge', data: { color: '#06b6d4', speed: '2.5s', speedOffset: '1.25s' } },
+      { id: 'e9-10', source: 'node_9', target: 'node_10', type: 'animatedDataEdge', data: { color: '#8b5cf6', speed: '1.5s', speedOffset: '0.75s' } },
+      { id: 'e9-11', source: 'node_9', target: 'node_11', type: 'animatedDataEdge', data: { color: '#8b5cf6', speed: '1.5s', speedOffset: '0.75s' } },
     ],
   },
 ];

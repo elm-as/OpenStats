@@ -359,15 +359,24 @@ function DnDFlow() {
     try {
       const authEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true';
       const token = authEnabled ? (localStorage.getItem('access_token') || '') : '';
-      const response = await fetch(`${API_V1_BASE}/canvas/run_pipeline`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Client-Id': (() => { try { return getAnonymousClientId(); } catch { return ''; } })(),
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(pipeline),
-      });
+      // Timeout de 5 minutes pour les pipelines complexes en production
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300_000);
+      let response: Response;
+      try {
+        response = await fetch(`${API_V1_BASE}/canvas/run_pipeline`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Client-Id': (() => { try { return getAnonymousClientId(); } catch { return ''; } })(),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(pipeline),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       const result = await response.json();
 
@@ -407,9 +416,19 @@ function DnDFlow() {
           data: { ...n.data, runStatus: 'error' },
         })));
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Pipeline error:', e);
-      setPipelineResults({ _global: { status: 'error', error: 'Connexion au serveur échouée' } });
+      let errorMessage = 'Connexion au serveur échouée';
+      if (e instanceof TypeError && e.message?.includes('Failed to fetch')) {
+        errorMessage = `Connexion au serveur impossible. Vérifiez que le backend est démarré (${API_V1_BASE}). Si en production, vérifiez la configuration CORS.`;
+      } else if (e instanceof TypeError && e.message?.includes('NetworkError')) {
+        errorMessage = 'Erreur réseau : le serveur est injoignable. Vérifiez votre connexion internet et l\'URL du backend.';
+      } else if (e?.name === 'AbortError') {
+        errorMessage = 'La requête a été annulée (timeout). Le pipeline est peut-être trop lourd.';
+      } else if (e?.message) {
+        errorMessage = `Erreur: ${e.message}`;
+      }
+      setPipelineResults({ _global: { status: 'error', error: errorMessage } });
       setShowResults(true);
       setNodes((nds) => nds.map(n => ({
         ...n,

@@ -11,7 +11,9 @@ worker_class = "gthread"
 threads = int(os.getenv("WEB_THREADS", "2"))
 
 # Optimisation pour les tâches d'analyse lourdes
-timeout = 120  # Laisse 2 minutes maximum pour une grosse analyse PCA/Séries temporelles
+# Un pipeline Canvas complet (ACP + clustering + régression + classification)
+# peut durer 3-5 minutes sur un dataset moyen avec un seul worker
+timeout = 300  # 5 minutes pour les pipelines Canvas complexes
 keepalive = 5
 
 # Logs

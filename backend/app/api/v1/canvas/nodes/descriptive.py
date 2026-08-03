@@ -98,6 +98,11 @@ def execute_correlation(data, dataset_id):
     method = data.get("method", "pearson")
     from app.core.analysis import compute_correlation_matrix
     df = dataset_manager.get_df(dataset_id)
+    if df is None or df.empty:
+        return {"status": "error", "error": "DataFrame vide ou introuvable pour la corrélation"}
+    numeric_df = df.select_dtypes(include=["number"])
+    if numeric_df.shape[1] < 2:
+        return {"status": "error", "error": f"Au moins 2 variables numériques requises pour la corrélation (trouvé: {numeric_df.shape[1]})"}
     result = compute_correlation_matrix(df, method=method)
     ds = dataset_manager.get(dataset_id)
     if ds:
@@ -106,14 +111,19 @@ def execute_correlation(data, dataset_id):
         dataset_manager.store_ad_hoc_analysis(dataset_id, "descriptive", {"method": method}, existing, cache_key="analysis_results")
     return {
         "status": "success",
-        "message": f"Matrice de corrélation ({method}) calculée",
+        "message": f"Matrice de corrélation ({method}) calculée ({numeric_df.shape[1]} variables)",
         "result": _sanitize(result),
     }
 
 
 def execute_vif(data, dataset_id):
-    results = dataset_manager.analyze(dataset_id)
+    try:
+        results = dataset_manager.analyze(dataset_id)
+    except Exception as e:
+        return {"status": "error", "error": f"Erreur lors du calcul VIF: {str(e)}"}
     vif_data = results.get("vif", {})
+    if not vif_data:
+        return {"status": "error", "error": "Impossible de calculer le VIF. Vérifiez qu'il y a au moins 2 variables numériques sans valeurs manquantes."}
     ds = dataset_manager.get(dataset_id)
     if ds:
         existing = dataset_manager._load_latest_analysis_result(dataset_id, "descriptive") or {}

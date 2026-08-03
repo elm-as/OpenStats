@@ -98,7 +98,7 @@ def compute_correlation_matrix(df: pd.DataFrame, method: str = "pearson", bootst
                 })
 
     result = {
-        "matrix": corr.round(4).to_dict(),
+        "matrix": corr.where(corr.notna(), None).round(4).to_dict(),
         "columns": cols,
         "method": method,
         "significant_pairs": sorted(significant, key=lambda x: abs(x["coefficient"]), reverse=True),

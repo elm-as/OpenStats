@@ -76,10 +76,18 @@ def execute_clustering(data, dataset_id):
 def execute_regression(data, dataset_id):
     target = data.get("targetCol", "")
     if not target:
-        return {"status": "error", "error": "Variable cible requise"}
+        return {"status": "error", "error": "Variable cible requise pour la régression"}
+    df = dataset_manager.get_df(dataset_id)
+    if df is None or df.empty:
+        return {"status": "error", "error": "DataFrame vide ou introuvable"}
+    if target not in df.columns:
+        return {"status": "error", "error": f"Colonne cible '{target}' introuvable dans le dataset"}
     models_val = data.get("models", "auto")
     models = None if models_val == "auto" else [models_val]
-    result = dataset_manager.train_models(dataset_id, target, model_keys=models)
+    try:
+        result = dataset_manager.train_models(dataset_id, target, model_keys=models)
+    except Exception as e:
+        return {"status": "error", "error": f"Erreur d'entraînement régression: {str(e)}"}
     return {
         "status": "success",
         "message": f"Régression entraînée (cible: {target})",
@@ -90,10 +98,18 @@ def execute_regression(data, dataset_id):
 def execute_classification(data, dataset_id):
     target = data.get("targetCol", "")
     if not target:
-        return {"status": "error", "error": "Variable cible requise"}
+        return {"status": "error", "error": "Variable cible requise pour la classification"}
+    df = dataset_manager.get_df(dataset_id)
+    if df is None or df.empty:
+        return {"status": "error", "error": "DataFrame vide ou introuvable"}
+    if target not in df.columns:
+        return {"status": "error", "error": f"Colonne cible '{target}' introuvable dans le dataset"}
     models_val = data.get("models", "auto")
     models = None if models_val == "auto" else [models_val]
-    result = dataset_manager.train_models(dataset_id, target, model_keys=models)
+    try:
+        result = dataset_manager.train_models(dataset_id, target, model_keys=models)
+    except Exception as e:
+        return {"status": "error", "error": f"Erreur d'entraînement classification: {str(e)}"}
     return {
         "status": "success",
         "message": f"Classification entraînée (cible: {target})",

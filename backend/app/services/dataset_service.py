@@ -446,16 +446,38 @@ class DatasetManager:
     # ── Analyse ────────────────────────────────────────────────
 
     def analyze(self, dataset_id: str, bootstrap_ci: bool = False, n_bootstrap: int = 1000) -> dict:
-        """Exécute l'analyse statistique complète."""
+        """Exécute l'analyse statistique complète.
+
+        Chaque sous-analyse (descriptive, corrélation, VIF) est isolée :
+        un échec partiel n'empêche pas le reste de s'exécuter.
+        """
         df = self.get_df(dataset_id)
         if df is None:
             raise ValueError(f"Dataset {dataset_id} introuvable")
 
         t0 = time.time()
-        descriptive = compute_descriptive_stats(df, bootstrap_ci=bootstrap_ci, n_bootstrap=n_bootstrap)
-        pearson = compute_correlation_matrix(df, "pearson", bootstrap_ci=bootstrap_ci, n_bootstrap=min(n_bootstrap, 500))
-        spearman = compute_correlation_matrix(df, "spearman", bootstrap_ci=bootstrap_ci, n_bootstrap=min(n_bootstrap, 500))
-        vif = compute_vif(df)
+
+        descriptive = {}
+        try:
+            descriptive = compute_descriptive_stats(df, bootstrap_ci=bootstrap_ci, n_bootstrap=n_bootstrap)
+        except Exception as e:
+            descriptive = {"error": f"Erreur stats descriptives: {str(e)}"}
+
+        pearson, spearman = {}, {}
+        try:
+            pearson = compute_correlation_matrix(df, "pearson", bootstrap_ci=bootstrap_ci, n_bootstrap=min(n_bootstrap, 500))
+        except Exception as e:
+            pearson = {"error": f"Erreur corrélation Pearson: {str(e)}"}
+        try:
+            spearman = compute_correlation_matrix(df, "spearman", bootstrap_ci=bootstrap_ci, n_bootstrap=min(n_bootstrap, 500))
+        except Exception as e:
+            spearman = {"error": f"Erreur corrélation Spearman: {str(e)}"}
+
+        vif = []
+        try:
+            vif = compute_vif(df)
+        except Exception as e:
+            vif = [{"error": f"Erreur VIF: {str(e)}"}]
 
         results = {
             "descriptive_stats": descriptive,
