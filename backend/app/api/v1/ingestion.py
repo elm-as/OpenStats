@@ -68,7 +68,8 @@ def upload_dataset():
 
         try:
             name = request.form.get("name", filename)
-            dataset_id = dataset_manager.ingest(filepath, name=name, uploaded_by=user_id)
+            sheet_name = request.form.get("sheet_name")
+            dataset_id = dataset_manager.ingest(filepath, name=name, uploaded_by=user_id, sheet_name=sheet_name)
             ds = dataset_manager.get(dataset_id)
 
             return jsonify({
@@ -80,6 +81,30 @@ def upload_dataset():
             return jsonify({"error": str(e)}), 422
     except Exception as e:
         current_app.logger.exception("Erreur upload_dataset: %s", e)
+        return jsonify({"error": str(e)}), 500
+
+
+@api_v1_bp.route("/datasets/<dataset_id>/sheet", methods=["POST"])
+@login_required
+def switch_dataset_sheet(dataset_id: str):
+    """Change la feuille active d'un fichier Excel multi-feuilles."""
+    data = request.get_json() or {}
+    sheet_name = data.get("sheet_name")
+    if not sheet_name:
+        return jsonify({"error": "Nom de feuille non spécifié (sheet_name requis)"}), 400
+
+    try:
+        user_id = g.current_user.id
+        updated_ds = dataset_manager.switch_excel_sheet(dataset_id, sheet_name=sheet_name, uploaded_by=user_id)
+        return jsonify(updated_ds), 200
+    except KeyError as e:
+        return jsonify({"error": str(e)}), 404
+    except (FileNotFoundError, ValueError) as e:
+        return jsonify({"error": str(e)}), 400
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
+    except Exception as e:
+        current_app.logger.exception("Erreur switch_dataset_sheet: %s", e)
         return jsonify({"error": str(e)}), 500
 
 

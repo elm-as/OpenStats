@@ -4,6 +4,9 @@
  * - Si VITE_API_URL n'a pas de schéma: on suppose https.
  */
 export function getApiOrigin(): string {
+  if (typeof window !== 'undefined' && (window as any).OPENSTATS_API_URL) {
+    return ((window as any).OPENSTATS_API_URL as string).replace(/\/+$/, '');
+  }
   const raw = (import.meta.env.VITE_API_URL || '').trim();
   if (!raw) {
     if (import.meta.env.DEV) return 'http://localhost:5000';

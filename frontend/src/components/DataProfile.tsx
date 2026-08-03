@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { DatasetProfile, ColumnProfile } from '../types';
-import { Database, Hash, Calendar, Tag, ToggleLeft, Pencil, Check, X, Info, Layers, BarChart } from 'lucide-react';
-import { useUpdateColumnTypeMutation } from '../store/api';
+import { Database, Hash, Calendar, Tag, ToggleLeft, Pencil, Check, X, Info, Layers, BarChart, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { useUpdateColumnTypeMutation, useSwitchDatasetSheetMutation } from '../store/api';
 
 interface Props {
   profile: DatasetProfile;
@@ -29,7 +29,9 @@ const STAT_TYPES = ['continu', 'discret', 'temporel', 'catégoriel_nominal', 'bi
 export default function DataProfile({ profile, datasetId }: Props) {
   const [editingCol, setEditingCol] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState('');
-  const [updateColumnType, { isLoading: isUpdating }] = useUpdateColumnTypeMutation();
+  const [updateColumnType] = useUpdateColumnTypeMutation();
+  const [switchSheet, { isLoading: isSwitchingSheet }] = useSwitchDatasetSheetMutation();
+  const [sheetErrorMessage, setSheetErrorMessage] = useState<string | null>(null);
 
   const handleEdit = (col: ColumnProfile) => {
     setEditingCol(col.nom_brut);
@@ -50,6 +52,16 @@ export default function DataProfile({ profile, datasetId }: Props) {
     }
     setEditingCol(null);
     setSelectedType('');
+  };
+
+  const handleSheetChange = async (sheetName: string) => {
+    if (!datasetId || sheetName === profile.selected_sheet || isSwitchingSheet) return;
+    setSheetErrorMessage(null);
+    try {
+      await switchSheet({ datasetId, sheetName }).unwrap();
+    } catch (err: any) {
+      setSheetErrorMessage(err?.data?.error || "Erreur lors du changement de feuille.");
+    }
   };
 
   return (
@@ -78,6 +90,50 @@ export default function DataProfile({ profile, datasetId }: Props) {
           ))}
         </div>
       </div>
+
+      {profile.excel_sheets && profile.excel_sheets.length > 0 && (
+        <div className="card p-5 bg-gradient-to-r from-accent-500/10 via-surface-900 to-accent-500/5 border border-accent-500/20 rounded-2xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-accent-400 font-bold text-sm">
+              <FileSpreadsheet className="w-5 h-5" />
+              <span>Feuilles du classeur Excel :</span>
+            </div>
+            {isSwitchingSheet && (
+              <span className="flex items-center gap-2 text-xs text-accent-300 animate-pulse font-bold">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Chargement de la feuille...
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {profile.excel_sheets.map((sheet) => {
+              const isSelected = sheet === profile.selected_sheet;
+              return (
+                <button
+                  key={sheet}
+                  disabled={isSwitchingSheet}
+                  onClick={() => handleSheetChange(sheet)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-2 border ${
+                    isSelected
+                      ? 'bg-accent-500 text-white border-accent-400 shadow-glow'
+                      : 'bg-white/5 text-surface-300 hover:bg-white/10 hover:text-white border-white/10'
+                  } ${isSwitchingSheet ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  {sheet}
+                  {isSelected && (
+                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1.5 py-0.5 rounded-md ml-1">
+                      Active
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {sheetErrorMessage && (
+            <p className="text-xs font-bold text-red-400 mt-1">{sheetErrorMessage}</p>
+          )}
+        </div>
+      )}
 
       {/* Dictionnaire de données Table */}
       <div className="card p-0 overflow-hidden border-white/10">

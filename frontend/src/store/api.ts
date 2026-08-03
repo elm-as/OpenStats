@@ -63,6 +63,15 @@ export const api = createApi({
       invalidatesTags: ['Dataset'],
     }),
 
+    switchDatasetSheet: builder.mutation<DatasetDetail, { datasetId: string; sheetName: string }>({
+      query: ({ datasetId, sheetName }) => ({
+        url: `/datasets/${datasetId}/sheet`,
+        method: 'POST',
+        body: { sheet_name: sheetName },
+      }),
+      invalidatesTags: (_r, _e, { datasetId }) => [{ type: 'Dataset', id: datasetId }],
+    }),
+
     deleteDataset: builder.mutation<{ message: string; dataset_id: string; name: string }, string>({
       query: (id) => ({
         url: `/datasets/${id}`,
@@ -774,6 +783,7 @@ export const {
   useListDatasetsQuery,
   useGetDatasetQuery,
   useUploadDatasetMutation,
+  useSwitchDatasetSheetMutation,
   useDeleteDatasetMutation,
   useCopyDatasetMutation,
   usePreviewDatasetQuery,
