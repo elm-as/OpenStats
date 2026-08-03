@@ -60,7 +60,7 @@ def execute_visualization(data, dataset_id):
     except Exception as e:
         return {
             "status": "error",
+            "error": f"Erreur lors de la génération du graphique: {str(e)}",
             "message": f"Erreur lors de la génération du graphique: {str(e)}",
-            "result": None
         }
 

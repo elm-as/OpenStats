@@ -12,6 +12,9 @@ from .nodes._shared import _sanitize
 import os
 import json
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _topo_sort(nodes, edges):
@@ -89,6 +92,9 @@ def run_canvas_pipeline():
         with app.app_context():
             node = node_map.get(node_id)
             if not node:
+                logger.warning("Canvas pipeline: nœud '%s' introuvable dans le graphe", node_id)
+                with results_lock:
+                    results[node_id] = {"status": "error", "message": f"Nœud '{node_id}' introuvable"}
                 return node_id
                 
             node_type = node.get("type", "")
@@ -108,8 +114,12 @@ def run_canvas_pipeline():
                             dataset_id = dataset_id_map[pid]
                             break
 
+            logger.info("Canvas pipeline: exécution nœud '%s' (type=%s, dataset_id=%s)", node_id, node_type, dataset_id)
             result = execute_node(node_type, clean_data, dataset_id)
             
+            if isinstance(result, dict) and result.get("status") == "error":
+                logger.warning("Canvas pipeline: nœud '%s' en erreur: %s", node_id, result.get("error") or result.get("message"))
+
             with results_lock:
                 results[node_id] = result
 
@@ -140,7 +150,7 @@ def run_canvas_pipeline():
                 try:
                     f.result()
                 except Exception as e:
-                    # Capture exception in results
+                    logger.exception("Canvas pipeline: exception non capturée pour le nœud '%s'", nid)
                     with results_lock:
                         results[nid] = {"status": "error", "message": str(e)}
                 
