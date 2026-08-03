@@ -55,15 +55,22 @@ NODE_EXECUTORS = {
 }
 
 _redis_client = None
+_redis_disabled = False
 
 def get_redis_client():
-    global _redis_client
+    global _redis_client, _redis_disabled
+    if _redis_disabled:
+        return None
     if _redis_client is None:
         try:
             url = current_app.config.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
-            _redis_client = redis.from_url(url)
-        except Exception:
-            pass
+            client = redis.from_url(url, socket_connect_timeout=1, socket_timeout=1)
+            client.ping()
+            _redis_client = client
+        except Exception as e:
+            current_app.logger.info("Redis non disponible (%s), le cache in-memory/dégradé sera utilisé", e)
+            _redis_disabled = True
+            return None
     return _redis_client
 
 def execute_node(node_type, data, dataset_id):

@@ -61,6 +61,28 @@ def _setup_logging(app: Flask):
     logging.getLogger("werkzeug").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
+    def _get_cors_origin(req_origin):
+        if not req_origin:
+            return "*"
+        cors_config = app.config.get("CORS_ORIGINS", "*")
+        if cors_config == "*":
+            return req_origin
+        allowed = [o.strip() for o in cors_config.split(",") if o.strip()]
+        if "*" in allowed or req_origin in allowed:
+            return req_origin
+        return allowed[0] if allowed else req_origin
+
+    def _apply_cors_headers(response):
+        req_origin = request.headers.get("Origin")
+        allow_origin = _get_cors_origin(req_origin)
+        response.headers["Access-Control-Allow-Origin"] = allow_origin
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, Accept, Origin, User-Agent, *"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        if allow_origin != "*":
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
+        return response
+
     @app.before_request
     def _before_request():
         g.request_id = request.headers.get("X-Request-Id", uuid.uuid4().hex[:12])
@@ -69,24 +91,13 @@ def _setup_logging(app: Flask):
         # Preflight OPTIONS interceptor sur /api/* pour répondre immédiatement aux requêtes CORS
         if request.method == "OPTIONS" and request.path.startswith("/api/"):
             response = app.make_default_options_response()
-            origin = request.headers.get("Origin") or "*"
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, Accept, Origin, User-Agent, *"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
-            return response
+            return _apply_cors_headers(response)
 
     @app.after_request
     def _after_request(response):
         duration = int((time.time() - getattr(g, "request_start", time.time())) * 1000)
         if request.path.startswith("/api/"):
-            origin = request.headers.get("Origin") or "*"
-            response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, Accept, Origin, User-Agent, *"
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-            response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
+            _apply_cors_headers(response)
 
             app.logger.info(
                 "request_id=%s method=%s path=%s status=%s duration_ms=%d",
