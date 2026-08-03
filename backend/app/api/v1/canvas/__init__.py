@@ -43,7 +43,7 @@ def _topo_sort(nodes, edges):
     return order
 
 
-@api_v1_bp.route("/canvas/run_pipeline", methods=["POST"])
+@api_v1_bp.route("/canvas/run_pipeline", methods=["POST", "OPTIONS"])
 def run_canvas_pipeline():
     """
     Exécute un pipeline Canvas complet en utilisant un graphe de dépendances (DAG)
