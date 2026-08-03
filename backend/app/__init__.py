@@ -69,26 +69,24 @@ def _setup_logging(app: Flask):
         # Preflight OPTIONS interceptor sur /api/* pour répondre immédiatement aux requêtes CORS
         if request.method == "OPTIONS" and request.path.startswith("/api/"):
             response = app.make_default_options_response()
-            origin = request.headers.get("Origin")
-            if origin:
-                response.headers["Access-Control-Allow-Origin"] = origin
-                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, *"
-                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-                response.headers["Access-Control-Allow-Credentials"] = "true"
-                response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
+            origin = request.headers.get("Origin") or "*"
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, Accept, Origin, User-Agent, *"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
             return response
 
     @app.after_request
     def _after_request(response):
         duration = int((time.time() - getattr(g, "request_start", time.time())) * 1000)
         if request.path.startswith("/api/"):
-            origin = request.headers.get("Origin")
-            if origin:
-                response.headers["Access-Control-Allow-Origin"] = origin
-                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, *"
-                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-                response.headers["Access-Control-Allow-Credentials"] = "true"
-                response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
+            origin = request.headers.get("Origin") or "*"
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, Accept, Origin, User-Agent, *"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
 
             app.logger.info(
                 "request_id=%s method=%s path=%s status=%s duration_ms=%d",
