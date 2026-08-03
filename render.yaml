@@ -29,7 +29,7 @@ services:
         value: /data/uploads
       # À METTRE À JOUR avec l'URL de votre frontend une fois déployé
       - key: CORS_ORIGINS
-        value: "https://openstats-frontend.onrender.com"
+        value: "https://openstats.elmas.solutions,https://openstats-frontend.onrender.com,*"
       - key: ANTHROPIC_API_KEY
         sync: false
 
