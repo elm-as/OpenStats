@@ -262,7 +262,7 @@ class DatasetManager:
 
         # cleaned = dernière version, raw = version 1
         if cleaned:
-            version = max(v.version_number for v in ds.versions)
+            version = max((v.version_number for v in ds.versions), default=2)
         else:
             version = 1
 

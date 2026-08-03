@@ -47,7 +47,7 @@ def test_e2e_pipeline_with_duckdb_and_ml(app):
         ds = Dataset(
             id="test-e2e-id",
             name="Test E2E",
-            filename="test_e2e.csv",
+            original_filename="test_e2e.csv",
             rows=n_samples,
             columns=5,
             file_size=1000
