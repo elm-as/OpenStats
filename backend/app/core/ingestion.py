@@ -249,6 +249,12 @@ def ingest_file(filepath: str, **kwargs) -> pd.DataFrame:
             seen[col_name] = 0
         cleaned_cols.append(col_name)
     df.columns = cleaned_cols
+
+    # Sanitize object columns with mixed types to ensure PyArrow Parquet compatibility
+    for col in df.columns:
+        if df[col].dtype == object:
+            df[col] = df[col].apply(lambda x: None if (x is None or pd.isna(x)) else str(x))
+
     return df
 
 
