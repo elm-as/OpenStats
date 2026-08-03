@@ -9,16 +9,11 @@ import pandas as pd
 from unittest.mock import patch, MagicMock
 from app.models.dataset import Dataset, DatasetVersion
 from app.extensions import db
-from tests.api.test_auth import create_valid_token
-
-
-# ── Fixtures ──────────────────────────────────────────────────
-
 @pytest.fixture
 def auth_headers(app):
     """Génère des headers d'authentification valides dans le contexte de l'app."""
     with app.app_context():
-        return {"Authorization": f"Bearer {create_valid_token()}"}
+        return {"Authorization": "Bearer dev-token"}
 
 
 @pytest.fixture

@@ -65,7 +65,7 @@ class TestPrepareDataRegression:
         assert result["X_test"].shape[0] == 60
 
     def test_no_non_numeric_features_included(self, regression_df):
-        regression_df["text_col"] = ["abc"] * len(regression_df)
+        regression_df["text_col"] = [f"abc_{i}" for i in range(len(regression_df))]
         result = prepare_data(regression_df, target_col="target", test_size=0.2)
 
         assert "text_col" not in result["feature_names"]

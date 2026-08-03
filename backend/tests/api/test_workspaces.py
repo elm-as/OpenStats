@@ -8,8 +8,6 @@ import os
 from app.models.workspace import Workspace, WorkspaceMember
 from app.models.user import User
 from app.extensions import db
-from tests.api.test_auth import create_valid_token
-
 
 # ── Fixtures ──────────────────────────────────────────────────
 
@@ -20,7 +18,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture
 def auth_headers():
-    return {"Authorization": f"Bearer {create_valid_token()}"}
+    return {"Authorization": "Bearer dev-token"}
 
 
 @pytest.fixture
