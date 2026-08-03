@@ -29,7 +29,7 @@ const STAT_TYPES = ['continu', 'discret', 'temporel', 'catégoriel_nominal', 'bi
 export default function DataProfile({ profile, datasetId }: Props) {
   const [editingCol, setEditingCol] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState('');
-  const [updateColumnType] = useUpdateColumnTypeMutation();
+  const [updateColumnType, { isLoading: isUpdating }] = useUpdateColumnTypeMutation();
   const [switchSheet, { isLoading: isSwitchingSheet }] = useSwitchDatasetSheetMutation();
   const [sheetErrorMessage, setSheetErrorMessage] = useState<string | null>(null);
 

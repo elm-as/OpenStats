@@ -17,6 +17,31 @@ export function useNodeUpdate(id: string, data: CanvasNodeData) {
   };
 }
 
+function getNodeSummaryText(res: any): string | null {
+  if (!res || typeof res !== 'object') return null;
+  if (res.name && res.rows !== undefined) return `${res.name} (${res.rows.toLocaleString()} lg × ${res.columns} col)`;
+  if (res.shape_after) return `${res.shape_after.rows.toLocaleString()} lg × ${res.shape_after.columns} col`;
+  if (res.rows !== undefined && res.columns !== undefined) return `${res.rows.toLocaleString()} lg × ${res.columns} col`;
+  if (res.best_model_name) return `Modèle : ${res.best_model_name}`;
+  if (res.best_model_key) return `Modèle : ${res.best_model_key}`;
+  if (res.model_selected) return `Modèle : ${res.model_selected}`;
+  if (res.n_clusters !== undefined) return `${res.n_clusters} clusters (Silhouette : ${(res.silhouette ?? 0).toFixed(2)})`;
+  if (res.p_value !== undefined) {
+    const p = typeof res.p_value === 'number' ? (res.p_value < 0.001 ? '< 0.001' : res.p_value.toFixed(4)) : res.p_value;
+    return `p-value : ${p} ${res.significant ? '(Significatif)' : ''}`;
+  }
+  if (res.statistic !== undefined) return `Statistique : ${typeof res.statistic === 'number' ? res.statistic.toFixed(2) : res.statistic}`;
+  if (res.explained_variance_ratio) {
+    const cum = res.cumulative_variance?.[1] ?? res.explained_variance_ratio[0] ?? 0;
+    return `Variance cum. : ${(cum > 1 ? cum : cum * 100).toFixed(1)}%`;
+  }
+  if (res.chart_type) return `Graphique : ${res.chart_type}`;
+  if (Array.isArray(res.insights)) return `${res.insights.length} insight(s)`;
+  if (res.mean_outcome !== undefined) return `Moy. simulée : ${typeof res.mean_outcome === 'number' ? res.mean_outcome.toFixed(2) : res.mean_outcome}`;
+  if (res.message && typeof res.message === 'string') return res.message;
+  return null;
+}
+
 export function NodeShell({
   id,
   data,
@@ -39,6 +64,9 @@ export function NodeShell({
   badge?: string;
 }) {
   const runStatus = data.runStatus as string | undefined;
+  const runResult = data.runResult as any;
+  const runError = data.runError as string | undefined;
+  const onOpenResult = data.onOpenResult as ((id: string) => void) | undefined;
   
   let statusBorder = 'border-white/[0.08]';
   let shadowGlow = 'shadow-[0_8px_40px_-12px_rgba(0,0,0,0.6)] group-hover:shadow-[0_12px_50px_-8px_rgba(0,0,0,0.7)]';
@@ -55,6 +83,8 @@ export function NodeShell({
   } else if (runStatus === 'skipped') {
     statusBorder = 'border-amber-500 ring-1 ring-amber-500/50';
   }
+
+  const summaryText = runStatus === 'success' ? getNodeSummaryText(runResult) : null;
 
   return (
     <div
@@ -73,14 +103,14 @@ export function NodeShell({
           >
             <Icon size={16} style={{ color }} />
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-bold text-[13px] text-surface-100 tracking-wide">{title}</span>
-            {runStatus === 'processing' && <Loader2 size={14} className="text-accent-400 animate-spin" />}
-            {runStatus === 'success' && <CheckCircle2 size={14} className="text-emerald-400 drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]" />}
-            {runStatus === 'error' && <XCircle size={14} className="text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" />}
-            {runStatus === 'skipped' && <AlertCircle size={14} className="text-amber-400" />}
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="font-bold text-[13px] text-surface-100 tracking-wide truncate">{title}</span>
+            {runStatus === 'processing' && <Loader2 size={14} className="text-accent-400 animate-spin shrink-0" />}
+            {runStatus === 'success' && <CheckCircle2 size={14} className="text-emerald-400 drop-shadow-[0_0_5px_rgba(16,185,129,0.5)] shrink-0" />}
+            {runStatus === 'error' && <XCircle size={14} className="text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)] shrink-0" />}
+            {runStatus === 'skipped' && <AlertCircle size={14} className="text-amber-400 shrink-0" />}
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2 shrink-0">
             {badge && (
               <span className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full border" style={{ color, borderColor: `${color}40`, background: `${color}10` }}>
                 {badge}
@@ -100,6 +130,45 @@ export function NodeShell({
 
         <div className="px-4 py-3 space-y-3 text-[12px]">
           {children}
+
+          {/* Banner de résultat dans le nœud */}
+          {runStatus === 'success' && (
+            <div className="mt-2 pt-2 border-t border-emerald-500/20 flex flex-col gap-1.5 bg-emerald-500/[0.04] -mx-4 -mb-3 px-4 py-2.5 rounded-b-2xl">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 size={11} /> Résultat disponible
+                </span>
+                {onOpenResult && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenResult(id);
+                    }}
+                    className="text-[10px] font-bold text-accent-300 hover:text-white bg-accent-500/20 hover:bg-accent-500/40 px-2 py-0.5 rounded-md transition-colors border border-accent-500/30"
+                  >
+                    👁️ Voir détails
+                  </button>
+                )}
+              </div>
+              {summaryText && (
+                <p className="text-[11px] font-medium text-surface-200 font-mono truncate">
+                  {summaryText}
+                </p>
+              )}
+            </div>
+          )}
+
+          {runStatus === 'error' && (
+            <div className="mt-2 pt-2 border-t border-red-500/20 flex flex-col gap-1 bg-red-500/[0.04] -mx-4 -mb-3 px-4 py-2.5 rounded-b-2xl">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-1">
+                <XCircle size={11} /> Erreur d'exécution
+              </span>
+              <p className="text-[11px] font-medium text-red-300/80 truncate">
+                {runError || 'Une erreur est survenue lors de l\'exécution.'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

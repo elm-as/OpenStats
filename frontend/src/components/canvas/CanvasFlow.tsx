@@ -376,12 +376,25 @@ function DnDFlow() {
         setPipelineResults(nodeResults);
         setShowResults(true);
 
-        // Color nodes by result status
+        // Color nodes by result status and attach result data + open result handler
         setNodes((nds) => nds.map(n => {
           const r = nodeResults[n.id];
           return {
             ...n,
-            data: { ...n.data, runStatus: r?.status || 'idle' },
+            data: {
+              ...n.data,
+              runStatus: r?.status || 'idle',
+              runResult: r?.result,
+              runError: r?.error,
+              runMessage: r?.message,
+              onOpenResult: (targetId: string) => {
+                const targetNode = nds.find(tn => tn.id === targetId) || n;
+                const type = targetNode.type || '';
+                const title = getNodeLabel(targetId);
+                const resData = nodeResults[targetId]?.result || targetNode.data?.runResult;
+                setSelectedResultNode({ id: targetId, type, title, result: resData });
+              },
+            },
           };
         }));
       } else {
