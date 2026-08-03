@@ -24,6 +24,9 @@ htmlcov/
 frontend/test-results/
 frontend/playwright-report/
 frontend/.vite/
+frontend/release/
+openstats-backend/
+*.exe
 
 # Local Netlify folder
 .netlify

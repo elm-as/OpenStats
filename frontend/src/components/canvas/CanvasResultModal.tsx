@@ -1084,10 +1084,163 @@ export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType
       );
     }
 
+    /* ── Time Series ── */
+    if (nodeType === 'timeseries') {
+      const bestModel = resultData.best_model_name || resultData.model_selected || resultData.model || 'Série Temporelle';
+      const metrics = resultData.metrics || {};
+      const forecast = resultData.forecast || resultData.predictions || [];
+      const isArrayForecast = Array.isArray(forecast);
+
+      return (
+        <div className="space-y-5">
+          <Section title={`Analyse de Série Temporelle (${bestModel})`} icon={TrendingUp} color="#f59e0b">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <KpiCard label="Modèle" value={bestModel} icon={TrendingUp} color="#f59e0b" />
+              {metrics.aic !== undefined && <KpiCard label="AIC" value={metrics.aic} color="#3b82f6" />}
+              {metrics.rmse !== undefined && <KpiCard label="RMSE" value={metrics.rmse} color="#10b981" />}
+              {metrics.mae !== undefined && <KpiCard label="MAE" value={metrics.mae} color="#8b5cf6" />}
+            </div>
+          </Section>
+
+          {isArrayForecast && forecast.length > 0 && (
+            <Section title={`Prévisions (${forecast.length} pas)`} icon={BarChart2} color="#f59e0b">
+              <DataTable
+                headers={['Pas', 'Prévision', 'IC Inf (95%)', 'IC Sup (95%)']}
+                rows={forecast.map((row: any, i: number) => [
+                  row.step ?? i + 1,
+                  row.forecast ?? row.yhat ?? row.value ?? row,
+                  row.lower_95 ?? row.yhat_lower ?? '\u2014',
+                  row.upper_95 ?? row.yhat_upper ?? '\u2014',
+                ])}
+              />
+            </Section>
+          )}
+
+          {resultData.stationary_test && (
+            <div className="p-3 bg-surface-800/40 rounded-xl border border-white/[0.04] text-xs text-surface-200">
+              <strong>Test de stationnarité :</strong> {resultData.stationary_test.interpretation || (resultData.stationary_test.is_stationary ? 'Série stationnaire' : 'Série non-stationnaire')}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ── Multivariate Time Series ── */
+    if (nodeType === 'multivariateTimeseries') {
+      const model = resultData.model_selected || resultData.model || 'VAR/VECM';
+      const vars = resultData.variables || [];
+      const lags = resultData.selected_lag || resultData.max_lag;
+      const granger = resultData.granger_causality;
+
+      return (
+        <div className="space-y-5">
+          <Section title={`Séries Temporelles Multivariées (${model})`} icon={Activity} color="#f59e0b">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <KpiCard label="Modèle" value={model} icon={Activity} color="#f59e0b" />
+              <KpiCard label="Variables" value={vars.length} icon={Layers} color="#3b82f6" />
+              {lags !== undefined && <KpiCard label="Lags retenus" value={lags} icon={Hash} color="#8b5cf6" />}
+              {resultData.johansen_test?.coint_rank !== undefined && (
+                <KpiCard label="Rang de cointégration" value={resultData.johansen_test.coint_rank} color="#10b981" />
+              )}
+            </div>
+          </Section>
+
+          {granger && typeof granger === 'object' && (
+            <Section title="Causalité de Granger" icon={TrendingUp} color="#8b5cf6">
+              <div className="space-y-2">
+                {Object.entries(granger).map(([cause, targets]: [string, any]) =>
+                  Object.entries(targets || {}).map(([target, info]: [string, any]) => {
+                    const pVal = typeof info === 'object' ? info.p_value : info;
+                    const isCausal = typeof info === 'object' ? info.is_causal : (typeof pVal === 'number' && pVal < 0.05);
+                    return (
+                      <div key={`${cause}-${target}`} className="flex items-center gap-3 bg-surface-800/30 p-2.5 rounded-lg border border-white/[0.03]">
+                        <span className="text-xs font-semibold text-surface-200">{cause} → {target}</span>
+                        <Badge color={isCausal ? '#10b981' : '#6b7280'}>{isCausal ? 'Causal (p < 0.05)' : 'Non-causal'}</Badge>
+                        <span className="text-xs font-mono ml-auto" style={{ color: isCausal ? '#10b981' : '#94a3b8' }}>
+                          p = {typeof pVal === 'number' ? (pVal < 0.001 ? '< 0.001' : pVal.toFixed(4)) : pVal}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </Section>
+          )}
+        </div>
+      );
+    }
+
+    /* ── Simulation ── */
+    if (nodeType === 'simulation') {
+      const simType = resultData.simulation_type || 'Simulation';
+      const mean = resultData.mean_outcome ?? resultData.mean;
+      const std = resultData.std_outcome ?? resultData.std;
+      const var95 = resultData.var_95 ?? resultData.VaR;
+      const quantiles = resultData.quantiles || {};
+
+      return (
+        <div className="space-y-5">
+          <Section title={`Résultat de Simulation (${simType})`} icon={Zap} color="#ec4899">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {mean !== undefined && <KpiCard label="Moyenne estimée" value={mean} icon={Hash} color="#10b981" />}
+              {std !== undefined && <KpiCard label="Écart-type" value={std} icon={BarChart2} color="#3b82f6" />}
+              {var95 !== undefined && <KpiCard label="VaR (95%)" value={var95} icon={AlertCircle} color="#ef4444" />}
+              {resultData.n_simulations && <KpiCard label="Simulations" value={resultData.n_simulations} icon={Layers} color="#8b5cf6" />}
+            </div>
+          </Section>
+
+          {quantiles && typeof quantiles === 'object' && Object.keys(quantiles).length > 0 && (
+            <Section title="Distribution des quantiles" icon={BarChart2} color="#ec4899">
+              <DataTable
+                headers={['Quantile', 'Valeur estimée']}
+                rows={Object.entries(quantiles).map(([q, v]) => [q, v])}
+              />
+            </Section>
+          )}
+        </div>
+      );
+    }
+
+    /* ── AI Node ── */
+    if (nodeType === 'ai') {
+      const analysis = resultData.synthesis || resultData.analysis || resultData.content || resultData.message;
+      return (
+        <Section title="Analyse IA et Recommandations" icon={Zap} color="#8b5cf6">
+          <div className="bg-surface-800/40 rounded-xl p-5 border border-white/[0.04] space-y-4">
+            {analysis && (
+              <div className="text-xs text-surface-200 leading-relaxed whitespace-pre-wrap font-sans">
+                {analysis}
+              </div>
+            )}
+          </div>
+        </Section>
+      );
+    }
+
+    /* ── Custom Extension Node ── */
+    if (nodeType === 'extension') {
+      return (
+        <Section title="Exécution de l'Extension" icon={Activity} color="#10b981">
+          <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <KpiCard label="Extension" value={resultData.name || 'Custom Extension'} icon={Activity} color="#10b981" />
+              <KpiCard label="Statut" value={resultData.status || 'OK'} icon={CheckCircle2} color="#10b981" />
+            </div>
+            {resultData.stdout && (
+              <div className="bg-black/40 p-3 rounded-lg border border-white/[0.06]">
+                <div className="text-[10px] text-surface-400 font-bold uppercase tracking-wider mb-1">Sortie Console (stdout)</div>
+                <pre className="text-xs font-mono text-emerald-400 whitespace-pre-wrap break-all">{resultData.stdout}</pre>
+              </div>
+            )}
+          </div>
+        </Section>
+      );
+    }
+
     /* ── SQL Node ── */
     if (nodeType === 'sql') {
       return (
-        <Section title="Résultat de la requête SQL" icon={Database} color="#3b82f6">
+        <Section title="Résultat de la requête SQL (DuckDB)" icon={Database} color="#3b82f6">
           <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <KpiCard label="Lignes générées" value={resultData.rows ?? 0} icon={Database} color="#10b981" />
@@ -1095,10 +1248,18 @@ export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType
             </div>
             {resultData.query && (
               <div className="bg-black/20 p-3 rounded-lg border border-white/[0.06]">
-                <div className="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">Requête exécutée</div>
+                <div className="text-[10px] text-surface-400 font-bold uppercase tracking-wider mb-1">Requête exécutée</div>
                 <pre className="text-xs font-mono text-accent-300 whitespace-pre-wrap break-all">{resultData.query}</pre>
               </div>
             )}
+            {Array.isArray(resultData.head) && resultData.head.length > 0 && (() => {
+              const cols = Object.keys(resultData.head[0]);
+              return (
+                <Section title={`Aperçu (.head ${resultData.head.length} lignes)`} icon={Database} color="#3b82f6">
+                  <DataTable headers={cols} rows={resultData.head.map((r: any) => cols.map(c => r[c]))} />
+                </Section>
+              );
+            })()}
           </div>
         </Section>
       );
@@ -1113,6 +1274,20 @@ export default function CanvasResultModal({ isOpen, onClose, nodeTitle, nodeType
               <KpiCard label="Lignes générées" value={resultData.rows ?? 0} icon={Database} color="#10b981" />
               <KpiCard label="Colonnes" value={resultData.columns ?? 0} icon={Layers} color="#8b5cf6" />
             </div>
+            {resultData.code && (
+              <div className="bg-black/20 p-3 rounded-lg border border-white/[0.06]">
+                <div className="text-[10px] text-surface-400 font-bold uppercase tracking-wider mb-1">Code exécuté</div>
+                <pre className="text-xs font-mono text-amber-300 whitespace-pre-wrap break-all">{resultData.code}</pre>
+              </div>
+            )}
+            {Array.isArray(resultData.head) && resultData.head.length > 0 && (() => {
+              const cols = Object.keys(resultData.head[0]);
+              return (
+                <Section title={`Aperçu (.head ${resultData.head.length} lignes)`} icon={Database} color="#10b981">
+                  <DataTable headers={cols} rows={resultData.head.map((r: any) => cols.map(c => r[c]))} />
+                </Section>
+              );
+            })()}
           </div>
         </Section>
       );
