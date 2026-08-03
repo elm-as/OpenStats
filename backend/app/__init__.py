@@ -3,7 +3,7 @@ import logging
 import uuid
 import time
 from flask import Flask, send_from_directory, request, g, jsonify
-from flask_cors import CORS
+
 from sqlalchemy import inspect, text
 from werkzeug.exceptions import HTTPException
 
@@ -110,29 +110,7 @@ def create_app(config_class=Config):
     if app.config.get("LOCAL_DEV_MODE", False) and os.getenv("FLASK_ENV") == "production":
         raise RuntimeError("LOCAL_DEV_MODE=true est interdit avec FLASK_ENV=production.")
 
-    import re
-    cors_origins_env = app.config.get("CORS_ORIGINS", "*")
-    if isinstance(cors_origins_env, str):
-        if cors_origins_env.strip() == "*":
-            cors_origins = re.compile(r"https?://.*")
-        else:
-            origins_list = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
-            if "*" in origins_list:
-                cors_origins = re.compile(r"https?://.*")
-            else:
-                cors_origins = origins_list
-    else:
-        cors_origins = cors_origins_env
 
-    CORS(app, resources={
-        r"/api/.*": {
-            "origins": cors_origins,
-            "allow_headers": ["*"],
-            "expose_headers": ["Content-Disposition", "X-Request-Id"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-            "supports_credentials": True,
-        }
-    })
 
     # Ensure directories exist
     for d in [app.config["UPLOAD_FOLDER"], app.config["DATA_DIR"], app.config["REPORTS_DIR"]]:
@@ -202,10 +180,7 @@ def create_app(config_class=Config):
             return err
         # Pour les routes frontend, conserver le comportement standard (page HTML 500)
         raise err
-        if isinstance(err, HTTPException):
-            return err
-        # Pour les routes frontend, conserver le comportement standard (page HTML 500)
-        raise err
+
 
     @app.route("/health")
     def health():
