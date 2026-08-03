@@ -66,10 +66,30 @@ def _setup_logging(app: Flask):
         g.request_id = request.headers.get("X-Request-Id", uuid.uuid4().hex[:12])
         g.request_start = time.time()
 
+        # Preflight OPTIONS interceptor sur /api/* pour répondre immédiatement aux requêtes CORS
+        if request.method == "OPTIONS" and request.path.startswith("/api/"):
+            response = app.make_default_options_response()
+            origin = request.headers.get("Origin")
+            if origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, *"
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
+            return response
+
     @app.after_request
     def _after_request(response):
         duration = int((time.time() - getattr(g, "request_start", time.time())) * 1000)
         if request.path.startswith("/api/"):
+            origin = request.headers.get("Origin")
+            if origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, *"
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Expose-Headers"] = "Content-Disposition, X-Request-Id"
+
             app.logger.info(
                 "request_id=%s method=%s path=%s status=%s duration_ms=%d",
                 getattr(g, "request_id", "-"),
@@ -92,25 +112,14 @@ def create_app(config_class=Config):
     if app.config.get("LOCAL_DEV_MODE", False) and os.getenv("FLASK_ENV") == "production":
         raise RuntimeError("LOCAL_DEV_MODE=true est interdit avec FLASK_ENV=production.")
 
-    if app.config.get("LOCAL_DEV_MODE", False):
-        import re
-        CORS(app, resources={
-            r"/api/.*": {
-                "origins": re.compile(r"https?://localhost(:\d+)?$"),
-                "allow_headers": ["*"],
-                "expose_headers": ["Content-Disposition"],
-                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
-            }
-        })
+    import re
     cors_origins_env = app.config.get("CORS_ORIGINS", "*")
     if isinstance(cors_origins_env, str):
         if cors_origins_env.strip() == "*":
-            import re
             cors_origins = re.compile(r"https?://.*")
         else:
             origins_list = [o.strip() for o in cors_origins_env.split(",") if o.strip()]
             if "*" in origins_list:
-                import re
                 cors_origins = re.compile(r"https?://.*")
             else:
                 cors_origins = origins_list
@@ -123,6 +132,7 @@ def create_app(config_class=Config):
             "allow_headers": ["*"],
             "expose_headers": ["Content-Disposition", "X-Request-Id"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+            "supports_credentials": True,
         }
     })
 
@@ -179,10 +189,21 @@ def create_app(config_class=Config):
             msg = err.description if isinstance(err, HTTPException) else str(err)
             if not isinstance(err, HTTPException):
                 app.logger.exception("Unhandled API error on %s %s", request.method, request.path)
-            return jsonify({
+            res = jsonify({
                 "error": msg or "Erreur interne du serveur",
                 "request_id": getattr(g, "request_id", None),
-            }), code
+            })
+            origin = request.headers.get("Origin")
+            if origin:
+                res.headers["Access-Control-Allow-Origin"] = origin
+                res.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Client-Id, X-Request-Id, *"
+                res.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+                res.headers["Access-Control-Allow-Credentials"] = "true"
+            return res, code
+        if isinstance(err, HTTPException):
+            return err
+        # Pour les routes frontend, conserver le comportement standard (page HTML 500)
+        raise err
         if isinstance(err, HTTPException):
             return err
         # Pour les routes frontend, conserver le comportement standard (page HTML 500)
