@@ -112,28 +112,56 @@ class CSVAdapter(BaseAdapter):
 
 class ExcelAdapter(BaseAdapter):
     """
-    Adaptateur Excel (XLSX/XLS) avec support multi-feuilles.
+    Adaptateur Excel (XLSX/XLS/XLSM) avec support multi-feuilles et gestion des moteurs.
     """
+
+    def _get_engine(self, source: str | io.BytesIO) -> Optional[str]:
+        filename = str(source) if isinstance(source, (str, Path)) else getattr(source, "name", "")
+        ext = Path(filename).suffix.lstrip(".").lower() if filename else ""
+        if ext in ("xlsx", "xlsm"):
+            return "openpyxl"
+        elif ext == "xls":
+            return "xlrd"
+        return None
 
     def read(self, source: str | io.BytesIO, **kwargs) -> pd.DataFrame:
         sheet_name = kwargs.pop("sheet_name", 0)
+        engine = kwargs.pop("engine", self._get_engine(source))
 
-        read_kwargs = {"sheet_name": sheet_name, "engine": "openpyxl"}
+        read_kwargs = {"sheet_name": sheet_name}
+        if engine:
+            read_kwargs["engine"] = engine
         read_kwargs.update(kwargs)
 
-        if isinstance(source, (str, Path)):
-            return pd.read_excel(source, **read_kwargs)
-        source.seek(0)
-        return pd.read_excel(source, **read_kwargs)
-
-    @staticmethod
-    def list_sheets(source: str | io.BytesIO) -> list[str]:
-        if isinstance(source, (str, Path)):
-            xls = pd.ExcelFile(source, engine="openpyxl")
-        else:
+        try:
+            if isinstance(source, (str, Path)):
+                return pd.read_excel(source, **read_kwargs)
             source.seek(0)
-            xls = pd.ExcelFile(source, engine="openpyxl")
-        return xls.sheet_names
+            return pd.read_excel(source, **read_kwargs)
+        except Exception:
+            # Fallback en enlevant l'engine explicite si l'engine spécifié a échoué
+            read_kwargs.pop("engine", None)
+            if isinstance(source, (str, Path)):
+                return pd.read_excel(source, **read_kwargs)
+            source.seek(0)
+            return pd.read_excel(source, **read_kwargs)
+
+    def list_sheets(self, source: str | io.BytesIO) -> list[str]:
+        engine = self._get_engine(source)
+        try:
+            if isinstance(source, (str, Path)):
+                xls = pd.ExcelFile(source, engine=engine) if engine else pd.ExcelFile(source)
+            else:
+                source.seek(0)
+                xls = pd.ExcelFile(source, engine=engine) if engine else pd.ExcelFile(source)
+            return xls.sheet_names
+        except Exception:
+            if isinstance(source, (str, Path)):
+                xls = pd.ExcelFile(source)
+            else:
+                source.seek(0)
+                xls = pd.ExcelFile(source)
+            return xls.sheet_names
 
 
 class JSONAdapter(BaseAdapter):
@@ -196,3 +224,15 @@ def ingest_file(filepath: str, **kwargs) -> pd.DataFrame:
     if ext == "jsonl":
         kwargs["jsonl"] = True
     return adapter.read(filepath, **kwargs)
+
+
+def list_excel_sheets(filepath: str) -> list[str]:
+    """Retourne la liste des feuilles pour un fichier Excel (XLSX/XLS/XLSM)."""
+    ext = Path(filepath).suffix.lstrip(".").lower()
+    if ext in ("xlsx", "xls", "xlsm"):
+        adapter = ExcelAdapter()
+        try:
+            return adapter.list_sheets(filepath)
+        except Exception:
+            return []
+    return []

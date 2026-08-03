@@ -26,6 +26,8 @@ export interface DatasetProfile {
   memory_usage_mb: number;
   dtypes: Record<string, string>;
   dictionary: ColumnProfile[];
+  excel_sheets?: string[];
+  selected_sheet?: string;
 }
 
 export interface DatasetDetail {

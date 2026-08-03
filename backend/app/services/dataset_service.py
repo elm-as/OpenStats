@@ -24,7 +24,7 @@ from app.models.dataset import Dataset, DatasetVersion
 from app.models.analysis import AnalysisResult
 from app.models.audit import AuditLog
 from app.services.storage_service import storage
-from app.core.ingestion import ingest_file
+from app.core.ingestion import ingest_file, list_excel_sheets
 from app.core.profiling import profile_dataframe, generate_data_dictionary
 from app.core.cleaning import run_cleaning_pipeline
 from app.core.analysis import (
@@ -90,6 +90,11 @@ class DatasetManager:
         df = ingest_file(filepath, **kwargs)
         profile = profile_dataframe(df)
 
+        excel_sheets = list_excel_sheets(filepath)
+        if excel_sheets:
+            profile["excel_sheets"] = excel_sheets
+            profile["selected_sheet"] = kwargs.get("sheet_name") or excel_sheets[0]
+
         ds = Dataset(
             name=name or Path(filepath).stem,
             original_filename=Path(filepath).name,
@@ -135,6 +140,52 @@ class DatasetManager:
 
         db.session.commit()
         return ds.id
+
+    def switch_excel_sheet(self, dataset_id: str, sheet_name: str, uploaded_by: str = None) -> dict:
+        """Change la feuille active d'un dataset Excel et ré-ingère ses données."""
+        ds = db.session.get(Dataset, dataset_id)
+        if not ds:
+            raise KeyError(f"Dataset non trouvé : {dataset_id}")
+        if uploaded_by and ds.uploaded_by and ds.uploaded_by != uploaded_by:
+            raise PermissionError("Accès non autorisé à ce dataset")
+
+        upload_dir = current_app.config["UPLOAD_FOLDER"]
+        filepath = os.path.join(upload_dir, ds.original_filename)
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Fichier d'origine non trouvé : {ds.original_filename}")
+
+        df = ingest_file(filepath, sheet_name=sheet_name)
+        profile = profile_dataframe(df)
+        excel_sheets = list_excel_sheets(filepath)
+        if excel_sheets:
+            profile["excel_sheets"] = excel_sheets
+            profile["selected_sheet"] = sheet_name
+
+        ds.rows = df.shape[0]
+        ds.columns = df.shape[1]
+        ds.profile = profile
+
+        parquet_path = storage.save_dataframe(df, ds.id, version=1)
+        v1 = DatasetVersion.query.filter_by(dataset_id=ds.id, version_number=1).first()
+        if v1:
+            v1.rows = df.shape[0]
+            v1.columns = df.shape[1]
+            v1.profile_snapshot = profile
+            v1.parquet_path = parquet_path
+
+        parquet_path_clean = storage.save_dataframe(df, ds.id, version=2)
+        v2 = DatasetVersion.query.filter_by(dataset_id=ds.id, version_number=2).first()
+        if v2:
+            v2.rows = df.shape[0]
+            v2.columns = df.shape[1]
+            v2.profile_snapshot = profile
+            v2.parquet_path = parquet_path_clean
+
+        self._invalidate_session_cache(ds.id)
+        _invalidate_df_cache(ds.id)
+        self._audit(ds.id, "switch_sheet", {"sheet_name": sheet_name, "rows": df.shape[0], "columns": df.shape[1]})
+        db.session.commit()
+        return self.get(ds.id)
 
     # ── Accès datasets ─────────────────────────────────────────
 

@@ -95,10 +95,11 @@ def create_app(config_class=Config):
     if app.config.get("LOCAL_DEV_MODE", False):
         import re
         CORS(app, resources={
-            r"/api/*": {
+            r"/api/.*": {
                 "origins": re.compile(r"https?://localhost(:\d+)?$"),
                 "allow_headers": ["*"],
-                "expose_headers": ["Content-Disposition"]
+                "expose_headers": ["Content-Disposition"],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
             }
         })
     else:
@@ -107,10 +108,11 @@ def create_app(config_class=Config):
             cors_origins = [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
             
         CORS(app, resources={
-            r"/api/*": {
+            r"/api/.*": {
                 "origins": cors_origins,
                 "allow_headers": ["*"],
-                "expose_headers": ["Content-Disposition"]
+                "expose_headers": ["Content-Disposition"],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
             }
         })
 
@@ -162,14 +164,17 @@ def create_app(config_class=Config):
     # sinon le frontend reçoit une page HTML et RTK Query plante en "PARSING_ERROR".
     @app.errorhandler(Exception)
     def _handle_unexpected_error(err):  # type: ignore[override]
+        if request.path.startswith("/api/"):
+            code = err.code if isinstance(err, HTTPException) else 500
+            msg = err.description if isinstance(err, HTTPException) else str(err)
+            if not isinstance(err, HTTPException):
+                app.logger.exception("Unhandled API error on %s %s", request.method, request.path)
+            return jsonify({
+                "error": msg or "Erreur interne du serveur",
+                "request_id": getattr(g, "request_id", None),
+            }), code
         if isinstance(err, HTTPException):
             return err
-        if request.path.startswith("/api/"):
-            app.logger.exception("Unhandled API error on %s %s", request.method, request.path)
-            return jsonify({
-                "error": "Erreur interne du serveur",
-                "request_id": getattr(g, "request_id", None),
-            }), 500
         # Pour les routes frontend, conserver le comportement standard (page HTML 500)
         raise err
 
