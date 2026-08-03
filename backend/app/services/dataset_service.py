@@ -38,7 +38,7 @@ from app.core.reporting import generate_report
 
 # ── Cache LRU pour DataFrames (évite de re-lire les parquets) ──
 _DF_CACHE: OrderedDict[str, pd.DataFrame] = OrderedDict()
-_DF_CACHE_MAX = 8
+_DF_CACHE_MAX = 2  # Réduit à 2 pour éviter les OOM sur Render (512 Mo)
 _DF_CACHE_LOCK = threading.Lock()
 
 
