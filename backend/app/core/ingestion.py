@@ -125,7 +125,9 @@ class ExcelAdapter(BaseAdapter):
         return None
 
     def read(self, source: str | io.BytesIO, **kwargs) -> pd.DataFrame:
-        sheet_name = kwargs.pop("sheet_name", 0)
+        sheet_name = kwargs.pop("sheet_name", None)
+        if sheet_name is None or sheet_name == "":
+            sheet_name = 0
         engine = kwargs.pop("engine", self._get_engine(source))
 
         read_kwargs = {"sheet_name": sheet_name}
@@ -135,16 +137,23 @@ class ExcelAdapter(BaseAdapter):
 
         try:
             if isinstance(source, (str, Path)):
-                return pd.read_excel(source, **read_kwargs)
-            source.seek(0)
-            return pd.read_excel(source, **read_kwargs)
+                res = pd.read_excel(source, **read_kwargs)
+            else:
+                source.seek(0)
+                res = pd.read_excel(source, **read_kwargs)
         except Exception:
             # Fallback en enlevant l'engine explicite si l'engine spécifié a échoué
             read_kwargs.pop("engine", None)
             if isinstance(source, (str, Path)):
-                return pd.read_excel(source, **read_kwargs)
-            source.seek(0)
-            return pd.read_excel(source, **read_kwargs)
+                res = pd.read_excel(source, **read_kwargs)
+            else:
+                source.seek(0)
+                res = pd.read_excel(source, **read_kwargs)
+
+        if isinstance(res, dict):
+            res = next(iter(res.values())) if res else pd.DataFrame()
+
+        return res
 
     def list_sheets(self, source: str | io.BytesIO) -> list[str]:
         engine = self._get_engine(source)
@@ -224,6 +233,9 @@ def ingest_file(filepath: str, **kwargs) -> pd.DataFrame:
     if ext == "jsonl":
         kwargs["jsonl"] = True
     df = adapter.read(filepath, **kwargs)
+
+    if isinstance(df, dict):
+        df = next(iter(df.values())) if df else pd.DataFrame()
 
     # Sanitize column names: string conversion, strip, default naming for empty headers, deduplication
     cleaned_cols = []
