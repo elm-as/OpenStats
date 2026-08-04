@@ -10,10 +10,9 @@ workers = int(os.getenv("WEB_CONCURRENCY", "1"))
 worker_class = "gthread"
 threads = int(os.getenv("WEB_THREADS", "2"))
 
-# Optimisation pour les tâches d'analyse lourdes
-# Un pipeline Canvas complet (ACP + clustering + régression + classification)
-# peut durer 3-5 minutes sur un dataset moyen avec un seul worker
-timeout = 300  # 5 minutes pour les pipelines Canvas complexes
+# Avec Render Standard (2 Go), les pipelines complets (9 algorithmes + ACP + clustering)
+# peuvent durer jusqu'à 10-15 minutes sur un gros dataset
+timeout = 900  # 15 minutes
 keepalive = 5
 
 # Logs
