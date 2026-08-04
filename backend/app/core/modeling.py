@@ -274,6 +274,11 @@ def prepare_data(
     if working_df.empty:
         raise ValueError(f"La colonne cible '{target_col}' ne contient que des valeurs manquantes (NaN)")
 
+    # Échantillonnage représentatif pour les très grands datasets (> 20 000 lignes)
+    # Permet d'entraîner les 9 modèles de ML en ~15 secondes au lieu de 5+ minutes
+    if len(working_df) > 20000:
+        working_df = working_df.sample(n=20000, random_state=random_state).reset_index(drop=True)
+
     y = working_df[target_col]
 
     # Conserver les colonnes numériques et catégorielles avec < 50 modalités, non totalement vides
