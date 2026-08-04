@@ -274,11 +274,6 @@ def prepare_data(
     if working_df.empty:
         raise ValueError(f"La colonne cible '{target_col}' ne contient que des valeurs manquantes (NaN)")
 
-    # Échantillonnage représentatif pour les très grands datasets (> 20 000 lignes)
-    # Permet d'entraîner les 9 modèles de ML en ~15 secondes au lieu de 5+ minutes
-    if len(working_df) > 20000:
-        working_df = working_df.sample(n=20000, random_state=random_state).reset_index(drop=True)
-
     y = working_df[target_col]
 
     # Conserver les colonnes numériques et catégorielles avec < 50 modalités, non totalement vides
@@ -418,11 +413,19 @@ def train_single_model(
     if model_key == "polynomial_regression":
         return _train_polynomial(data, cv_folds)
 
+    # Pour SVR/SVC à noyau RBF (complexité O(N^3)), limiter l'entraînement de SVR/SVC à 10 000 lignes
+    # afin d'éviter un blocage CPU de 45+ minutes sur de très grands jeux de données.
+    X_train_fit, y_train_fit = X_train, y_train
+    if model_key in ("svr", "svc") and len(X_train) > 10000:
+        idx = np.random.choice(len(X_train), 10000, replace=False)
+        X_train_fit = X_train.iloc[idx]
+        y_train_fit = y_train.iloc[idx]
+
     model_cls = model_info["class"]
     param_grid = model_info["params"]
     needs_scaling = model_info.get("needs_scaling", False)
 
-    preprocessor = _build_preprocessor(X_train, needs_scaling)
+    preprocessor = _build_preprocessor(X_train_fit, needs_scaling)
     base_model = model_cls()
     pipe = Pipeline([("preprocessor", preprocessor), ("model", base_model)])
     
@@ -436,17 +439,17 @@ def train_single_model(
     if pipe_params or any(isinstance(v, list) for v in param_grid.values()):
         scoring = "neg_mean_squared_error" if task_type == "regression" else "f1_weighted"
         grid = GridSearchCV(
-            pipe, pipe_params, cv=cv_folds, scoring=scoring, n_jobs=1, error_score="raise"
+            pipe, pipe_params, cv=cv_folds, scoring=scoring, n_jobs=-1, error_score="raise"
         )
-        grid.fit(X_train, y_train)
+        grid.fit(X_train_fit, y_train_fit)
         model = grid.best_estimator_
         best_params = {k.replace("model__", ""): v for k, v in grid.best_params_.items()}
     else:
-        pipe.fit(X_train, y_train)
+        pipe.fit(X_train_fit, y_train_fit)
         model = pipe
         best_params = {k: v[0] if isinstance(v, list) else v for k, v in param_grid.items()}
 
-    # Prédictions
+    # Prédictions sur l'ensemble de test complet
     y_pred = model.predict(X_test)
 
     # Métriques
@@ -457,7 +460,10 @@ def train_single_model(
 
     # Cross-validation score
     scoring = "neg_mean_squared_error" if task_type == "regression" else "f1_weighted"
-    cv_scores = cross_val_score(model, X_train, y_train, cv=cv_folds, scoring=scoring)
+    try:
+        cv_scores = cross_val_score(model, X_train_fit, y_train_fit, cv=cv_folds, scoring=scoring, n_jobs=-1)
+    except Exception:
+        cv_scores = np.array([0.0])
 
     # Feature importance
     importance = _get_feature_importance(model, data["feature_names"])

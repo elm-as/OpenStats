@@ -22,9 +22,6 @@ def execute_clustering(data, dataset_id):
     if len(clean_df) < 3:
         return {"status": "error", "error": "Au moins 3 observations valides requises pour le clustering"}
 
-    if len(clean_df) > 20000:
-        clean_df = clean_df.sample(n=20000, random_state=42).reset_index(drop=True)
-
     X = StandardScaler().fit_transform(clean_df)
     
     # Pour la visualisation 2D
