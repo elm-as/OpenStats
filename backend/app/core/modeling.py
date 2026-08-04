@@ -266,13 +266,23 @@ def prepare_data(
 ) -> dict:
     """Prépare les données pour la modélisation : séparation train/test."""
     working_df = _sanitize_dataframe(df.copy())
+    if target_col not in working_df.columns:
+        raise ValueError(f"Colonne cible '{target_col}' introuvable dans le dataset")
+
+    # Éliminer impérativement les lignes où la variable cible est NaN
+    working_df = working_df.dropna(subset=[target_col])
+    if working_df.empty:
+        raise ValueError(f"La colonne cible '{target_col}' ne contient que des valeurs manquantes (NaN)")
+
     y = working_df[target_col]
 
-    # Conserver les colonnes numériques et les colonnes catégorielles avec peu de modalités (< 50)
+    # Conserver les colonnes numériques et catégorielles avec < 50 modalités, non totalement vides
     X = working_df.drop(columns=[target_col])
     
     cols_to_keep = []
     for col in X.columns:
+        if X[col].dropna().empty:
+            continue
         if pd.api.types.is_numeric_dtype(X[col]):
             cols_to_keep.append(col)
         else:
