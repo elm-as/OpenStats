@@ -359,9 +359,9 @@ function DnDFlow() {
     try {
       const authEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true';
       const token = authEnabled ? (localStorage.getItem('access_token') || '') : '';
-      // Timeout de 5 minutes pour les pipelines complexes en production
+      // Timeout de 15 minutes pour les pipelines complets (9 algorithmes + ACP + clustering)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300_000);
+      const timeoutId = setTimeout(() => controller.abort(), 900_000);
       let response: Response;
       try {
         response = await fetch(`${API_V1_BASE}/canvas/run_pipeline`, {

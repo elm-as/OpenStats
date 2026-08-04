@@ -141,8 +141,8 @@ def run_canvas_pipeline():
     # DAG Execution
     ready = [nid for nid, d in in_degrees.items() if d == 0]
     futures = {}
-    # Réduire max_workers à 1 au lieu de 2 pour éviter les OOM et timeouts sur Render (Free Tier 512MB)
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    # 2 workers en parallèle (Render Standard 2 Go)
+    with ThreadPoolExecutor(max_workers=2) as executor:
         for nid in ready:
             futures[executor.submit(process_node, nid)] = nid
             
