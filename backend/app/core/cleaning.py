@@ -55,12 +55,6 @@ class MissingValuesStep(CleaningStep):
     }
 
     def apply(self, df: pd.DataFrame, config: dict) -> tuple[pd.DataFrame, dict]:
-        """
-        config: {
-            "columns": {"col_name": {"strategy": "mean"}, ...}
-            "default_strategy": "median"  # pour les colonnes non spécifiées
-        }
-        """
         logs = []
         columns_config = config.get("columns", {})
         default_strategy = config.get("default_strategy", "median")
@@ -76,7 +70,9 @@ class MissingValuesStep(CleaningStep):
             if strategy in self.STRATEGIES:
                 method = getattr(self, self.STRATEGIES[strategy])
                 df = method(df, col, col_config)
-                logs.append(f"{col}: {strategy} ({null_count} valeurs)")
+                remaining_nulls = df[col].isna().sum()
+                imputed_count = null_count - remaining_nulls
+                logs.append(f"{col}: {strategy} ({imputed_count} imputées, {remaining_nulls} restantes)")
 
         return df, self._log(f"Imputation appliquée sur {len(logs)} colonnes", {"details": logs})
 
@@ -85,39 +81,61 @@ class MissingValuesStep(CleaningStep):
 
     def _impute_mean(self, df: pd.DataFrame, col: str, config: dict) -> pd.DataFrame:
         if pd.api.types.is_numeric_dtype(df[col]):
-            df[col] = df[col].fillna(df[col].mean())
+            mean_val = df[col].mean()
+            fill_val = mean_val if pd.notna(mean_val) else 0
+            df[col] = df[col].fillna(fill_val)
+        else:
+            df = self._impute_mode(df, col, config)
         return df
 
     def _impute_median(self, df: pd.DataFrame, col: str, config: dict) -> pd.DataFrame:
         if pd.api.types.is_numeric_dtype(df[col]):
-            df[col] = df[col].fillna(df[col].median())
+            med_val = df[col].median()
+            fill_val = med_val if pd.notna(med_val) else 0
+            df[col] = df[col].fillna(fill_val)
+        else:
+            df = self._impute_mode(df, col, config)
         return df
 
     def _impute_mode(self, df: pd.DataFrame, col: str, config: dict) -> pd.DataFrame:
         mode_val = df[col].mode()
-        if not mode_val.empty:
+        if not mode_val.empty and pd.notna(mode_val.iloc[0]):
             df[col] = df[col].fillna(mode_val.iloc[0])
+        else:
+            fill_val = 0 if pd.api.types.is_numeric_dtype(df[col]) else "Inconnu"
+            df[col] = df[col].fillna(fill_val)
         return df
 
     def _impute_knn(self, df: pd.DataFrame, col: str, config: dict) -> pd.DataFrame:
-        from sklearn.impute import KNNImputer
-
-        k = config.get("k", 5)
-        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-        if col not in numeric_cols:
-            return self._impute_median(df, col, config)
-
-        imputer = KNNImputer(n_neighbors=k)
-        df[numeric_cols] = imputer.fit_transform(df[numeric_cols])
+        if pd.api.types.is_numeric_dtype(df[col]):
+            from sklearn.impute import KNNImputer
+            k = config.get("k", 5)
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if len(numeric_cols) > 0:
+                try:
+                    imputer = KNNImputer(n_neighbors=k)
+                    df[numeric_cols] = imputer.fit_transform(df[numeric_cols])
+                except Exception:
+                    df = self._impute_median(df, col, config)
+            else:
+                df = self._impute_median(df, col, config)
+        else:
+            df = self._impute_mode(df, col, config)
         return df
 
     def _forward_fill(self, df: pd.DataFrame, col: str, config: dict) -> pd.DataFrame:
-        df[col] = df[col].ffill()
+        df[col] = df[col].ffill().bfill()
+        if df[col].isna().any():
+            df = self._impute_mode(df, col, config)
         return df
 
     def _interpolate(self, df: pd.DataFrame, col: str, config: dict) -> pd.DataFrame:
         if pd.api.types.is_numeric_dtype(df[col]):
-            df[col] = df[col].interpolate(method="linear")
+            df[col] = df[col].interpolate(method="linear").bfill().ffill()
+            if df[col].isna().any():
+                df[col] = df[col].fillna(0)
+        else:
+            df = self._impute_mode(df, col, config)
         return df
 
     def _impute_constant(self, df: pd.DataFrame, col: str, config: dict) -> pd.DataFrame:
