@@ -507,8 +507,13 @@ def train_competitive(
     task_type = data["task_type"]
     registry = REGRESSION_MODELS if task_type == "regression" else CLASSIFICATION_MODELS
 
-    if model_keys is None:
-        model_keys = list(registry.keys())
+    if not model_keys:
+        # Sur les serveurs à faible RAM (comme Render Free 512MB),
+        # entraîner tous les modèles crashe (OOM). On prend les plus légers.
+        if task_type == "regression":
+            model_keys = ["linear_regression", "ridge", "decision_tree"]
+        else:
+            model_keys = ["logistic_regression", "decision_tree", "random_forest"]
 
     results = []
     for key in model_keys:

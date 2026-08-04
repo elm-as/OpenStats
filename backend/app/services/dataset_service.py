@@ -31,10 +31,12 @@ from app.core.analysis import (
     compute_descriptive_stats, compute_correlation_matrix,
     compute_vif, run_hypothesis_test,
 )
-from app.core.modeling import prepare_data, train_competitive, train_single_model
-from app.core.timeseries import run_timeseries_analysis, run_multivariate_timeseries_analysis
-from app.core.explainability import compute_shap_values
-from app.core.reporting import generate_report
+# Imports lourds rendus lazy pour réduire l'empreinte mémoire au démarrage (~200 Mo économisés).
+# Chaque module est importé dans la méthode qui l'utilise, pas au niveau module.
+# - app.core.modeling (sklearn, xgboost, lightgbm)
+# - app.core.timeseries (statsmodels, pmdarima)
+# - app.core.explainability (shap)
+# - app.core.reporting (reportlab)
 
 # ── Cache LRU pour DataFrames (évite de re-lire les parquets) ──
 _DF_CACHE: OrderedDict[str, pd.DataFrame] = OrderedDict()
@@ -519,6 +521,8 @@ class DatasetManager:
         temporal_col: str | None = None,
     ) -> dict:
         """Lance l'entraînement compétitif multi-algorithmes."""
+        from app.core.modeling import prepare_data, train_competitive
+
         df = self.get_df(dataset_id)
         if df is None:
             raise ValueError(f"Dataset {dataset_id} introuvable")
@@ -536,6 +540,7 @@ class DatasetManager:
         shap_data = None
         if results.get("best_model") is not None:
             try:
+                from app.core.explainability import compute_shap_values
                 shap_data = compute_shap_values(results["best_model"], data["X_test"])
             except Exception as e:
                 shap_data = {"error": str(e)}
@@ -571,6 +576,8 @@ class DatasetManager:
         forecast_steps: int = 10,
     ) -> dict:
         """Lance l'analyse de série temporelle."""
+        from app.core.timeseries import run_timeseries_analysis
+
         df = self.get_df(dataset_id, respect_exclusions=False)
         if df is None:
             raise ValueError(f"Dataset {dataset_id} introuvable")
@@ -620,6 +627,8 @@ class DatasetManager:
         max_diff_order: int = 2,
     ) -> dict:
         """Lance l'analyse de séries temporelles multivariées."""
+        from app.core.timeseries import run_multivariate_timeseries_analysis
+
         df = self.get_df(dataset_id, respect_exclusions=False)
         if df is None:
             raise ValueError(f"Dataset {dataset_id} introuvable")
@@ -758,6 +767,8 @@ class DatasetManager:
 
         analysis = bundle.get("analysis", {})
         model = bundle.get("modeling", {})
+
+        from app.core.reporting import generate_report
 
         generate_report(
             output_path=output_path,
