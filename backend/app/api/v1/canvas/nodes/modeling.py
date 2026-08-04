@@ -8,6 +8,8 @@ from ._shared import _sanitize
 def execute_clustering(data, dataset_id):
     method = data.get("method", "kmeans")
     df = dataset_manager.get_df(dataset_id)
+    if df is None or df.empty:
+        return {"status": "error", "error": "DataFrame vide ou introuvable"}
     numeric_df = df.select_dtypes("number").dropna(axis=1, how="all")
     if numeric_df.shape[1] < 2:
         return {"status": "error", "error": "Au moins 2 variables numériques requises"}
@@ -17,6 +19,9 @@ def execute_clustering(data, dataset_id):
     import numpy as np
     
     clean_df = numeric_df.dropna()
+    if len(clean_df) < 3:
+        return {"status": "error", "error": "Au moins 3 observations valides requises pour le clustering"}
+
     X = StandardScaler().fit_transform(clean_df)
     
     # Pour la visualisation 2D
@@ -26,16 +31,27 @@ def execute_clustering(data, dataset_id):
     if method == "kmeans":
         from sklearn.cluster import KMeans
         from sklearn.metrics import silhouette_score
-        best_k, best_score = 2, -1
+        best_k, best_score = 2, -1.0
+        best_labels = None
         for k in range(2, min(11, len(X))):
             km = KMeans(n_clusters=k, n_init=10, random_state=42)
             labels = km.fit_predict(X)
-            s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
-            if s > best_score:
-                best_k, best_score = k, s
-        km = KMeans(n_clusters=best_k, n_init=10, random_state=42)
-        labels = km.fit_predict(X)
-        result = {"method": "kmeans", "k": best_k, "silhouette": round(float(best_score), 4), "cluster_sizes": {str(i): int(np.sum(labels == i)) for i in range(best_k)}}
+            if len(set(labels)) < 2:
+                continue
+            try:
+                s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
+                if s > best_score:
+                    best_k, best_score = k, s
+                    best_labels = labels
+            except Exception:
+                continue
+        if best_labels is None:
+            km = KMeans(n_clusters=min(2, max(1, len(X))), n_init=10, random_state=42)
+            best_labels = km.fit_predict(X)
+            best_k = len(set(best_labels))
+            best_score = 0.0
+        labels = best_labels
+        result = {"method": "kmeans", "k": best_k, "silhouette": round(float(best_score), 4), "cluster_sizes": {str(i): int(np.sum(labels == i)) for i in set(labels)}}
     elif method == "dbscan":
         from sklearn.cluster import DBSCAN
         db = DBSCAN(eps=0.5, min_samples=5)
@@ -45,15 +61,26 @@ def execute_clustering(data, dataset_id):
     else:  # hierarchical
         from sklearn.cluster import AgglomerativeClustering
         from sklearn.metrics import silhouette_score
-        best_k, best_score = 2, -1
+        best_k, best_score = 2, -1.0
+        best_labels = None
         for k in range(2, min(11, len(X))):
             ac = AgglomerativeClustering(n_clusters=k)
             labels = ac.fit_predict(X)
-            s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
-            if s > best_score:
-                best_k, best_score = k, s
-        ac = AgglomerativeClustering(n_clusters=best_k)
-        labels = ac.fit_predict(X)
+            if len(set(labels)) < 2:
+                continue
+            try:
+                s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
+                if s > best_score:
+                    best_k, best_score = k, s
+                    best_labels = labels
+            except Exception:
+                continue
+        if best_labels is None:
+            ac = AgglomerativeClustering(n_clusters=min(2, max(1, len(X))))
+            best_labels = ac.fit_predict(X)
+            best_k = len(set(best_labels))
+            best_score = 0.0
+        labels = best_labels
         result = {"method": "hierarchical", "k": best_k, "silhouette": round(float(best_score), 4)}
 
     # Ajout des points pour le graphe
@@ -74,14 +101,18 @@ def execute_clustering(data, dataset_id):
 
 
 def execute_regression(data, dataset_id):
-    target = data.get("targetCol", "")
-    if not target:
-        return {"status": "error", "error": "Variable cible requise pour la régression"}
     df = dataset_manager.get_df(dataset_id)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable"}
-    if target not in df.columns:
-        return {"status": "error", "error": f"Colonne cible '{target}' introuvable dans le dataset"}
+
+    target = data.get("targetCol", "")
+    if not target or target not in df.columns:
+        # Auto-sélection de la dernière colonne numérique valide
+        num_cols = [c for c in df.select_dtypes(include=["number"]).columns if df[c].dropna().nunique() > 1]
+        if not num_cols:
+            return {"status": "error", "error": "Aucune colonne numérique valide disponible comme cible"}
+        target = num_cols[-1]
+
     models_val = data.get("models", "auto")
     models = None if models_val == "auto" else [models_val]
     try:
@@ -96,14 +127,19 @@ def execute_regression(data, dataset_id):
 
 
 def execute_classification(data, dataset_id):
-    target = data.get("targetCol", "")
-    if not target:
-        return {"status": "error", "error": "Variable cible requise pour la classification"}
     df = dataset_manager.get_df(dataset_id)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable"}
-    if target not in df.columns:
-        return {"status": "error", "error": f"Colonne cible '{target}' introuvable dans le dataset"}
+
+    target = data.get("targetCol", "")
+    import pandas as pd
+    if not target or target not in df.columns:
+        # Auto-sélection de la première/dernière colonne catégorielle ou binaire
+        cat_cols = [c for c in df.columns if not pd.api.types.is_numeric_dtype(df[c]) or df[c].dropna().nunique() <= 10]
+        if not cat_cols:
+            return {"status": "error", "error": "Aucune colonne catégorielle/binaire valide disponible comme cible"}
+        target = cat_cols[-1]
+
     models_val = data.get("models", "auto")
     models = None if models_val == "auto" else [models_val]
     try:
