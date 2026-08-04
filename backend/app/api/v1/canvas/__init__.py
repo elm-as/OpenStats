@@ -10,6 +10,7 @@ from app.api.v1 import api_v1_bp
 from .nodes import execute_node
 from .nodes._shared import _sanitize
 import os
+import gc
 import json
 import uuid
 import logging
@@ -132,6 +133,8 @@ def run_canvas_pipeline():
                     dataset_id_map[node_id] = dataset_id
                 elif resolved_id:
                     dataset_id_map[node_id] = resolved_id
+            # Libérer la mémoire après chaque nœud (critique sur Render 512 Mo)
+            gc.collect()
                     
             return node_id
 

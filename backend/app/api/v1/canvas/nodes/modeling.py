@@ -30,7 +30,7 @@ def execute_clustering(data, dataset_id):
         for k in range(2, min(11, len(X))):
             km = KMeans(n_clusters=k, n_init=10, random_state=42)
             labels = km.fit_predict(X)
-            s = silhouette_score(X, labels)
+            s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
             if s > best_score:
                 best_k, best_score = k, s
         km = KMeans(n_clusters=best_k, n_init=10, random_state=42)
@@ -49,7 +49,7 @@ def execute_clustering(data, dataset_id):
         for k in range(2, min(11, len(X))):
             ac = AgglomerativeClustering(n_clusters=k)
             labels = ac.fit_predict(X)
-            s = silhouette_score(X, labels)
+            s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
             if s > best_score:
                 best_k, best_score = k, s
         ac = AgglomerativeClustering(n_clusters=best_k)
