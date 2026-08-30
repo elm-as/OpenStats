@@ -50,17 +50,24 @@ export function ModelingTab({
               </code>
             </div>
             {bestModel.metrics?.r2 !== undefined && (
-              <span
-                className={`text-sm font-mono font-bold px-2.5 py-1 rounded ${
-                  bestModel.metrics.r2 < 0
-                    ? 'text-rose-300 bg-rose-500/20 border border-rose-500/30'
-                    : bestModel.metrics.r2 > 0.5
-                    ? 'text-emerald-300 bg-emerald-500/20 border border-emerald-500/30'
-                    : 'text-amber-300 bg-amber-500/20 border border-amber-500/30'
-                }`}
-              >
-                R² = {(bestModel.metrics.r2 * 100).toFixed(1)}%
-              </span>
+              <div className="flex flex-col items-end">
+                <span
+                  className={`text-sm font-mono font-bold px-2.5 py-1 rounded ${
+                    bestModel.metrics.r2 < 0
+                      ? 'text-rose-300 bg-rose-500/20 border border-rose-500/30'
+                      : bestModel.metrics.r2 > 0.5
+                      ? 'text-emerald-300 bg-emerald-500/20 border border-emerald-500/30'
+                      : 'text-amber-300 bg-amber-500/20 border border-amber-500/30'
+                  }`}
+                >
+                  R² = {bestModel.metrics.r2.toFixed(3)}
+                </span>
+                {bestModel.metrics.r2 < 0 && (
+                  <span className="text-[10px] text-rose-300/80 mt-1 italic max-w-xs text-right">
+                    Modèle moins performant que la moyenne (extrapolation temporelle défavorable)
+                  </span>
+                )}
+              </div>
             )}
 
             {bestModel.metrics?.f1_weighted !== undefined && (
@@ -103,6 +110,14 @@ export function ModelingTab({
                       MAE: {metrics.mae.toFixed(3)}
                     </span>
                   )}
+                  {r.cv_scores?.mean !== undefined && (
+                    <span
+                      className="text-xs font-mono text-surface-300 bg-surface-600/40 px-2 py-0.5 rounded"
+                      title={r.cv_scores.rmse_mean !== undefined ? `CV RMSE: ${r.cv_scores.rmse_mean}` : undefined}
+                    >
+                      CV ({r.cv_scores.metric || (metrics.r2 !== undefined ? 'R²' : 'F1')}): {r.cv_scores.mean.toFixed(3)}
+                    </span>
+                  )}
                   {metrics.accuracy !== undefined && (
                     <span className="text-xs font-mono text-surface-400">
                       Acc: {(metrics.accuracy * 100).toFixed(1)}%
@@ -111,20 +126,20 @@ export function ModelingTab({
 
                   {primary !== undefined && (
                     <>
-                      <div className="w-32 h-2 bg-surface-600 rounded-full overflow-hidden">
+                      <div className="w-28 h-2 bg-surface-600 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
-                            primary >= 0 ? 'bg-emerald-500' : 'bg-red-500'
+                            primary > 0.5 ? 'bg-emerald-500' : primary >= 0 ? 'bg-amber-500' : 'bg-rose-500'
                           }`}
-                          style={{ width: `${Math.min(Math.abs(primary) * 100, 100)}%` }}
+                          style={{ width: `${primary > 0 ? Math.min(primary * 100, 100) : 0}%` }}
                         />
                       </div>
                       <span
-                        className={`text-sm font-mono w-20 text-right font-semibold ${
-                          primary >= 0 ? 'text-emerald-300' : 'text-red-400'
+                        className={`text-sm font-mono w-24 text-right font-semibold ${
+                          primary > 0.5 ? 'text-emerald-300' : primary >= 0 ? 'text-amber-300' : 'text-rose-400'
                         }`}
                       >
-                        {label} {(primary * 100).toFixed(1)}%
+                        {label === 'R²' ? `R² ${primary.toFixed(3)}` : `${label} ${(primary * 100).toFixed(1)}%`}
                       </span>
                     </>
                   )}

@@ -52,7 +52,7 @@ export function ModelingResults({ results }: { results: ModelResults }) {
                   <td className="py-2.5 px-3 font-medium">{r.model_name}</td>
                   {results.task_type === 'regression' ? (
                     <>
-                      <td className="py-2.5 px-3 text-right font-mono text-xs">
+                      <td className={`py-2.5 px-3 text-right font-mono text-xs ${(r.metrics.r2 as number) < 0 ? 'text-rose-400 font-semibold' : ''}`}>
                         {fmtMetric(r.metrics.r2 as number)}
                       </td>
                       <td className="py-2.5 px-3 text-right font-mono text-xs">
@@ -76,7 +76,13 @@ export function ModelingResults({ results }: { results: ModelResults }) {
                     </>
                   )}
                   <td className="py-2.5 px-3 text-right font-mono text-xs">
-                    {r.cv_scores.mean.toFixed(4)}
+                    {r.cv_scores?.mean != null ? (
+                      <span title={(r.cv_scores as any)?.rmse_mean ? `CV RMSE: ${(r.cv_scores as any).rmse_mean}` : undefined}>
+                        {r.cv_scores.mean.toFixed(4)}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                 </tr>
               ))}

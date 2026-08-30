@@ -160,7 +160,22 @@ export const RegressionClassificationResultView = ({
         </div>
       )}
 
-      {diagnostics?.quality_flag === 'critical' && (
+      {ranking[0]?.metrics?.r2 !== undefined && ranking[0].metrics.r2 < 0 && (
+        <div className="p-3.5 bg-rose-500/10 border border-rose-500/25 rounded-xl flex items-start gap-3">
+          <AlertCircle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <div className="text-xs font-bold text-rose-300">
+              Avertissement de Généralisation (R² = {ranking[0].metrics.r2.toFixed(3)})
+            </div>
+            <p className="text-xs text-rose-200/80 mt-0.5 leading-relaxed">
+              Le modèle obtient une erreur hors-échantillon supérieure à celle d'une simple moyenne constante.
+              Ce phénomène survient généralement en cas de rupture structurelle temporelle (extrapolation impossible pour les arbres) ou de multicolinéarité sévère.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {diagnostics?.quality_flag === 'critical' && (!ranking[0]?.metrics?.r2 || ranking[0].metrics.r2 >= 0) && (
         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-300">
           {diagnostics.message || 'Qualité de prédiction faible.'}
         </div>
@@ -228,6 +243,31 @@ export const RegressionClassificationResultView = ({
           </div>
         </Section>
       )}
+
+      {(() => {
+        const regSummary = resultData.regression_summary || ranking[0]?.regression_summary;
+        if (!regSummary?.coefficients || regSummary.coefficients.length === 0) return null;
+        return (
+          <Section title={`Équation & Coefficients OLS (${bestName})`} icon={TrendingUp} color="#3b82f6">
+            {regSummary.equation && (
+              <div className="p-3 bg-surface-900/90 rounded-lg border border-white/10 font-mono text-xs text-cyan-300 overflow-x-auto select-all">
+                {regSummary.equation}
+              </div>
+            )}
+            <DataTable
+              headers={['Variable', 'Coeff (β)', 'Std Err', 't-stat', 'p-value', 'IC 95%']}
+              rows={regSummary.coefficients.map((c: any) => [
+                c.variable,
+                fmt(c.coefficient),
+                fmt(c.std_error),
+                fmt(c.t_statistic),
+                c.p_value < 0.001 ? '< 0.001' : fmt(c.p_value),
+                `[${fmt(c.ci_lower)}, ${fmt(c.ci_upper)}]`,
+              ])}
+            />
+          </Section>
+        );
+      })()}
 
       {failed.length > 0 && (
         <Section title={`${failed.length} modèle(s) échoué(s)`} icon={AlertCircle} color="#ef4444">

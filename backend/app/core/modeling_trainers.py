@@ -38,8 +38,6 @@ def train_single_model(
     task_type = data["task_type"]
     cv_folds = _safe_cv_folds(data["y_train"], cv_folds)
 
-    if is_competitive:
-        cv_folds = min(cv_folds, 3)
     registry = REGRESSION_MODELS if task_type == "regression" else CLASSIFICATION_MODELS
 
     if model_key not in registry:
@@ -53,10 +51,7 @@ def train_single_model(
         return _train_polynomial(data, cv_folds)
 
     X_train_fit, y_train_fit = X_train, y_train
-    if is_competitive:
-        max_fit_samples = 2500
-    else:
-        max_fit_samples = 5000 if model_key in ("svr", "svc") else 15000
+    max_fit_samples = 5000 if model_key in ("svr", "svc") else 50000
 
     if len(X_train) > max_fit_samples:
         idx = np.random.choice(len(X_train), max_fit_samples, replace=False)
@@ -83,8 +78,9 @@ def train_single_model(
     if fixed_params:
         pipe.set_params(**fixed_params)
 
+    scoring = "r2" if task_type == "regression" else "f1_weighted"
+
     if pipe_params or any(isinstance(v, list) for v in param_grid.values()):
-        scoring = "neg_mean_squared_error" if task_type == "regression" else "f1_weighted"
         grid = GridSearchCV(
             pipe, pipe_params, cv=cv_folds, scoring=scoring, n_jobs=1, error_score="raise"
         )
@@ -106,11 +102,18 @@ def train_single_model(
     else:
         metrics = _classification_metrics(y_test, y_pred, model, X_test)
 
-    scoring = "neg_mean_squared_error" if task_type == "regression" else "f1_weighted"
     try:
         cv_scores = cross_val_score(model, X_train_fit, y_train_fit, cv=cv_folds, scoring=scoring, n_jobs=1)
     except Exception:
         cv_scores = np.array([0.0])
+
+    cv_rmse_val = None
+    if task_type == "regression":
+        try:
+            cv_neg_mse = cross_val_score(model, X_train_fit, y_train_fit, cv=cv_folds, scoring="neg_mean_squared_error", n_jobs=1)
+            cv_rmse_val = round(float(np.sqrt(np.maximum(0.0, -cv_neg_mse.mean()))), 4)
+        except Exception:
+            pass
 
     importance = _get_feature_importance(model, data["feature_names"])
 
@@ -168,9 +171,11 @@ def train_single_model(
         "best_params": best_params,
         "metrics": metrics,
         "cv_scores": {
-            "mean": round(float(cv_scores.mean()), 6),
-            "std": round(float(cv_scores.std()), 6),
-            "scores": [round(float(s), 6) for s in cv_scores],
+            "mean": round(float(cv_scores.mean()), 4),
+            "std": round(float(cv_scores.std()), 4),
+            "scores": [round(float(s), 4) for s in cv_scores],
+            "rmse_mean": cv_rmse_val,
+            "metric": "R²" if task_type == "regression" else "F1",
         },
         "feature_importance": importance,
         "model": model,
@@ -188,6 +193,7 @@ def train_single_model(
 def _train_polynomial(data: dict, cv_folds: int) -> dict:
     """Entraîne une régression polynomiale."""
     best_score = -np.inf
+    best_rmse = None
     best_degree = 2
     best_model = None
 
@@ -212,9 +218,11 @@ def _train_polynomial(data: dict, cv_folds: int) -> dict:
             ("reg", Ridge(alpha=1.0)),
         ])
         try:
-            cv_scores = cross_val_score(pipe, X_train_fit, y_train_fit, cv=cv_folds, scoring="neg_mean_squared_error", n_jobs=1)
+            cv_scores = cross_val_score(pipe, X_train_fit, y_train_fit, cv=cv_folds, scoring="r2", n_jobs=1)
+            cv_mse = cross_val_score(pipe, X_train_fit, y_train_fit, cv=cv_folds, scoring="neg_mean_squared_error", n_jobs=1)
             if cv_scores.mean() > best_score:
                 best_score = cv_scores.mean()
+                best_rmse = round(float(np.sqrt(np.maximum(0.0, -cv_mse.mean()))), 4)
                 best_degree = degree
                 pipe.fit(X_train_fit, y_train_fit)
                 best_model = pipe
@@ -234,9 +242,11 @@ def _train_polynomial(data: dict, cv_folds: int) -> dict:
         "best_params": {"degree": best_degree},
         "metrics": metrics,
         "cv_scores": {
-            "mean": round(float(best_score), 6),
+            "mean": round(float(best_score), 4),
             "std": 0.0,
-            "scores": [round(float(best_score), 6)],
+            "scores": [round(float(best_score), 4)],
+            "rmse_mean": best_rmse,
+            "metric": "R²",
         },
         "feature_importance": [],
         "model": best_model,
