@@ -82,7 +82,7 @@ export default function Layout() {
               {isSidebarOpen && (
                 <div className="animate-fade-in whitespace-nowrap">
                   <h1 className="text-sm font-black text-surface-50 tracking-tighter leading-none">
-                    OpenStats
+                    OpenStats by Elmas
                   </h1>
                 </div>
               )}

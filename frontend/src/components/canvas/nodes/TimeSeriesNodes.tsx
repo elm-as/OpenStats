@@ -183,3 +183,62 @@ export function MultivariateTimeSeriesNode({ id, data }: NodeProps<Node<CanvasNo
     </NodeShell>
   );
 }
+
+export function GrangerNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns } = useConnectedColumns(id);
+
+  return (
+    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Causalité de Granger" hasInput badge="Temporal">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Matrice de dépendances causales directionnelles entre séries temporelles.
+      </div>
+      <div>
+        <NodeLabel>Variables à analyser</NodeLabel>
+        <NodeMultiColumnInput name="valueCols" placeholder="Toutes (auto)" value={(data.valueCols as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+      <div>
+        <NodeLabel>Lag maximum</NodeLabel>
+        <NodeNumberInput name="maxLag" placeholder="4" value={(data.maxLag as string) || '4'} onChange={handleChange} min={1} max={12} />
+      </div>
+    </NodeShell>
+  );
+}
+
+export function CointegrationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns } = useConnectedColumns(id);
+
+  return (
+    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Test de Cointégration (Johansen)" hasInput badge="Temporal">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Détecte l'existence d'une relation d'équilibre à long terme entre plusieurs séries I(1).
+      </div>
+      <div>
+        <NodeLabel>Variables I(1) à tester</NodeLabel>
+        <NodeMultiColumnInput name="valueCols" placeholder="Toutes (auto)" value={(data.valueCols as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+    </NodeShell>
+  );
+}
+
+export function TSDecompositionNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns } = useConnectedColumns(id);
+
+  return (
+    <NodeShell id={id} data={data} color="#f59e0b" icon={LineChart} title="Décomposition STL / Saisonnière" hasInput badge="Temporal">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Isoler la tendance, la saisonnalité et le bruit résiduel d'une série temporelle.
+      </div>
+      <div>
+        <NodeLabel>Variable numérique</NodeLabel>
+        <NodeColumnSelect name="valueCol" placeholder="-- Variable --" value={(data.valueCol as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+      <div>
+        <NodeLabel>Période saisonnière</NodeLabel>
+        <NodeNumberInput name="period" placeholder="7" value={(data.period as string) || '7'} onChange={handleChange} min={2} max={365} />
+      </div>
+    </NodeShell>
+  );
+}

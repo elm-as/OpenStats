@@ -110,3 +110,43 @@ export function TestStationarityNode({ id, data }: NodeProps<Node<CanvasNodeData
     </NodeShell>
   );
 }
+
+export function TestNormalityNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns, columnTypes } = useConnectedColumns(id);
+  const numericCols = columns.filter(c => isNumericType(columnTypes[c] || ''));
+
+  return (
+    <NodeShell id={id} data={data} color="#ef4444" icon={Activity} title="Test de normalité" hasInput badge="Test">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Shapiro-Wilk (p-value). Évalue si la distribution suit une loi Normale (Gaussienne).
+      </div>
+      <div>
+        <NodeLabel>Variables à tester</NodeLabel>
+        <NodeMultiColumnInput name="cols" placeholder="Toutes (auto)" value={(data.cols as string) || ''} onChange={handleChange} columns={numericCols} />
+      </div>
+    </NodeShell>
+  );
+}
+
+export function TestAnovaNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns, columnTypes } = useConnectedColumns(id);
+  const numericCols = columns.filter(c => isNumericType(columnTypes[c] || ''));
+
+  return (
+    <NodeShell id={id} data={data} color="#ef4444" icon={GitCompare} title="ANOVA & Kruskal-Wallis" hasInput badge="Test">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Analyse de variance paramétrique (F-test) et non-paramétrique (Kruskal-Wallis) sur 2+ groupes.
+      </div>
+      <div>
+        <NodeLabel>Variable de groupement</NodeLabel>
+        <NodeColumnSelect name="groupCol" placeholder="-- Variable Groupe --" value={(data.groupCol as string) || ''} onChange={handleChange} columns={columns} columnTypes={columnTypes} />
+      </div>
+      <div>
+        <NodeLabel>Variable numérique</NodeLabel>
+        <NodeColumnSelect name="valueCol" placeholder="-- Variable Valeur --" value={(data.valueCol as string) || ''} onChange={handleChange} columns={numericCols} columnTypes={columnTypes} />
+      </div>
+    </NodeShell>
+  );
+}

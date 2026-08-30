@@ -95,7 +95,7 @@ def predict_values(dataset_id):
     if ds is None:
         return jsonify({"error": "Dataset introuvable"}), 404
 
-    model_results = ds.get("model_results", {})
+    model_results = dataset_manager.get_model_results(dataset_id)
     if not model_results:
         return jsonify({"error": "Aucun modèle entraîné. Lancez d'abord un entraînement."}), 400
 
@@ -122,22 +122,42 @@ def predict_values(dataset_id):
         else:
             return jsonify({"error": "features doit être un dict ou une liste de dicts"}), 400
 
+        # Récupérer le DF pour l'imputation
+        df = dataset_manager.get_df(dataset_id)
+
         # Construire le DataFrame avec les bonnes colonnes dans le bon ordre
         rows = []
         for feat_dict in features_list:
             row = {}
             for fname in feature_names:
                 val = feat_dict.get(fname)
-                if val is None:
-                    return jsonify({"error": f"Feature manquante : {fname}"}), 400
-                try:
-                    row[fname] = float(val)
-                except (ValueError, TypeError):
-                    return jsonify({"error": f"Valeur invalide pour {fname}: {val}"}), 400
+                if val is None or val == "":
+                    # Imputation automatique si la feature est désactivée/manquante
+                    if fname in df.columns:
+                        col = df[fname].dropna()
+                        if pd.api.types.is_numeric_dtype(col):
+                            val = col.mean()
+                        else:
+                            val = col.mode().iloc[0] if len(col) > 0 else "unknown"
+                    else:
+                        val = 0.0 # Fallback
+                else:
+                    if fname in df.columns and pd.api.types.is_numeric_dtype(df[fname]):
+                        try:
+                            val = float(val)
+                        except (ValueError, TypeError):
+                            return jsonify({"error": f"Valeur numérique invalide pour {fname}: {val}"}), 400
+                    else:
+                        val = str(val)
+                row[fname] = val
             rows.append(row)
 
         X_pred = pd.DataFrame(rows, columns=feature_names)
         predictions = best_model.predict(X_pred)
+        
+        le = model_results.get("label_encoder")
+        if le is not None:
+            predictions = le.inverse_transform(predictions)
 
         task_type = model_results.get("task_type", "regression")
 
@@ -159,10 +179,13 @@ def predict_values(dataset_id):
         if task_type == "classification" and hasattr(best_model, "predict_proba"):
             try:
                 probas = best_model.predict_proba(X_pred)
-                classes = best_model.classes_ if hasattr(best_model, "classes_") else None
-                if classes is None and hasattr(best_model, "named_steps"):
-                    inner = list(best_model.named_steps.values())[-1]
-                    classes = inner.classes_ if hasattr(inner, "classes_") else None
+                if le is not None:
+                    classes = list(le.classes_)
+                else:
+                    classes = best_model.classes_ if hasattr(best_model, "classes_") else None
+                    if classes is None and hasattr(best_model, "named_steps"):
+                        inner = list(best_model.named_steps.values())[-1]
+                        classes = inner.classes_ if hasattr(inner, "classes_") else None
                 result["probabilities"] = [
                     {str(c): _safe(p) for c, p in zip(classes, row)} if classes is not None else [_safe(p) for p in row]
                     for row in probas
@@ -195,15 +218,35 @@ def get_feature_ranges(dataset_id):
 
     ranges = {}
     for fname in feature_names:
-        if fname in df.columns and pd.api.types.is_numeric_dtype(df[fname]):
+        if fname in df.columns:
             col = df[fname].dropna()
-            ranges[fname] = {
-                "min": round(float(col.min()), 4),
-                "max": round(float(col.max()), 4),
-                "mean": round(float(col.mean()), 4),
-                "median": round(float(col.median()), 4),
-                "std": round(float(col.std()), 4),
-            }
+            if pd.api.types.is_numeric_dtype(col):
+                unique_vals = col.dropna().unique()
+                if len(unique_vals) <= 10:
+                    mode_val = col.mode().iloc[0] if not col.empty else unique_vals[0]
+                    ranges[fname] = {
+                        "type": "categorical",
+                        "categories": unique_vals.tolist(),
+                        "mode": str(mode_val),
+                    }
+                else:
+                    ranges[fname] = {
+                        "type": "numeric",
+                        "min": round(float(col.min()), 4),
+                        "max": round(float(col.max()), 4),
+                        "mean": round(float(col.mean()), 4),
+                        "median": round(float(col.median()), 4),
+                        "std": round(float(col.std()), 4),
+                    }
+            else:
+                unique_vals = col.dropna().unique()
+                if len(unique_vals) <= 100:
+                    mode_val = col.mode().iloc[0] if not col.empty else unique_vals[0]
+                    ranges[fname] = {
+                        "type": "categorical",
+                        "categories": unique_vals.tolist(),
+                        "mode": str(mode_val),
+                    }
 
     return jsonify({
         "features": feature_names,

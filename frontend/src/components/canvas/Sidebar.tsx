@@ -40,6 +40,7 @@ const categories: SidebarCategory[] = [
     items: [
       { type: 'descriptiveNumeric', label: 'Stats numériques', icon: BarChart2, color: '#10b981' },
       { type: 'descriptiveCategorical', label: 'Stats catégorielles', icon: PieChart, color: '#14b8a6' },
+      { type: 'bootstrap', label: 'Bootstrap IC (0.95)', icon: FlaskConical, color: '#a855f7', badge: 'IC' },
     ],
   },
   {
@@ -47,15 +48,18 @@ const categories: SidebarCategory[] = [
     items: [
       { type: 'correlation', label: 'Matrice de corrélation', icon: TrendingUp, color: '#3b82f6' },
       { type: 'vif', label: 'VIF (Multicolinéarité)', icon: AlertTriangle, color: '#f97316' },
+      { type: 'outliers', label: 'Détection d\'anomalies', icon: AlertTriangle, color: '#f97316', badge: 'Outliers' },
     ],
   },
   {
     title: 'Tests d\'hypothèses',
     items: [
       { type: 'testCompareMeans', label: 'Comparaison moyennes', icon: GitCompare, color: '#ef4444' },
+      { type: 'testAnova', label: 'ANOVA & Kruskal-Wallis', icon: GitCompare, color: '#ef4444' },
       { type: 'testCorrelation', label: 'Test de corrélation', icon: Link2, color: '#ef4444' },
       { type: 'testIndependence', label: 'Test d\'indépendance', icon: Grid3X3, color: '#ef4444' },
       { type: 'testStationarity', label: 'Test stationnarité', icon: Activity, color: '#ef4444' },
+      { type: 'testNormality', label: 'Test de normalité', icon: Activity, color: '#ef4444' },
     ],
   },
   {
@@ -72,13 +76,26 @@ const categories: SidebarCategory[] = [
     items: [
       { type: 'regression', label: 'Régression', icon: TrendingUp, color: '#8b5cf6' },
       { type: 'classification', label: 'Classification', icon: Target, color: '#8b5cf6' },
+      { type: 'explainability', label: 'Explicabilité SHAP', icon: Target, color: '#8b5cf6', badge: 'XAI' },
+    ],
+  },
+  {
+    title: 'Analyses Avancées & Causalité',
+    items: [
+      { type: 'survival', label: 'Analyse de Survie (KM)', icon: Activity, color: '#ec4899', badge: 'Survie' },
+      { type: 'causal', label: 'Inférence Causale (DiD)', icon: GitCompare, color: '#06b6d4', badge: 'Causal' },
+      { type: 'manifold', label: 't-SNE & DBSCAN', icon: Layers, color: '#8b5cf6', badge: 'Manifold' },
     ],
   },
   {
     title: 'Séries temporelles',
     items: [
       { type: 'timeseries', label: 'Univariée (ARIMA)', icon: LineChart, color: '#f59e0b' },
+      { type: 'tsDecomposition', label: 'Décomposition STL', icon: LineChart, color: '#f59e0b' },
+      { type: 'garch', label: 'Volatilité GARCH(1,1)', icon: TrendingUp, color: '#f59e0b', badge: 'Risk' },
       { type: 'multivariateTimeseries', label: 'Multivariée (VAR)', icon: Shuffle, color: '#f59e0b' },
+      { type: 'granger', label: 'Causalité de Granger', icon: Shuffle, color: '#f59e0b' },
+      { type: 'cointegration', label: 'Cointégration (Johansen)', icon: Shuffle, color: '#f59e0b' },
     ],
   },
   {

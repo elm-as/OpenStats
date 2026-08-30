@@ -20,16 +20,19 @@ export function RegressionNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
       <div>
         <NodeLabel>Algorithmes</NodeLabel>
         <NodeSelect name="models" value={(data.models as string) || 'auto'} onChange={handleChange}>
-          <option value="auto">Compétitif (tous)</option>
-          <option value="linear_regression">Régression Linéaire</option>
-          <option value="ridge">Ridge</option>
-          <option value="lasso">Lasso</option>
+          <option value="auto">Compétitif (tous les 12 modèles)</option>
+          <option value="linear_regression">Régression Linéaire (OLS)</option>
+          <option value="ridge">Ridge (L2)</option>
+          <option value="lasso">Lasso (L1)</option>
           <option value="elasticnet">ElasticNet</option>
+          <option value="polynomial_regression">Régression Polynomiale</option>
+          <option value="decision_tree">Arbre de Décision</option>
           <option value="random_forest">Random Forest</option>
           <option value="gradient_boosting">Gradient Boosting</option>
-          <option value="xgb_regression">XGBoost</option>
-          <option value="svr">SVR</option>
-          <option value="knn_regression">KNN</option>
+          <option value="xgboost">XGBoost</option>
+          <option value="lightgbm">LightGBM</option>
+          <option value="svr">SVR (SVM Régression)</option>
+          <option value="knn">K-Plus Proches Voisins (KNN)</option>
         </NodeSelect>
       </div>
       <div className="flex items-center justify-between pt-1">
@@ -94,15 +97,18 @@ export function ClassificationNode({ id, data }: NodeProps<Node<CanvasNodeData>>
       <div>
         <NodeLabel>Algorithmes</NodeLabel>
         <NodeSelect name="models" value={(data.models as string) || 'auto'} onChange={handleChange}>
-          <option value="auto">Compétitif (tous)</option>
+          <option value="auto">Compétitif (tous les 11 modèles)</option>
           <option value="logistic_regression">Régression Logistique</option>
+          <option value="decision_tree">Arbre de Décision</option>
           <option value="random_forest">Random Forest</option>
           <option value="gradient_boosting">Gradient Boosting</option>
-          <option value="xgb_classification">XGBoost</option>
-          <option value="svm">SVM</option>
-          <option value="knn">KNN</option>
-          <option value="lda">LDA</option>
           <option value="adaboost">AdaBoost</option>
+          <option value="xgboost">XGBoost</option>
+          <option value="lightgbm">LightGBM</option>
+          <option value="svm">Support Vector Machine (SVM)</option>
+          <option value="knn">K-Plus Proches Voisins (KNN)</option>
+          <option value="lda">Analyse Discriminante Linéaire (LDA)</option>
+          <option value="qda">Analyse Discriminante Quadratique (QDA)</option>
         </NodeSelect>
       </div>
       <div className="flex items-center justify-between pt-1">
@@ -158,6 +164,23 @@ export function ClassificationNode({ id, data }: NodeProps<Node<CanvasNodeData>>
           </div>
         </NodeCollapsible>
       )}
+    </NodeShell>
+  );
+}
+
+export function ExplainabilityNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns } = useConnectedColumns(id);
+
+  return (
+    <NodeShell id={id} data={data} color="#8b5cf6" icon={Target} title="Explicabilité SHAP" hasInput badge="XAI">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Calcul des valeurs SHAP (Tree/Kernel Explainer) pour l'importance et l'impact local des variables.
+      </div>
+      <div>
+        <NodeLabel>Variable Cible</NodeLabel>
+        <NodeColumnSelect name="targetCol" placeholder="-- Variable Cible --" value={(data.targetCol as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
     </NodeShell>
   );
 }

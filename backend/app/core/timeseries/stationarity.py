@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Any
 from statsmodels.tsa.stattools import adfuller, kpss
 
-from app.core.timeseries.helpers import _sf
+from app.core.timeseries.residual_diagnostics import _sf
 
 
 def test_stationarity(series: pd.Series) -> dict[str, Any]:
@@ -12,7 +12,10 @@ def test_stationarity(series: pd.Series) -> dict[str, Any]:
 
     # ADF (H0 : non-stationnaire)
     try:
-        adf_stat, adf_p, adf_lag, adf_nobs, adf_crit, _ = adfuller(series.dropna(), autolag="AIC")
+        clean = series.dropna()
+        if len(clean) > 10000:
+            clean = clean.iloc[-10000:]
+        adf_stat, adf_p, adf_lag, adf_nobs, adf_crit, _ = adfuller(clean, autolag="AIC")
         results["adf"] = {
             "statistic": _sf(adf_stat),
             "p_value": _sf(adf_p),
@@ -30,7 +33,7 @@ def test_stationarity(series: pd.Series) -> dict[str, Any]:
 
     # KPSS (H0 : stationnaire)
     try:
-        kpss_stat, kpss_p, kpss_lag, kpss_crit = kpss(series.dropna(), regression="c", nlags="auto")
+        kpss_stat, kpss_p, kpss_lag, kpss_crit = kpss(clean, regression="c", nlags="auto")
         results["kpss"] = {
             "statistic": _sf(kpss_stat),
             "p_value": _sf(kpss_p),

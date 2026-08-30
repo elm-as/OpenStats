@@ -2,6 +2,7 @@
 Nœuds de sortie et d'extensions (AI, Extension, Insights, Output).
 """
 
+import os
 from app.services.dataset_service import dataset_manager
 from ._shared import _sanitize
 
@@ -74,9 +75,64 @@ def execute_insights(data, dataset_id):
 
 
 def execute_output(data, dataset_id):
-    fmt = data.get("format", "pdf")
-    return {
-        "status": "success",
-        "message": f"Rapport ({fmt.upper()}) prêt. Téléchargez-le depuis la page de rapport.",
-        "result": {"format": fmt, "dataset_id": dataset_id},
-    }
+    fmt = data.get("format", "pdf").lower()
+    title = data.get("title", "Rapport Canvas")
+    org = data.get("organization", "OpenStats")
+    
+    if not dataset_id:
+        return {"status": "skipped", "message": "Aucun dataset connecté pour générer le rapport"}
+
+    try:
+        if fmt in ("pdf", "docx", "pptx"):
+            if fmt == "pdf":
+                file_path = dataset_manager.generate_pdf_report(dataset_id, title=title, organization=org)
+                filename = os.path.basename(file_path)
+            else:
+                from app.core.professional_report import build_report_payload, generate_docx, generate_pptx
+                from app.config import Config
+                bundle = dataset_manager.get_export_bundle(dataset_id, title=title, organization=org)
+                content = build_report_payload(
+                    dataset_name=bundle.get("dataset", {}).get("name", dataset_id),
+                    profile=bundle.get("data_summary", {}).get("profile"),
+                    descriptive=bundle.get("analysis", {}).get("descriptive_stats"),
+                    model_results=bundle.get("modeling"),
+                )
+                blob = generate_docx(content) if fmt == "docx" else generate_pptx(content)
+                base_dir = os.path.join(Config.REPORTS_DIR, dataset_id)
+                os.makedirs(base_dir, exist_ok=True)
+                filename = f"rapport_{dataset_id}.{fmt}"
+                file_path = os.path.join(base_dir, filename)
+                with open(file_path, "wb") as f:
+                    f.write(blob)
+
+            download_url = f"/api/v1/datasets/{dataset_id}/report" if fmt == "pdf" else f"/api/v1/datasets/{dataset_id}/report/professional/{fmt}"
+            return {
+                "status": "success",
+                "message": f"Rapport ({fmt.upper()}) généré avec succès.",
+                "dataset_id": dataset_id,
+                "result": {
+                    "format": fmt,
+                    "dataset_id": dataset_id,
+                    "file_path": file_path,
+                    "filename": filename,
+                    "download_url": download_url,
+                },
+            }
+        else:
+            download_url = f"/api/v1/datasets/{dataset_id}/export/{fmt}"
+            return {
+                "status": "success",
+                "message": f"Export ({fmt.upper()}) prêt.",
+                "dataset_id": dataset_id,
+                "result": {
+                    "format": fmt,
+                    "dataset_id": dataset_id,
+                    "download_url": download_url,
+                },
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Erreur de génération de rapport ({fmt}): {str(e)}",
+            "dataset_id": dataset_id,
+        }

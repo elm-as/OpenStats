@@ -58,6 +58,7 @@ export function DatasetNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
       if (data.onChange) {
         data.onChange(id, 'importMode', 'existing');
         data.onChange(id, 'file', response.dataset_id);
+        data.onChange(id, 'fileName', file.name);
       }
 
       setUploadStatus('success');
@@ -73,11 +74,23 @@ export function DatasetNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     }
   };
 
+  const handleDatasetSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    const selectedDs = datasets.find((d: any) => d.id === selectedId);
+    if (data.onChange) {
+      data.onChange(id, 'file', selectedId);
+      if (selectedDs?.name) {
+        data.onChange(id, 'fileName', selectedDs.name);
+      }
+    }
+  };
+
   const handleUrlFetch = () => {
     if (!urlInput.trim()) return;
     if (data.onChange) {
       data.onChange(id, 'importMode', 'url');
       data.onChange(id, 'file', urlInput.trim());
+      data.onChange(id, 'fileName', urlInput.trim().split('/').pop() || 'dataset.csv');
     }
   };
 
@@ -101,7 +114,7 @@ export function DatasetNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
               Aucun dataset disponible. Importez un fichier ci-dessous.
             </div>
           ) : (
-            <NodeSelect name="file" value={(data.file as string) || ''} onChange={handleChange}>
+            <NodeSelect name="file" value={(data.file as string) || ''} onChange={handleDatasetSelect}>
               <option value="">-- Choisir un dataset --</option>
               {datasets.map((ds: any) => (
                 <option key={ds.id} value={ds.id}>{ds.name}</option>

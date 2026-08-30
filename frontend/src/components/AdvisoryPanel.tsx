@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, AlertTriangle, AlertCircle, Info, Sparkles } from 'lucide-react';
-import { api } from '../store/api';
+import { useGetDiagnosticsQuery } from '../store/api';
 
 interface Advisory {
   severity: 'critical' | 'warning' | 'info' | 'methodological';
@@ -84,7 +84,7 @@ function AdvisoryCard({ advisory }: { advisory: Advisory }) {
 
 export default function AdvisoryPanel({ datasetId }: { datasetId: string }) {
   const [open, setOpen] = useState(false);
-  const { data, isLoading } = api.useGetDiagnosticsQuery(datasetId);
+  const { data, isLoading } = useGetDiagnosticsQuery(datasetId);
 
   if (isLoading) {
     return (

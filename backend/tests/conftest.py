@@ -16,7 +16,10 @@ def app():
     app = create_app()
     
     with app.app_context():
+        from app.models.dataset import Dataset
         db.create_all()
+        db.session.query(Dataset).delete()
+        db.session.commit()
         yield app
         db.session.remove()
         db.drop_all()

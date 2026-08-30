@@ -15,70 +15,94 @@ from typing import Any
 from app.core.auto_pipeline.detector import DatasetProfile
 
 
-@dataclass
-class PipelineStep:
-    """Une étape d'un pipeline."""
+from app.core.auto_pipeline.pipeline_schema import PipelineStep, PipelineRecipe
 
-    key: str  # identifiant unique
-    operation: str  # clean | descriptive | correlation | vif | transform | model | timeseries | pca | report
-    label: str  # label affichable
-    rationale: str  # pourquoi cette étape
-    params: dict[str, Any] = field(default_factory=dict)
-    optional: bool = False
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
-
-@dataclass
-class PipelineRecipe:
-    """Pipeline complet pour un dataset."""
-
-    title: str
-    description: str
-    problem_type: str
-    target: str | None
-    steps: list[PipelineStep] = field(default_factory=list)
-    estimated_duration_sec: int = 0
-    confidence: str = "high"  # high | medium | low
-
-    def to_dict(self) -> dict[str, Any]:
-        d = asdict(self)
-        d["steps"] = [s.to_dict() if hasattr(s, "to_dict") else s for s in self.steps]
-        return d
 
 
 # ── Builder ──────────────────────────────────────────────────────────────
 
 
-def build_recipe(profile: DatasetProfile) -> PipelineRecipe:
-    """Construit un pipeline adapté au profil du dataset."""
+# ── Builder ──────────────────────────────────────────────────────────────
+
+
+def build_recipe(
+    profile: DatasetProfile,
+    target: str | None = None,
+    task_type: str | None = None,
+    selected_analyses: list[str] | None = None,
+    custom_steps: list[dict[str, Any] | PipelineStep] | None = None,
+) -> PipelineRecipe:
+    """Construit un pipeline personnalisé et adapté au profil du dataset et aux choix de l'utilisateur."""
+    if custom_steps:
+        parsed_steps: list[PipelineStep] = []
+        for s in custom_steps:
+            if isinstance(s, PipelineStep):
+                parsed_steps.append(s)
+            elif isinstance(s, dict):
+                parsed_steps.append(PipelineStep(
+                    key=s.get("key", "step"),
+                    operation=s.get("operation", "generic"),
+                    label=s.get("label", "Étape"),
+                    rationale=s.get("rationale", ""),
+                    params=s.get("params", {}),
+                    optional=bool(s.get("optional", False)),
+                ))
+        return PipelineRecipe(
+            title=f"Pipeline Personnalisé ({len(parsed_steps)} étapes)",
+            description="Pipeline personnalisé configuré par l'utilisateur.",
+            problem_type=task_type or profile.problem_type,
+            target=target or profile.suggested_target,
+            steps=parsed_steps,
+            estimated_duration_sec=len(parsed_steps) * 3,
+            confidence="high",
+        )
+
     steps: list[PipelineStep] = []
     duration = 0
 
-    target = profile.suggested_target
-    problem = profile.problem_type
+    effective_target = target or profile.suggested_target
+    target_type = profile.column_types.get(effective_target, "numeric") if effective_target else None
 
-    # ──  1. Cleaning ──
-    cleaning_actions = []
-    if profile.duplicate_ratio > 0.01:
-        cleaning_actions.append("remove_duplicates")
-    if profile.high_missing_cols:
-        cleaning_actions.append("drop_high_missing_cols")
-    if profile.near_constant_cols:
-        cleaning_actions.append("drop_constant_cols")
-    if profile.overall_null_rate > 0.05:
-        cleaning_actions.append("impute_missing")
+    # Détermination du type de problème
+    if task_type and task_type != "auto":
+        problem = task_type
+    elif profile.has_temporal and effective_target and target_type in ("numeric", "discrete", "continu"):
+        problem = "forecast"
+    elif effective_target and target_type in ("categorical", "binary"):
+        problem = "binary_classification" if target_type == "binary" else "multiclass_classification"
+    elif effective_target and target_type in ("numeric", "discrete", "continu"):
+        problem = "regression"
+    else:
+        problem = profile.problem_type or "exploration"
 
-    if cleaning_actions:
+    # Filtre sur les analyses sélectionnées si spécifié
+    def is_selected(key: str) -> bool:
+        if selected_analyses is None:
+            return True
+        return key in selected_analyses
+
+    # ── 1. Nettoyage & Intégrité ──
+    if is_selected("clean"):
+        cleaning_actions = []
+        if profile.duplicate_ratio > 0.01:
+            cleaning_actions.append("remove_duplicates")
+        if profile.high_missing_cols:
+            cleaning_actions.append("drop_high_missing_cols")
+        if profile.near_constant_cols:
+            cleaning_actions.append("drop_constant_cols")
+        if profile.overall_null_rate > 0.05:
+            cleaning_actions.append("impute_missing")
+
         steps.append(PipelineStep(
             key="clean",
             operation="clean",
-            label="Nettoyage des données",
+            label="Nettoyage & Contrôle d'intégrité",
             rationale=(
-                f"Présence de {profile.duplicate_rows} doublons, "
-                f"{len(profile.high_missing_cols)} colonnes trop manquantes, "
+                f"Détection de {profile.duplicate_rows} doublons, "
+                f"{len(profile.high_missing_cols)} colonnes manquantes, "
                 f"{len(profile.near_constant_cols)} quasi-constantes."
+                if cleaning_actions else
+                "Contrôle d'intégrité : 0 doublons, 0 valeurs manquantes critiques."
             ),
             params={
                 "actions": cleaning_actions,
@@ -88,236 +112,219 @@ def build_recipe(profile: DatasetProfile) -> PipelineRecipe:
         ))
         duration += 2
 
-    # ── 2. Profilage / Descriptives ──
-    steps.append(PipelineStep(
-        key="descriptive",
-        operation="descriptive",
-        label="Statistiques descriptives",
-        rationale="Vue d'ensemble : distributions, tendances centrales, dispersion.",
-        params={"bootstrap_ci": profile.n_rows < 1000},
-    ))
-    duration += 2
+    # ── 2. Profilage & Descriptives ──
+    if is_selected("descriptive"):
+        steps.append(PipelineStep(
+            key="descriptive",
+            operation="descriptive",
+            label="Statistiques descriptives & Distributions",
+            rationale="Vue d'ensemble des variables : tendance centrale, dispersion, asymétrie.",
+            params={"bootstrap_ci": profile.n_rows < 1000},
+        ))
+        duration += 2
 
     # ── 3. Corrélations (si ≥2 numériques) ──
-    if len(profile.numeric_cols) >= 2:
+    if is_selected("correlations") and len(profile.numeric_cols) >= 2:
         steps.append(PipelineStep(
             key="correlations",
             operation="correlation",
-            label="Matrice de corrélation",
-            rationale=f"{len(profile.numeric_cols)} variables numériques disponibles.",
+            label="Matrice de corrélation & Dépendances",
+            rationale=f"{len(profile.numeric_cols)} variables numériques analysées pour détecter les associations linéaires et rangs.",
             params={"method": "pearson"},
         ))
         duration += 1
 
-    # ── 4. VIF (multicolinéarité) ──
-    if len(profile.numeric_cols) >= 3 and problem in ("regression", "binary_classification", "multiclass_classification"):
-        steps.append(PipelineStep(
-            key="vif",
-            operation="vif",
-            label="Vérification multicolinéarité (VIF)",
-            rationale="Indispensable avant une régression : détecte les variables redondantes.",
-            params={},
-        ))
-        duration += 1
+    # ── 4. ANALYSES TEMPORELLES & ÉCONOMÉTRIE (Si variable temporelle présente) ──
+    if profile.has_temporal and profile.numeric_cols:
+        date_col = profile.temporal_cols[0] if profile.temporal_cols else "date"
 
-    # ── 5. Transformations recommandées ──
-    if problem in ("regression", "binary_classification", "multiclass_classification"):
-        steps.append(PipelineStep(
-            key="transform_recommend",
-            operation="transform_recommend",
-            label="Recommandations de transformation",
-            rationale="Identifie les variables nécessitant log/standardisation/Box-Cox.",
-            params={},
-            optional=True,
-        ))
-        duration += 1
-
-    # ── 6. Réduction de dimensions (si haut dim) ──
-    if "high_dim" in profile.flags or "wide_dataset" in profile.flags:
-        if len(profile.numeric_cols) >= 5:
+        # 4a. Stationnarité (ADF / KPSS)
+        if is_selected("stationarity"):
+            orders = profile.integration_orders or {}
+            non_stat_cols = [c for c, v in orders.items() if not v.get("is_stationary", True) or v.get("order", 0) >= 1]
+            stat_rationale = (
+                f"Tests ADF & KPSS sur les séries temporelles. {len(non_stat_cols)} série(s) non-stationnaire(s) détectée(s)."
+                if non_stat_cols else
+                "Diagnostic de stationnarité (ADF & KPSS) pour valider l'absence de racine unitaire."
+            )
             steps.append(PipelineStep(
-                key="pca",
-                operation="pca",
-                label="ACP — Réduction de dimensions",
-                rationale=(
-                    "Dataset à haute dimension : ACP recommandée pour identifier les axes principaux."
-                ),
-                params={"columns": profile.numeric_cols},
+                key="timeseries_stationarity",
+                operation="timeseries_stationarity",
+                label="Tests de Stationnarité (ADF & KPSS)",
+                rationale=stat_rationale,
+                params={"date_col": date_col, "columns": profile.numeric_cols[:10]},
             ))
             duration += 3
 
-    # ── 7. Modélisation ou prévision ──
-    if problem == "forecast" and profile.temporal_cols and profile.numeric_cols:
-        date_col = profile.temporal_cols[0]
-        value_col = target or profile.numeric_cols[0]
-        orders = profile.integration_orders  # col -> {order, is_stationary, ...}
-        stat_summary = profile.stationarity_summary  # all_stationary | all_nonstationary | mixed | unknown
-
-        if len(profile.numeric_cols) >= 2:
-            value_cols = profile.numeric_cols[:5]
-
-            # Choisir le modèle selon stationnarité
-            if stat_summary == "all_stationary":
-                # Toutes I(0) → VAR en niveaux
-                forced_model = "var"
-                ts_rationale = (
-                    f"Toutes les séries sont stationnaires I(0) → VAR en niveaux recommandé "
-                    f"(ADF confirmé pour : {', '.join(value_cols[:3])})."
-                )
-            elif stat_summary == "all_nonstationary" and profile.cointegration_likely:
-                # Toutes I(1) + probable cointégration → VECM
-                forced_model = "vecm"
-                ts_rationale = (
-                    f"{len(value_cols)} séries non-stationnaires I(1) détectées. "
-                    f"Cointégration probable → VECM recommandé (test Johansen inclus)."
-                )
-            elif stat_summary == "all_nonstationary":
-                # Toutes I(1) sans cointégration → VAR en différences
-                forced_model = "var"
-                ts_rationale = (
-                    f"Séries I(1) sans cointégration détectée → VAR sur premières différences."
-                )
-            elif stat_summary == "mixed":
-                # I(0) et I(1) mélangés → ARDL
-                i0 = [c for c, v in orders.items() if v.get("order", 1) == 0]
-                i1 = [c for c, v in orders.items() if v.get("order", 0) >= 1]
-                forced_model = "ardl"
-                ts_rationale = (
-                    f"Stationnarité mixte détectée : {len(i0)} I(0), {len(i1)} I(1) → ARDL recommandé "
-                    f"(robuste aux ordres d'intégration mixtes)."
-                )
-            else:
-                # Inconnu → laisser l'auto-sélection
-                forced_model = None
-                ts_rationale = "Plusieurs variables temporelles : analyse de cointégration et VAR."
-
-            step_params: dict = {
-                "date_col": date_col,
-                "value_cols": value_cols,
-                "forecast_steps": 10,
-            }
-            if forced_model:
-                step_params["forced_model"] = forced_model
-
-            model_label = {
-                "vecm": "Prévision multivariée — VECM (cointégration)",
-                "ardl": "Prévision multivariée — ARDL (ordres mixtes)",
-                "var": "Prévision multivariée — VAR",
-            }.get(forced_model or "", "Prévision multivariée (VAR/VECM/ARDL)")
-
+        # 4b. Cointégration de Johansen & Relations Long-Terme (si ≥2 numériques)
+        if is_selected("cointegration") and len(profile.numeric_cols) >= 2:
             steps.append(PipelineStep(
-                key="timeseries_multivariate",
-                operation="timeseries_multivariate",
-                label=model_label,
-                rationale=ts_rationale,
-                params=step_params,
+                key="timeseries_cointegration",
+                operation="timeseries_cointegration",
+                label="Test de Cointégration de Johansen",
+                rationale=f"Vérifie l'existence d'une relation d'équilibre à long terme entre les {len(profile.numeric_cols[:5])} variables économiques/temporelles.",
+                params={"date_col": date_col, "columns": profile.numeric_cols[:5]},
             ))
-            duration += 15
+            duration += 4
 
-        else:
-            # Univarié : choisir d selon ADF
-            col_order_info = orders.get(value_col, {})
-            d = col_order_info.get("order", 0)
-            adf_p = col_order_info.get("adf_p")
-
-            if d == 0:
-                stat_note = f"Série stationnaire (ADF p={adf_p:.4f}) → ARIMA(d=0)/SARIMA."
-            elif d == 1:
-                stat_note = f"Série I(1) (ADF p={adf_p:.4f}) → ARIMA(d=1) recommandé."
-            else:
-                stat_note = f"Série I({d}) → différenciation {d} ordre(s) nécessaire."
-
+        # 4c. Prévision Univariée / Économétrique (ARIMA, SARIMA, Holt-Winters)
+        if is_selected("timeseries_forecast") and effective_target:
             steps.append(PipelineStep(
                 key="timeseries",
                 operation="timeseries",
-                label=f"Prévision ARIMA(d={d}) sur `{value_col}`",
-                rationale=f"{stat_note} Modélisation ARIMA/SARIMA/Holt-Winters avec prévisions.",
+                label=f"Prévision Temporelle (ARIMA/SARIMA) sur `{effective_target}`",
+                rationale=f"Modélisation temporelle avec sélection automatique ARIMA / Holt-Winters et projection à horizon.",
                 params={
                     "date_col": date_col,
-                    "value_col": value_col,
-                    "forecast_steps": 10,
+                    "value_col": effective_target,
+                    "forecast_steps": min(max(5, int(profile.n_rows * 0.2)), 24),
                 },
             ))
-            duration += 10
+            duration += 8
 
-    elif problem in ("regression", "binary_classification", "multiclass_classification") and target:
-        # Liste de modèles selon le problème
-        if problem == "regression":
-            model_keys = ["linear_regression", "ridge", "random_forest", "gradient_boosting"]
-        else:
+        # 4d. Modélisation Multivariée (VAR / VECM / ARDL)
+        if is_selected("timeseries_multivariate") and len(profile.numeric_cols) >= 2:
+            value_cols = [effective_target] + [c for c in profile.numeric_cols if c != effective_target][:4] if effective_target else profile.numeric_cols[:5]
+            steps.append(PipelineStep(
+                key="timeseries_multivariate",
+                operation="timeseries_multivariate",
+                label="Modélisation Multivariée (VAR / VECM / ARDL)",
+                rationale=f"Capture les dynamiques croisées, interdépendances et causalités de Granger entre {len(value_cols)} variables.",
+                params={
+                    "date_col": date_col,
+                    "value_cols": value_cols,
+                    "forecast_steps": min(max(5, int(profile.n_rows * 0.2)), 24),
+                },
+            ))
+            duration += 12
+
+    # ── 5. Multicolinéarité (VIF) ──
+    if is_selected("vif") and len(profile.numeric_cols) >= 3 and problem in ("regression", "binary_classification", "multiclass_classification", "forecast", "timeseries_regression"):
+        steps.append(PipelineStep(
+            key="vif",
+            operation="vif",
+            label="Vérification Multicolinéarité (VIF)",
+            rationale="Détecte les redondances et intercorrélations excessives entre variables explicatives.",
+            params={},
+        ))
+        duration += 1
+
+    # ── 6. Transformations & Normalisation ──
+    if is_selected("transform"):
+        transform_feature_cols = [c for c in profile.numeric_cols if c != effective_target]
+        if transform_feature_cols:
+            steps.append(PipelineStep(
+                key="transform",
+                operation="transform",
+                label="Normalisation & Préparation des caractéristiques",
+                rationale="Standardisation, log-scaling et mise à l'échelle des variables prédictives.",
+                params={
+                    "transforms": [{"column": c, "transform": "standardize"} for c in transform_feature_cols[:5]]
+                },
+                optional=False,
+            ))
+            duration += 2
+
+    # ── 7. Réduction de dimensions (ACP / t-SNE) ──
+    if is_selected("pca") and len(profile.numeric_cols) >= 4:
+        steps.append(PipelineStep(
+            key="pca",
+            operation="pca",
+            label="ACP — Analyse en Composantes Principales",
+            rationale="Synthèse des axes majeurs de variance et réduction de dimensionnalité.",
+            params={"columns": profile.numeric_cols},
+            optional=True,
+        ))
+        duration += 3
+
+    # ── 8. Modélisation Machine Learning ──
+    if is_selected("model") and effective_target:
+        is_classif = problem in ("binary_classification", "multiclass_classification")
+        if is_classif:
             model_keys = ["logistic_regression", "random_forest", "gradient_boosting"]
+            model_label = f"Classification Supervisée sur `{effective_target}`"
+            rationale = f"Entraînement comparatif des modèles de classification sur `{effective_target}`."
+        else:
+            model_keys = ["linear_regression", "ridge", "random_forest", "gradient_boosting"]
+            model_label = f"Régression Machine Learning sur `{effective_target}`"
+            rationale = (
+                f"Modélisation prédictive avec validation temporelle `TimeSeriesSplit` sur `{effective_target}`."
+                if profile.has_temporal else
+                f"Régression prédictive multi-modèles avec validation croisée sur `{effective_target}`."
+            )
 
         steps.append(PipelineStep(
             key="model",
             operation="model",
-            label=f"Modélisation prédictive ({problem.replace('_', ' ')})",
-            rationale=(
-                f"Cible détectée : `{target}` (confiance {profile.target_score:.0f}/100). "
-                f"Mode compétitif avec validation croisée."
-            ),
+            label=model_label,
+            rationale=rationale,
             params={
-                "target_col": target,
+                "target_col": effective_target,
+                "problem_type": "classification" if is_classif else "regression",
+                "task_type": "classification" if is_classif else "regression",
                 "model_keys": model_keys,
-                "cv_folds": 5 if profile.n_rows >= 200 else 3,
+                "cv_folds": 5 if profile.n_rows >= 100 else 3,
+                "cv_strategy": "timeseries" if profile.has_temporal else "kfold",
                 "competitive": True,
             },
         ))
         duration += 10
 
-        # SHAP si possible
+    # ── 9. Explicabilité SHAP ──
+    if is_selected("explainability") and effective_target:
         steps.append(PipelineStep(
             key="explainability",
             operation="explainability",
-            label="Explicabilité SHAP",
-            rationale="Interprétation des prédictions par SHAP : feature importance + impacts locaux.",
-            params={"target_col": target},
+            label="Explicabilité SHAP & Importance des variables",
+            rationale="Mesure l'impact direct et la contribution relative de chaque variable explicative.",
+            params={"target_col": effective_target},
             optional=True,
         ))
-        duration += 5
+        duration += 4
 
-    # ── 8. Insights automatiques ──
-    steps.append(PipelineStep(
-        key="insights",
-        operation="insights",
-        label="Génération d'insights narratifs",
-        rationale="Transforme les résultats numériques en interprétations actionnables.",
-        params={},
-    ))
-    duration += 1
+    # ── 10. Insights Narratifs ──
+    if is_selected("insights"):
+        steps.append(PipelineStep(
+            key="insights",
+            operation="insights",
+            label="Génération d'Insights Narratifs IA",
+            rationale="Synthèse interprétative automatisée et recommandations statistiques actionnables.",
+            params={},
+        ))
+        duration += 1
 
-    # ── 9. Rapport (optionnel) ──
-    steps.append(PipelineStep(
-        key="report",
-        operation="report",
-        label="Rapport PDF/DOCX",
-        rationale="Génère un rapport complet avec insights, graphiques et recommandations.",
-        params={"format": "pdf"},
-        optional=True,
-    ))
-    duration += 3
+    # ── 11. Rapport Complet (PDF/DOCX) ──
+    if is_selected("report"):
+        steps.append(PipelineStep(
+            key="report",
+            operation="report",
+            label="Génération de Rapport Exécutif PDF/DOCX",
+            rationale="Création d'un rapport structuré avec graphiques, tableaux de résultats et conclusions.",
+            params={"format": "pdf"},
+            optional=True,
+        ))
+        duration += 3
 
-    # Titre et confiance globale
-    if problem == "forecast":
-        title = "Prévision de séries temporelles"
-        desc = f"Pipeline de prévision sur **{target or profile.numeric_cols[0] if profile.numeric_cols else 'la variable cible'}**."
-    elif problem == "regression":
-        title = f"Régression sur `{target}`"
-        desc = f"Pipeline de régression : nettoyage, exploration, modélisation, explicabilité."
-    elif problem in ("binary_classification", "multiclass_classification"):
-        title = f"Classification : prédire `{target}`"
-        desc = f"Pipeline de classification {'binaire' if problem == 'binary_classification' else 'multi-classe'}."
+    # Titre et description adaptés
+    if profile.has_temporal and effective_target:
+        title = f"Pipeline Séries Temporelles & Économétrie (`{effective_target}`)"
+        desc = f"Pipeline complet d'analyse temporelle, stationnarité, cointégration et prévision sur **{effective_target}** ({profile.n_rows} observations)."
+    elif problem == "regression" and effective_target:
+        title = f"Pipeline de Régression (`{effective_target}`)"
+        desc = f"Pipeline de modélisation prédictive, VIF, régression et explicabilité sur **{effective_target}**."
+    elif "classification" in problem and effective_target:
+        title = f"Pipeline de Classification (`{effective_target}`)"
+        desc = f"Pipeline d'apprentissage supervisé et discrimination sur **{effective_target}**."
     else:
-        title = "Exploration du dataset"
-        desc = "Aucune cible évidente détectée : pipeline exploratoire."
-
-    confidence = "high" if profile.target_score >= 70 or problem == "forecast" else "medium" if profile.target_score >= 40 else "low"
+        title = "Pipeline d'Exploration & Profilage"
+        desc = "Pipeline exploratoire : contrôle de qualité, statistiques, corrélations et réduction dimensionnelle."
 
     return PipelineRecipe(
         title=title,
         description=desc,
         problem_type=problem,
-        target=target,
+        target=effective_target,
         steps=steps,
         estimated_duration_sec=duration,
-        confidence=confidence,
+        confidence="high",
     )

@@ -2,6 +2,7 @@ import os
 import logging
 import uuid
 import time
+os.environ.setdefault("LOKY_MAX_CPU_COUNT", "4")
 from flask import Flask, send_from_directory, request, g, jsonify
 from flask_cors import CORS
 
@@ -14,6 +15,11 @@ from app.extensions import db, migrate, limiter
 
 def _ensure_legacy_schema_compatibility(app: Flask):
     """Met a niveau une base SQLite existante avec les colonnes/tables recentes."""
+    try:
+        db.create_all()
+    except Exception as e:
+        app.logger.warning("Erreur db.create_all() dans compatibilité: %s", e)
+
     engine = db.engine
     if engine.dialect.name != "sqlite":
         return
@@ -58,8 +64,11 @@ def _setup_logging(app: Flask):
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    # Réduire le bruit des libs tierces
-    logging.getLogger("werkzeug").setLevel(logging.WARNING)
+    # Réduire le bruit des libs tierces (garder werkzeug en INFO en mode local)
+    if os.getenv("LOCAL_DEV_MODE", "true").lower() == "true":
+        logging.getLogger("werkzeug").setLevel(logging.INFO)
+    else:
+        logging.getLogger("werkzeug").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
     @app.before_request
@@ -122,15 +131,14 @@ def create_app(config_class=Config):
     # Logging structuré
     _setup_logging(app)
 
-    # Importer les modèles pour Alembic
+    # Importer les modèles pour SQLAlchemy / Alembic
     with app.app_context():
         from app import models  # noqa: F401
-        _ensure_legacy_schema_compatibility(app)
 
         is_sqlite = db.engine.dialect.name == "sqlite"
-        if is_sqlite and app.config.get("LOCAL_DEV_MODE", False):
+        if is_sqlite:
             db.create_all()
-            app.logger.info("SQLite local: tables créées via create_all()")
+            app.logger.info("SQLite: tables créées/vérifiées via create_all()")
         else:
             from flask_migrate import upgrade as _migrate_upgrade
             try:
@@ -140,12 +148,18 @@ def create_app(config_class=Config):
                 app.logger.warning("flask db upgrade a échoué: %s. Fallback sur create_all().", exc)
                 db.create_all()
 
+        _ensure_legacy_schema_compatibility(app)
+
         from app.services.marketplace_service import seed_marketplace
         seed_marketplace()
 
         # Enregistrer les exécuteurs de jobs
         from app.tasks.executors import register_all_executors
         register_all_executors()
+
+        # Précharger les modules ML/statistiques pour éviter les erreurs d'importation concourantes dans le Canvas
+        from app.core.preload import preload_heavy_modules
+        preload_heavy_modules(app.logger)
 
     # Register API blueprints
     from app.api.v1 import api_v1_bp

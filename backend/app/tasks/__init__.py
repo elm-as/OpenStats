@@ -22,7 +22,7 @@ def _make_celery():
         return _celery_app
     
     _checked = True
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis_url = os.getenv("REDIS_URL") or os.getenv("CELERY_BROKER_URL") or "redis://localhost:6379/0"
 
     try:
         from celery import Celery

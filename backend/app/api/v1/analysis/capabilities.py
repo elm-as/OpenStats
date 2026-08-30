@@ -57,22 +57,35 @@ def get_capabilities(dataset_id):
         col_name = col_info["nom_brut"]
         if col_name in excluded:
             continue
-        col_type = col_info.get("type_statistique", "")
+        col_type = str(col_info.get("type_statistique", "")).lower()
 
-        if col_type == "continu":
+        if col_type in ("continu", "discret", "numerique"):
             numeric_cols.append(col_name)
-        elif col_type == "discret":
-            numeric_cols.append(col_name)
-            discrete_cols.append(col_name)
+            if col_type == "discret":
+                discrete_cols.append(col_name)
         elif col_type == "binaire":
             binary_cols.append(col_name)
             categorical_cols.append(col_name)
-        elif col_type.startswith("catégoriel"):
+        elif col_type.startswith("catégoriel") or col_type in ("categoriel", "categoriel_nominal", "categoriel_ordinal"):
             categorical_cols.append(col_name)
         elif col_type == "temporel":
             temporal_cols.append(col_name)
 
-    grouping_cols = categorical_cols + discrete_cols
+    # Fallback sur les dtypes réels de la DataFrame pour capturer les nouvelles colonnes
+    # ou les colonnes non typées dans le dictionnaire
+    known_cols = set(numeric_cols + categorical_cols + temporal_cols)
+    for col in df.columns:
+        if col in excluded or col in known_cols:
+            continue
+        series = df[col]
+        if pd.api.types.is_numeric_dtype(series):
+            numeric_cols.append(col)
+        elif pd.api.types.is_datetime64_any_dtype(series):
+            temporal_cols.append(col)
+        else:
+            categorical_cols.append(col)
+
+    grouping_cols = list(dict.fromkeys(categorical_cols + discrete_cols))
 
     group_counts = {}
     for col in grouping_cols:
@@ -177,27 +190,28 @@ def get_capabilities(dataset_id):
         "reason": None if has_numeric else "Aucune variable numérique disponible",
     })
 
-    regression_targets = numeric_cols
-    classification_targets = [c for c in grouping_cols if group_counts.get(c, 0) >= 2]
+    all_active_cols = [c for c in df.columns if c not in excluded]
+    regression_targets = list(dict.fromkeys(numeric_cols + all_active_cols))
+    classification_targets = list(dict.fromkeys(grouping_cols + categorical_cols + binary_cols + all_active_cols))
 
     analyses.append({
         "key": "modeling_regression", "label": "Modélisation prédictive — Régression",
         "description": "Prédiction d'une variable numérique continue. Algorithmes : Linéaire, Ridge, Lasso, RF, XGBoost…",
         "category": "modeling", "icon": "trending_up",
-        "available": len(regression_targets) >= 1 and (len(numeric_cols) + len(categorical_cols)) >= 2,
-        "requires": "Variable cible numérique + ≥1 variable explicative",
+        "available": len(regression_targets) >= 1 and len(all_active_cols) >= 2,
+        "requires": "Variable cible + ≥1 variable explicative",
         "applicable_columns": regression_targets,
-        "reason": None if regression_targets else "Aucune variable numérique pour servir de cible",
+        "reason": None if regression_targets else "Aucune variable disponible pour servir de cible",
     })
 
     analyses.append({
         "key": "modeling_classification", "label": "Modélisation prédictive — Classification",
         "description": "Prédiction d'une variable catégorielle ou discrète. Algorithmes : Logistique, RF, XGBoost, SVM…",
         "category": "modeling", "icon": "layers",
-        "available": len(classification_targets) >= 1 and (len(numeric_cols) + len(categorical_cols)) >= 2,
-        "requires": "Variable cible catégorielle/discrète + ≥1 variable explicative",
+        "available": len(classification_targets) >= 1 and len(all_active_cols) >= 2,
+        "requires": "Variable cible + ≥1 variable explicative",
         "applicable_columns": classification_targets,
-        "reason": None if classification_targets else "Aucune variable catégorielle/discrète pour servir de cible",
+        "reason": None if classification_targets else "Aucune variable disponible pour servir de cible",
     })
 
     can_timeseries = has_temporal and has_numeric
@@ -267,7 +281,7 @@ def get_capabilities(dataset_id):
     has_model = False
     try:
         ds_data = dataset_manager.get(dataset_id)
-        if ds_data and ds_data.get("model_results", {}).get("best_model") is not None:
+        if ds_data and ds_data.get("model_results", {}).get("metrics") is not None:
             has_model = True
     except Exception:
         pass

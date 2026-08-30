@@ -94,7 +94,7 @@ export default function SharedCanvasPage() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
             <span className="text-white font-black text-sm tracking-tighter">OS</span>
           </div>
-          <span className="font-bold text-surface-100">OpenStats</span>
+          <span className="font-bold text-surface-100">OpenStats by Elmas</span>
           <span className="px-2 py-0.5 rounded-full bg-accent-500/10 text-accent-400 text-[10px] font-bold uppercase tracking-widest border border-accent-500/20">Read-Only</span>
         </div>
         <Link to="/" className="text-sm font-semibold text-surface-400 hover:text-white transition-colors">

@@ -10,7 +10,7 @@ from app.core.interpretation.base import (
     insight,
     sort_insights,
 )
-from app.core.interpretation.narrators._helpers import _fmt_pct, _fmt_num, _safe
+from app.core.interpretation.narrators.narrator_formatting import _fmt_pct, _fmt_num, _safe
 
 
 def narrate_modeling(results: dict[str, Any]) -> list[Insight]:
@@ -20,19 +20,23 @@ def narrate_modeling(results: dict[str, Any]) -> list[Insight]:
         return insights
 
     task = results.get("task_type") or results.get("task")
-    best = results.get("best_model") or results.get("best") or {}
-    all_models = results.get("models") or results.get("comparison") or []
+    ranking = results.get("ranking") or []
+    all_models = ranking or results.get("models") or results.get("comparison") or []
     target = results.get("target") or results.get("target_col")
 
-    if not best and isinstance(all_models, list) and all_models:
-        # Prendre le meilleur du leaderboard
-        if task == "regression":
-            all_models_sorted = sorted(all_models, key=lambda m: -_safe(m, "test_metrics", "r2", default=-999))
-        else:
-            all_models_sorted = sorted(all_models, key=lambda m: -_safe(m, "test_metrics", "accuracy", default=0))
-        best = all_models_sorted[0] if all_models_sorted else {}
+    best = None
+    if isinstance(ranking, list) and ranking and isinstance(ranking[0], dict):
+        best = ranking[0]
+    elif isinstance(results.get("best"), dict):
+        best = results["best"]
+    elif isinstance(results.get("best_model"), dict):
+        best = results["best_model"]
 
-    best_name = best.get("name") or best.get("model_key") or "Meilleur modèle"
+    if not best and isinstance(all_models, list) and all_models:
+        best = all_models[0] if isinstance(all_models[0], dict) else {}
+
+    best = best if isinstance(best, dict) else {}
+    best_name = best.get("name") or best.get("model_name") or best.get("model_key") or "Meilleur modèle"
     test_metrics = best.get("test_metrics") or best.get("metrics") or {}
 
     # ── Régression ──

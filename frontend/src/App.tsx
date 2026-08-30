@@ -52,7 +52,7 @@ export default function App() {
           <Route path="analyzer" element={<AnalyzerPage />} />
           <Route path="analyzer/results" element={<AnalyzerResultsPage />} />
 
-          {/* Canvas Intercatif */}
+          {/* Canvas Interactif */}
           <Route path="canvas" element={<CanvasPage />} />
 
           {/* Marketplace */}

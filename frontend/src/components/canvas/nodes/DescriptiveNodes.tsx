@@ -46,3 +46,31 @@ export function VIFNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     </NodeShell>
   );
 }
+
+export function BootstrapNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  return (
+    <NodeShell id={id} data={data} color="#a855f7" icon={TrendingUp} title="Bootstrap IC (0.95)" hasInput badge="Inférence">
+      <div className="space-y-2">
+        <div>
+          <NodeLabel>Statistique</NodeLabel>
+          <NodeSelect name="statistic" value={(data.statistic as string) || 'mean'} onChange={handleChange}>
+            <option value="mean">Moyenne</option>
+            <option value="median">Médiane</option>
+            <option value="std">Écart-type</option>
+          </NodeSelect>
+        </div>
+      </div>
+    </NodeShell>
+  );
+}
+
+export function OutliersNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  return (
+    <NodeShell id={id} data={data} color="#f97316" icon={AlertTriangle} title="Détection d'Anomalies" hasInput badge="Outliers">
+      <div className="text-surface-400 text-[11px] leading-relaxed">
+        Algorithme Isolation Forest pour identifier les observations aberrantes ou multidimensionnellement atypiques.
+      </div>
+    </NodeShell>
+  );
+}

@@ -1,0 +1,107 @@
+@layer base {
+  /* ── Global dark-mode base ── */
+  :root {
+    /* Accent system */
+    --color-accent: 6 182 212;
+    --color-secondary: 37 99 235;
+
+    /* Glass surfaces (4 levels of elevation) */
+    --surface-0: rgba(8, 12, 28, 0.95);      /* deepest bg */
+    --surface-1: rgba(15, 23, 42, 0.55);     /* card base */
+    --surface-2: rgba(20, 28, 54, 0.7);      /* elevated card */
+    --surface-3: rgba(28, 38, 70, 0.85);     /* modal/popover */
+    --glass-bg: var(--surface-1);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-hover: rgba(6, 182, 212, 0.25);
+    --glass-highlight: rgba(255, 255, 255, 0.04);
+
+    /* SEMANTIC text colors (contraste recalibre pour dark) */
+    --text-primary: #f1f5f9;     /* titres, contenu important */
+    --text-secondary: #cbd5e1;   /* corps de texte */
+    --text-muted: #94a3b8;       /* labels, helpers */
+    --text-faint: #64748b;       /* placeholders, decorations */
+    --text-inverse: #0c0f1a;     /* texte sur fonds clairs */
+
+    /* Semantic action colors */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #06b6d4;
+
+    /* Density (radius + padding) */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+
+    --pad-tight: 0.5rem;
+    --pad-cozy: 0.75rem;
+    --pad-comfy: 1rem;
+    --pad-spacious: 1.5rem;
+
+    /* Layout */
+    --content-max-w: min(1600px, 96vw);
+    --sidebar-w: 240px;
+    --sidebar-w-compact: 64px;
+
+    color-scheme: dark;
+  }
+
+  /* Compact density variant (PC < 1366 ou utilisateur opt-in) */
+  :root[data-density="compact"] {
+    --pad-cozy: 0.5rem;
+    --pad-comfy: 0.75rem;
+    --pad-spacious: 1rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    font-size: 14px;
+  }
+
+  @media (max-width: 1366px) {
+    :root:not([data-density="spacious"]) {
+      --pad-cozy: 0.5rem;
+      --pad-comfy: 0.75rem;
+      --pad-spacious: 1rem;
+      font-size: 14px;
+    }
+  }
+
+  ::selection {
+    background: rgba(6, 182, 212, 0.3);
+    color: #ecfeff;
+  }
+
+  body {
+    @apply bg-surface-950 antialiased;
+    color: var(--text-primary);
+    font-family: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+    background-attachment: fixed;
+  }
+
+  /* ── Semantic text utilities (utilisables partout) ── */
+  .text-strong { color: var(--text-primary) !important; }
+  .text-default { color: var(--text-secondary) !important; }
+  .text-muted { color: var(--text-muted) !important; }
+  .text-faint { color: var(--text-faint) !important; }
+
+  /* Override the "gray" inversion for readability */
+  .text-on-dark { color: var(--text-secondary); }
+  .text-on-dark-strong { color: var(--text-primary); }
+
+  /* ── Headings hierarchy ── */
+  h1, .h1 { @apply text-2xl md:text-3xl font-bold tracking-tight; color: var(--text-primary); }
+  h2, .h2 { @apply text-xl md:text-2xl font-bold tracking-tight; color: var(--text-primary); }
+  h3, .h3 { @apply text-base md:text-lg font-semibold; color: var(--text-primary); }
+  h4, .h4 { @apply text-sm md:text-base font-semibold; color: var(--text-secondary); }
+  p { color: var(--text-secondary); line-height: 1.6; }
+
+  /* Custom scrollbar - sleek & modern */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.4); }
+}

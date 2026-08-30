@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Node, Edge } from '@xyflow/react';
-import { TEMPLATES, CanvasTemplate } from './templates';
-import { LayoutTemplate, X, ChevronRight, Sparkles } from 'lucide-react';
+import { TEMPLATES, CanvasTemplate, getUserTemplates } from './templates';
+import { LayoutTemplate, X, ChevronRight, Sparkles, Trash2 } from 'lucide-react';
 
 interface TemplateSelectorProps {
   onSelect: (nodes: Node[], edges: Edge[]) => void;
@@ -10,10 +10,24 @@ interface TemplateSelectorProps {
 export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [allTemplates, setAllTemplates] = useState<CanvasTemplate[]>(TEMPLATES);
+
+  useEffect(() => {
+    if (isOpen) {
+      setAllTemplates([...getUserTemplates(), ...TEMPLATES]);
+    }
+  }, [isOpen]);
 
   const handleSelect = (template: CanvasTemplate) => {
     onSelect(template.nodes, template.edges);
     setIsOpen(false);
+  };
+  
+  const handleDeleteCustom = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const existing = getUserTemplates().filter(t => t.id !== id);
+    localStorage.setItem('openstats_user_templates', JSON.stringify(existing));
+    setAllTemplates([...existing, ...TEMPLATES]);
   };
 
   return (
@@ -63,13 +77,16 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
 
             {/* Template List */}
             <div className="p-5 space-y-3 overflow-y-auto max-h-[calc(85vh-100px)] custom-scrollbar">
-              {TEMPLATES.map((template) => (
-                <button
+              {allTemplates.map((template) => (
+                <div
                   key={template.id}
                   onClick={() => handleSelect(template)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSelect(template)}
                   onMouseEnter={() => setHoveredId(template.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 group relative overflow-hidden ${
+                  className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 group relative overflow-hidden cursor-pointer ${
                     hoveredId === template.id
                       ? 'border-accent-500/40 bg-accent-500/[0.04] shadow-[0_0_30px_rgba(56,189,248,0.08)]'
                       : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]'
@@ -90,32 +107,33 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2.5 mb-1">
+                      <div className="flex items-center justify-between mb-1">
                         <h3 className="font-bold text-surface-100 text-sm group-hover:text-white transition-colors">
                           {template.name}
                         </h3>
-                        {template.nodes.length > 0 && (
-                          <span className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full bg-white/[0.06] text-surface-400 border border-white/[0.06]">
-                            {template.nodes.length} blocs
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="text-xs text-surface-400 font-medium">
+                            Utiliser ce modèle
+                          </div>
+                          <ChevronRight size={16} className="text-accent-400 group-hover:translate-x-1 transition-transform" />
+                        </div>
                       </div>
-                      <p className="text-xs text-surface-400 leading-relaxed">
+                      <p className="text-xs text-surface-400 leading-relaxed pr-8">
                         {template.description}
                       </p>
                     </div>
-
-                    {/* Arrow */}
-                    <ChevronRight
-                      size={18}
-                      className={`shrink-0 mt-2 transition-all duration-200 ${
-                        hoveredId === template.id
-                          ? 'text-accent-400 translate-x-0 opacity-100'
-                          : 'text-surface-600 -translate-x-1 opacity-0'
-                      }`}
-                    />
+                    {/* Delete Custom Button */}
+                    {template.id.startsWith('custom_') && (
+                      <button
+                        onClick={(e) => handleDeleteCustom(e, template.id)}
+                        className="absolute top-4 right-4 p-2 text-surface-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-20"
+                        title="Supprimer ce modèle"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>

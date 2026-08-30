@@ -81,7 +81,8 @@ def generate_complex_dataset(num_rows=100000, output_path='test_dataset_complet.
 if __name__ == '__main__':
     # You can adjust the path as needed
     import os
-    base_dir = r"c:\Users\elmas\Desktop\Projets\Stats\backend\data"
+    from pathlib import Path
+    base_dir = str(Path(__file__).resolve().parent.parent / "data")
     os.makedirs(base_dir, exist_ok=True)
     out_file = os.path.join(base_dir, "test_dataset_complet.csv")
     generate_complex_dataset(num_rows=100000, output_path=out_file)

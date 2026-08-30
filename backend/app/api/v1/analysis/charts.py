@@ -5,7 +5,7 @@ Route — Données formatées pour la construction de graphiques.
 from flask import request, jsonify
 from app.api.v1 import api_v1_bp
 from app.services.dataset_service import dataset_manager
-from app.api.v1.analysis._helpers import build_chart_data
+from app.api.v1.analysis.chart_data_builder import build_chart_data
 
 
 @api_v1_bp.route("/datasets/<dataset_id>/chart-data", methods=["POST"])

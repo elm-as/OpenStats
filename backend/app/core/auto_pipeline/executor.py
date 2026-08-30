@@ -15,20 +15,14 @@ import logging
 import pandas as pd
 
 from app.core.auto_pipeline.recipe import PipelineRecipe, PipelineStep
-from app.core.interpretation import (
-    narrate_descriptive,
-    narrate_correlations,
-    narrate_vif,
-    narrate_modeling,
-    narrate_timeseries,
-    narrate_multivariate_timeseries,
-    narrate_pca,
-    narrate_ca,
-    narrate_mca,
-    narrate_diagnostics,
+from app.core.auto_pipeline.reporting import (
+    _build_explainability_payload,
+    _build_insights_payload,
+    _build_report_payload,
+    _collect_pipeline_insights,
+    _get_step_output,
 )
-from app.core.interpretation.base import insights_to_dict, sort_insights
-from app.core.professional_report import build_report_payload
+
 
 logger = logging.getLogger(__name__)
 
@@ -75,10 +69,14 @@ def execute_recipe(
 
         try:
             output = _dispatch(step, work_df, results)
-            # Mutation du df si cleaning a renvoyé un nouveau df
-            if step.operation == "clean" and isinstance(output, dict) and "df" in output:
+            # Mutation du df si cleaning ou transform a renvoyé un nouveau df
+            if step.operation in ("clean", "transform") and isinstance(output, dict) and "df" in output:
                 work_df = output["df"]
                 output.pop("df", None)
+
+                # Conservation des données transformées pour les étapes downstream (modélisation, stats)
+                if step.operation == "transform":
+                    logger.info("Pipeline: %d colonnes prêtes après transformation", work_df.shape[1])
 
             step_result["status"] = "success"
             step_result["result"] = output
@@ -120,23 +118,53 @@ def _dispatch(step: PipelineStep, df: pd.DataFrame, ctx: dict[str, Any]) -> Any:
         from app.core.transformations import recommend_transforms
         return {"recommendations": recommend_transforms(df)}
 
+    if op == "transform":
+        from app.core.transformations import apply_transforms_to_df
+        transforms = params.get("transforms", [])
+        if not transforms and "column" in params and "transform" in params:
+            transforms = [params]
+        if not transforms:
+            return {"status": "skipped", "message": "Aucune transformation spécifiée"}
+        df_res, logs = apply_transforms_to_df(df, transforms)
+        return {"logs": logs, "df": df_res}
+
     if op == "pca":
         from app.core.factor_analysis import run_pca
         return run_pca(df, columns=params.get("columns"))
 
     if op == "model":
-        from app.core.modeling import train_competitive, prepare_data, detect_task_type
+        from app.core.modeling import train_competitive, prepare_data
         target = params["target_col"]
-        data = prepare_data(df, target)
+        task_type = params.get("task_type") or params.get("problem_type")
+        data = prepare_data(df, target, task_type=task_type)
         result = train_competitive(
             data,
             model_keys=params.get("model_keys"),
             cv_folds=params.get("cv_folds", 5),
+            task_type=task_type,
         )
         if result.get("ranking"):
             result["best"] = result["ranking"][0]
         result["target"] = target
         return result
+
+    if op == "timeseries_stationarity":
+        from app.core.timeseries.stationarity import run_stationarity_tests
+        cols = params.get("columns") or [c for c in df.select_dtypes(include="number").columns]
+        res = {}
+        for c in cols[:10]:
+            try:
+                res[c] = run_stationarity_tests(df[c].dropna())
+            except Exception as e:
+                res[c] = {"error": str(e)}
+        return res
+
+    if op == "timeseries_cointegration":
+        from app.core.timeseries.multivariate import test_johansen_cointegration
+        cols = params.get("columns") or [c for c in df.select_dtypes(include="number").columns]
+        if len(cols) >= 2:
+            return test_johansen_cointegration(df[cols].dropna())
+        return {"status": "skipped", "message": "Nécessite au moins 2 séries numériques"}
 
     if op == "timeseries":
         from app.core.timeseries import run_timeseries_analysis
@@ -156,6 +184,18 @@ def _dispatch(step: PipelineStep, df: pd.DataFrame, ctx: dict[str, Any]) -> Any:
             forecast_steps=params.get("forecast_steps", 10),
         )
 
+    if op == "survival":
+        from app.core.survival import run_survival_analysis
+        return run_survival_analysis(df, duration_col=params.get("durationCol"), event_col=params.get("eventCol"))
+
+    if op == "causal":
+        from app.core.causal import run_difference_in_differences
+        return run_difference_in_differences(df, treatment_col=params.get("treatmentCol"), outcome_col=params.get("outcomeCol"))
+
+    if op == "manifold":
+        from app.core.factor_analysis import run_tsne
+        return run_tsne(df, columns=params.get("columns"))
+
     if op == "explainability":
         return _build_explainability_payload(ctx)
 
@@ -168,124 +208,6 @@ def _dispatch(step: PipelineStep, df: pd.DataFrame, ctx: dict[str, Any]) -> Any:
     raise ValueError(f"Opération inconnue : {op}")
 
 
-def _get_step_output(ctx: dict[str, Any], step_key: str) -> Any:
-    step = ctx.get("steps", {}).get(step_key, {})
-    if not isinstance(step, dict) or step.get("status") != "success":
-        return None
-    return step.get("result")
-
-
-def _collect_pipeline_insights(ctx: dict[str, Any]) -> list[dict[str, Any]]:
-    insights: list[Any] = []
-
-    sources = [
-        ("descriptive", narrate_descriptive),
-        ("correlations", narrate_correlations),
-        ("vif", narrate_vif),
-        ("model", narrate_modeling),
-        ("timeseries", narrate_timeseries),
-        ("timeseries_multivariate", narrate_multivariate_timeseries),
-        ("pca", narrate_pca),
-        ("ca", narrate_ca),
-        ("mca", narrate_mca),
-    ]
-
-    for step_key, narrate in sources:
-        payload = _get_step_output(ctx, step_key)
-        if not payload:
-            continue
-        try:
-            insights.extend(narrate(payload))
-        except Exception:
-            logger.exception("Failed to narrate step %s", step_key)
-
-    return insights_to_dict(sort_insights(insights))
-
-
-def _build_explainability_payload(ctx: dict[str, Any]) -> dict[str, Any]:
-    model_res = _get_step_output(ctx, "model") or {}
-    ranking = model_res.get("ranking") or []
-    best = ranking[0] if ranking else {}
-    feature_importance = best.get("feature_importance") or model_res.get("feature_importance") or []
-
-    if not isinstance(feature_importance, list):
-        feature_importance = []
-
-    global_importance = []
-    for item in feature_importance:
-        feature = item.get("feature") or item.get("name")
-        importance = item.get("importance") or item.get("mean_importance") or 0
-        if feature is None:
-            continue
-        try:
-            importance_value = round(float(importance), 6)
-        except (TypeError, ValueError):
-            continue
-        global_importance.append({"feature": feature, "mean_shap": importance_value})
-
-    global_importance.sort(key=lambda x: x["mean_shap"], reverse=True)
-    waterfall_example = [
-        {"feature": item["feature"], "shap_value": item["mean_shap"]}
-        for item in global_importance[:20]
-    ]
-
-    return {
-        "global_importance": global_importance,
-        "waterfall_example": waterfall_example,
-        "n_features": len(global_importance),
-        "source": "feature_importance_proxy",
-        "model_name": best.get("model_name") or best.get("model_key"),
-    }
-
-
-def _build_insights_payload(ctx: dict[str, Any]) -> dict[str, Any]:
-    insights = _collect_pipeline_insights(ctx)
-    summary = {"critical": 0, "warning": 0, "info": 0, "success": 0, "methodological": 0}
-    for item in insights:
-        sev = item.get("severity", "info")
-        if sev in summary:
-            summary[sev] += 1
-
-    return {
-        "insights": insights,
-        "count": len(insights),
-        "summary": summary,
-    }
-
-
-def _build_report_payload(df: pd.DataFrame, ctx: dict[str, Any]) -> dict[str, Any]:
-    recipe: PipelineRecipe = ctx["recipe"]
-    descriptive = _get_step_output(ctx, "descriptive") or {}
-    model_results = _get_step_output(ctx, "model") or _get_step_output(ctx, "timeseries") or _get_step_output(ctx, "timeseries_multivariate") or {}
-    insights = _collect_pipeline_insights(ctx)
-
-    profile = {
-        "n_rows": int(len(df)),
-        "n_cols": int(df.shape[1]),
-        "shape": {"rows": int(len(df)), "columns": int(df.shape[1])},
-        "memory_usage_mb": round(float(df.memory_usage(deep=True).sum() / 1e6), 3),
-        "numeric_cols": df.select_dtypes(include=["number"]).columns.tolist(),
-        "categorical_cols": df.select_dtypes(include=["object", "category", "bool"]).columns.tolist(),
-        "temporal_cols": [c for c in df.columns if pd.api.types.is_datetime64_any_dtype(df[c])],
-        "dictionary": [],
-    }
-
-    report = build_report_payload(
-        dataset_name=recipe.title,
-        profile=profile,
-        recipe=recipe.to_dict(),
-        descriptive=descriptive if isinstance(descriptive, dict) else {},
-        model_results=model_results if isinstance(model_results, dict) else {},
-        insights=insights,
-    )
-    report.metadata = {
-        **(report.metadata or {}),
-        "source": "auto_pipeline",
-        "pipeline_title": recipe.title,
-        "steps": list(ctx.get("steps", {}).keys()),
-    }
-
-    return asdict(report)
 
 
 def _exec_clean(df: pd.DataFrame, params: dict[str, Any]) -> dict[str, Any]:

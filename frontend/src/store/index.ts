@@ -8,7 +8,20 @@ export const store = configureStore({
     dataset: datasetReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware),
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['api/executeMutation/fulfilled', 'api/subscriptions/internal_getRTKQSubscriptions'],
+        ignoredPaths: ['api.mutations'],
+        isSerializable: (value: unknown) =>
+          typeof value === 'symbol' ||
+          value instanceof Blob ||
+          typeof value === 'function' ||
+          typeof value !== 'object' ||
+          value === null ||
+          Array.isArray(value) ||
+          Object.prototype.toString.call(value) === '[object Object]',
+      },
+    }).concat(api.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

@@ -3,6 +3,7 @@ Routes API pour l'ingestion et le profilage des données.
 """
 
 import os
+from pathlib import Path
 from flask import request, jsonify, current_app
 from werkzeug.utils import secure_filename
 

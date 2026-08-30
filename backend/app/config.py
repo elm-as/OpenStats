@@ -36,8 +36,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Redis / Celery
-    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
-    CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+    _redis_default = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL") or _redis_default
+    CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND") or _redis_default
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
 
     # Anthropic LLM

@@ -10,7 +10,7 @@ from app.core.interpretation.base import (
     insight,
     sort_insights,
 )
-from app.core.interpretation.narrators._helpers import _fmt_pct, _fmt_num, _safe
+from app.core.interpretation.narrators.narrator_formatting import _fmt_pct, _fmt_num, _safe
 
 
 def narrate_timeseries(results: dict[str, Any]) -> list[Insight]:

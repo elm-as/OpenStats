@@ -3,7 +3,7 @@ Nœud de visualisation.
 """
 
 from app.services.dataset_service import dataset_manager
-from app.api.v1.analysis._helpers import build_chart_data
+from app.api.v1.analysis.chart_data_builder import build_chart_data
 from ._shared import _sanitize
 
 def execute_visualization(data, dataset_id):
@@ -17,9 +17,8 @@ def execute_visualization(data, dataset_id):
     chart_title = data.get("title", "")
     log_scale = data.get("logScale", False)
     top_n = int(data.get("topN", 20))
-    aggregation = data.get("aggregation", "mean")
-
-    df = dataset_manager.get_df(dataset_id)
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if chart_type == "auto":
         numeric_cols = df.select_dtypes("number").columns.tolist()
         cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
