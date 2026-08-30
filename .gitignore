@@ -36,3 +36,7 @@ instance/
 *.db
 *.sqlite
 
+# Debug screenshots
+screenshots-debug/
+
+

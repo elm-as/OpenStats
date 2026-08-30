@@ -232,6 +232,10 @@ export const BootstrapResultView = ({ resultData }: { resultData: any }) => {
 };
 
 export const CausalResultView = ({ resultData }: { resultData: any }) => {
+  const isPsm = resultData.method?.includes('PSM') || resultData.method?.includes('Propensity');
+  const effect = resultData.att ?? resultData.att_estimate ?? resultData.coefficient;
+  const lovePlot = resultData.love_plot || [];
+
   return (
     <div className="space-y-4">
       <Section title={`Inférence Causale (${resultData.method})`} icon={GitCompare} color="#06b6d4">
@@ -239,8 +243,8 @@ export const CausalResultView = ({ resultData }: { resultData: any }) => {
           <KpiCard label="Traitement (X)" value={resultData.treatment_column} color="#06b6d4" />
           <KpiCard label="Résultat (Y)" value={resultData.outcome_column} color="#8b5cf6" />
           <KpiCard
-            label="Effet Causal / Coef"
-            value={resultData.att_estimate ?? resultData.coefficient}
+            label={isPsm ? 'Effet Traitement (ATT)' : 'Effet Causal / Coef'}
+            value={effect !== undefined ? Number(effect).toFixed(4) : '—'}
             color="#10b981"
           />
           <KpiCard
@@ -250,6 +254,29 @@ export const CausalResultView = ({ resultData }: { resultData: any }) => {
           />
         </div>
       </Section>
+
+      {isPsm && (
+        <div className="grid grid-cols-3 gap-3">
+          <KpiCard label="Paires Appariées (1:1)" value={resultData.n_matched_pairs} color="#3b82f6" />
+          <KpiCard label="Traités Totaux" value={resultData.n_treated_total} color="#8b5cf6" />
+          <KpiCard label="Témoins Totaux" value={resultData.n_control_total} color="#06b6d4" />
+        </div>
+      )}
+
+      {lovePlot.length > 0 && (
+        <Section title="Diagnostic de Balance des Covariables (Love Plot)" icon={GitCompare} color="#06b6d4">
+          <DataTable
+            headers={['Covariable', 'SMD Avant (Non apparié)', 'SMD Après (Apparié)', 'Équilibre']}
+            rows={lovePlot.map((l: any) => [
+              l.covariate,
+              l.smd_before?.toFixed(3) ?? '—',
+              l.smd_after?.toFixed(3) ?? '—',
+              l.balanced ? ' Équilibré (|SMD| < 0.1)' : '⚠️ Déséquilibre persistant',
+            ])}
+          />
+        </Section>
+      )}
+
       <div
         className={`p-3.5 rounded-xl border text-xs font-semibold ${
           resultData.is_significant
@@ -264,3 +291,4 @@ export const CausalResultView = ({ resultData }: { resultData: any }) => {
     </div>
   );
 };
+

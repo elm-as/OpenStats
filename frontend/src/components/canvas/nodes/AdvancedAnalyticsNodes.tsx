@@ -18,15 +18,19 @@ export function SurvivalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
     <NodeShell id={id} data={data} color="#ec4899" icon={Activity} title="Analyse de Survie (Kaplan-Meier)" hasInput badge="Survie">
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
-        Estimation de la courbe de survie et modèle de Cox à risques proportionnels.
+        Courbes Kaplan-Meier (IC Greenwood 95%), test du Log-Rank et modèle de Cox.
       </div>
       <div>
-        <NodeLabel>Variable de Temps/Durée</NodeLabel>
+        <NodeLabel>Variable de Temps / Durée</NodeLabel>
         <NodeColumnSelect name="durationCol" placeholder="-- Durée --" value={(data.durationCol as string) || ''} onChange={handleChange} columns={columns} />
       </div>
       <div>
         <NodeLabel>Marqueur d'Événement (0/1)</NodeLabel>
         <NodeColumnSelect name="eventCol" placeholder="-- Événement binaire --" value={(data.eventCol as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+      <div>
+        <NodeLabel>Groupe de Comparaison (optionnel - Log-Rank)</NodeLabel>
+        <NodeColumnSelect name="groupCol" placeholder="-- Comparer 2 groupes --" value={(data.groupCol as string) || ''} onChange={handleChange} columns={columns} />
       </div>
     </NodeShell>
   );
@@ -35,15 +39,17 @@ export function SurvivalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 export function CausalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const handleChange = useNodeUpdate(id, data);
   const { columns } = useConnectedColumns(id);
+  const method = (data.method as string) || 'psm';
 
   return (
-    <NodeShell id={id} data={data} color="#06b6d4" icon={GitCompare} title="Inférence Causale (DiD / 2SLS)" hasInput badge="Causal">
+    <NodeShell id={id} data={data} color="#06b6d4" icon={GitCompare} title="Inférence Causale" hasInput badge="Causal">
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
-        Attribution causale du traitement (Diff-in-Diff) et variables instrumentales (2SLS).
+        Appariement sur score de propension (PSM), Diff-in-Diff ou 2SLS.
       </div>
       <div>
         <NodeLabel>Méthode d'Inférence</NodeLabel>
-        <NodeSelect name="method" value={(data.method as string) || 'did'} onChange={handleChange}>
+        <NodeSelect name="method" value={method} onChange={handleChange}>
+          <option value="psm">Score de Propension (PSM + Love Plot)</option>
           <option value="did">Diff-in-Diff (DiD)</option>
           <option value="iv2sls">Variables Instrumentales (2SLS)</option>
         </NodeSelect>
@@ -59,6 +65,7 @@ export function CausalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     </NodeShell>
   );
 }
+
 
 export function ManifoldNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (

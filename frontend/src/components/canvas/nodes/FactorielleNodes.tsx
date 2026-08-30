@@ -71,3 +71,48 @@ export function ClusteringNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     </NodeShell>
   );
 }
+
+export function HierarchicalClusteringNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const method = (data.method as string) || 'ward';
+
+  return (
+    <NodeShell id={id} data={data} color="#0ea5e9" icon={Radar} title="Clustering Hiérarchique (CAH)" hasInput badge="Dendrogramme">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Construction de la matrice de liaison, tracé du dendrogramme et découpage en clusters.
+      </div>
+      <div>
+        <NodeLabel>Nombre de clusters (k)</NodeLabel>
+        <NodeSelect name="k" value={String(data.k || 3)} onChange={handleChange}>
+          <option value="2">2 clusters</option>
+          <option value="3">3 clusters</option>
+          <option value="4">4 clusters</option>
+          <option value="5">5 clusters</option>
+          <option value="6">6 clusters</option>
+          <option value="7">7 clusters</option>
+          <option value="8">8 clusters</option>
+        </NodeSelect>
+      </div>
+      <div>
+        <NodeLabel>Méthode d'agrégation</NodeLabel>
+        <NodeSelect name="method" value={method} onChange={handleChange}>
+          <option value="ward">Ward (variance minimale)</option>
+          <option value="complete">Liaison complète (distance max)</option>
+          <option value="average">Liaison moyenne (UPGMA)</option>
+          <option value="single">Liaison simple (distance min)</option>
+        </NodeSelect>
+      </div>
+      {method !== 'ward' && (
+        <div>
+          <NodeLabel>Métrique de distance</NodeLabel>
+          <NodeSelect name="metric" value={(data.metric as string) || 'euclidean'} onChange={handleChange}>
+            <option value="euclidean">Euclidienne</option>
+            <option value="cityblock">Manhattan / Cityblock</option>
+            <option value="cosine">Cosinus</option>
+          </NodeSelect>
+        </div>
+      )}
+    </NodeShell>
+  );
+}
+

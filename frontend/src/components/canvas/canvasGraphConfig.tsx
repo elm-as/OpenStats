@@ -20,7 +20,10 @@ import {
   CANode,
   MCANode,
   ClusteringNode,
+  HierarchicalClusteringNode,
   RegressionNode,
+
+
   ClassificationNode,
   ExplainabilityNode,
   TimeSeriesNode,
@@ -73,7 +76,9 @@ export const nodeTypes = {
   ca: CANode,
   mca: MCANode,
   clustering: ClusteringNode,
+  hierarchicalClustering: HierarchicalClusteringNode,
   regression: RegressionNode,
+
   classification: ClassificationNode,
   explainability: ExplainabilityNode,
   survival: SurvivalNode,
