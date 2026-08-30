@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -13,10 +13,13 @@ import TemplateSelector from './TemplateSelector';
 import CodeViewerModal from './CodeViewerModal';
 import CanvasResultModal from './CanvasResultModal';
 import CanvasLogConsole, { LogEntry } from './CanvasLogConsole';
+import { CanvasSearchBar } from './CanvasSearchBar';
 import { nodeTypes, edgeTypes } from './canvasGraphConfig';
 import { useCanvasGraph } from './useCanvasGraph';
 import { useCanvasPipeline } from './useCanvasPipeline';
 import { useCanvasExport } from './useCanvasExport';
+import { useCanvasHistory } from './useCanvasHistory';
+import { useCanvasLayout } from './useCanvasLayout';
 import { CanvasActionToolbar } from './CanvasActionToolbar';
 import { CanvasPipelineResultsPanel } from './CanvasPipelineResultsPanel';
 import { CanvasShareModal } from './CanvasShareModal';
@@ -32,6 +35,8 @@ function DnDFlow() {
   } | null>(null);
 
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [showMiniMap, setShowMiniMap] = useState(true);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const addLog = useCallback(
     (message: string, level: 'info' | 'success' | 'error' = 'info', nodeId?: string) => {
@@ -50,6 +55,50 @@ function DnDFlow() {
       pipeline.setShowResults(false);
     },
   });
+
+  const history = useCanvasHistory(
+    graph.nodes,
+    graph.setNodes,
+    graph.edges,
+    graph.setEdges
+  );
+
+  const { computeAutoLayout } = useCanvasLayout();
+
+  const handleAutoLayout = useCallback(() => {
+    history.takeSnapshot();
+    const next = computeAutoLayout(graph.nodes, graph.edges);
+    graph.setNodes(next);
+    setTimeout(() => {
+      graph.reactFlowInstance?.fitView({ duration: 600 });
+    }, 50);
+  }, [graph.nodes, graph.edges, graph.setNodes, graph.reactFlowInstance, computeAutoLayout, history]);
+
+  // Raccourci clavier Ctrl+F pour la recherche de nœuds
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleSelectSearchNode = useCallback(
+    (node: any) => {
+      if (graph.reactFlowInstance && node.position) {
+        graph.reactFlowInstance.setCenter(node.position.x + 120, node.position.y + 60, {
+          zoom: 1.2,
+          duration: 600,
+        });
+      }
+    },
+    [graph.reactFlowInstance]
+  );
 
   const pipeline = useCanvasPipeline({
     nodes: graph.nodes,
@@ -70,17 +119,33 @@ function DnDFlow() {
       <Sidebar />
       <div className="flex-1 h-full relative" ref={graph.reactFlowWrapper}>
         <TemplateSelector onSelect={graph.loadTemplate} />
+
+        {/* Barre de recherche de nœuds */}
+        <CanvasSearchBar
+          nodes={graph.nodes}
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          onSelectNode={handleSelectSearchNode}
+        />
+
         <ReactFlow
           nodes={graph.nodes}
           edges={graph.edges}
           onNodesChange={graph.onNodesChange}
           onEdgesChange={graph.onEdgesChange}
-          onConnect={graph.onConnect}
-          onEdgeDoubleClick={(_, edge) =>
-            graph.setEdges(eds => eds.filter(e => e.id !== edge.id))
-          }
+          onConnect={params => {
+            history.takeSnapshot();
+            graph.onConnect(params);
+          }}
+          onEdgeDoubleClick={(_, edge) => {
+            history.takeSnapshot();
+            graph.setEdges(eds => eds.filter(e => e.id !== edge.id));
+          }}
           onInit={graph.setReactFlowInstance}
-          onDrop={graph.onDrop}
+          onDrop={e => {
+            history.takeSnapshot();
+            graph.onDrop(e);
+          }}
           onDragOver={graph.onDragOver}
           nodeTypes={nodeTypes as any}
           edgeTypes={edgeTypes as any}
@@ -95,19 +160,29 @@ function DnDFlow() {
         >
           <Background color="#1e293b" gap={24} size={1.5} />
           <Controls className="!bg-surface-800/90 !border !border-white/[0.08] !rounded-xl !shadow-2xl [&>button]:!bg-transparent [&>button]:!border-white/[0.06] [&>button]:!text-surface-300 [&>button:hover]:!bg-white/10 [&>button]:!rounded-lg" />
-          <MiniMap
-            nodeStrokeColor="#ffffff"
-            nodeColor="#0f172a"
-            maskColor="rgba(15,23,42,0.6)"
-            className="!bg-surface-900/90 !border !border-white/[0.1] !rounded-xl !shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden backdrop-blur-md"
-            style={{ right: 20, bottom: 20 }}
-          />
+          {showMiniMap && (
+            <MiniMap
+              nodeStrokeColor="#ffffff"
+              nodeColor="#0f172a"
+              maskColor="rgba(15,23,42,0.6)"
+              className="!bg-surface-900/90 !border !border-white/[0.1] !rounded-xl !shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden backdrop-blur-md"
+              style={{ right: 20, bottom: 20 }}
+            />
+          )}
         </ReactFlow>
 
         <CanvasActionToolbar
           nodesCount={graph.nodes.length}
           isRunning={pipeline.isRunning}
           isSharing={exporter.isSharing}
+          canUndo={history.canUndo}
+          canRedo={history.canRedo}
+          showMiniMap={showMiniMap}
+          onUndo={history.undo}
+          onRedo={history.redo}
+          onAutoLayout={handleAutoLayout}
+          onToggleMiniMap={() => setShowMiniMap(prev => !prev)}
+          onOpenSearch={() => setIsSearchOpen(true)}
           onOpenGlobalCodeModal={exporter.handleOpenGlobalCodeModal}
           onSaveTemplate={exporter.handleSaveTemplate}
           onShare={exporter.handleShare}
