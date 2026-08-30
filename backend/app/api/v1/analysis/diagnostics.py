@@ -63,13 +63,7 @@ def auto_pipeline_recipe(dataset_id):
     return jsonify({"profile": profile.to_dict(), "recipe": recipe.to_dict()})
 
 
-@api_v1_bp.route("/datasets/<dataset_id>/auto-pipeline/canvas", methods=["GET", "POST", "OPTIONS"])
-def auto_pipeline_canvas(dataset_id):
-    """Génère le graphe Canvas ReactFlow pour le dataset spécifié."""
-    if request.method == "OPTIONS":
-        return jsonify({"status": "ok"}), 200
-    from app.api.v1.canvas import generate_canvas_from_recipe
-    return generate_canvas_from_recipe(dataset_id=dataset_id)
+
 
 
 @api_v1_bp.route("/datasets/<dataset_id>/auto-pipeline/execute", methods=["POST"])

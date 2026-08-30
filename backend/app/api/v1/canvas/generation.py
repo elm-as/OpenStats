@@ -68,10 +68,14 @@ def generate_canvas_from_recipe(dataset_id=None):
     from app.core.auto_pipeline.recipe import PipelineRecipe, PipelineStep
 
     df = dataset_manager.get_df(dataset_id)
+    if df is None or df.empty:
+        return jsonify({"error": f"Dataset '{dataset_id}' introuvable ou vide"}), 404
+
     ds_info = dataset_manager.get(dataset_id) or {}
     type_overrides = ds_info.get("type_overrides") or getattr(ds_info, "type_overrides", {}) or {}
     stored_profile = ds_info.get("profile") or getattr(ds_info, "profile", {}) or {}
     profile = detect_dataset_profile(df, user_hint_target=target, type_overrides=type_overrides, ds_profile=stored_profile)
+
 
     if body.get("recipe") and isinstance(body.get("recipe"), dict) and "steps" in body.get("recipe"):
         raw_r = body["recipe"]

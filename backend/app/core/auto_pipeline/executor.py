@@ -125,8 +125,15 @@ def _dispatch(step: PipelineStep, df: pd.DataFrame, ctx: dict[str, Any]) -> Any:
             transforms = [params]
         if not transforms:
             return {"status": "skipped", "message": "Aucune transformation spécifiée"}
-        df_res, logs = apply_transforms_to_df(df, transforms)
+        clean_transforms = []
+        for t in transforms:
+            t_copy = dict(t)
+            if t_copy.get("transform") in ("standardize", "minmax", "robust", "quantile", "power"):
+                t_copy.setdefault("replace", True)
+            clean_transforms.append(t_copy)
+        df_res, logs = apply_transforms_to_df(df, clean_transforms)
         return {"logs": logs, "df": df_res}
+
 
     if op == "pca":
         from app.core.factor_analysis import run_pca
@@ -149,12 +156,12 @@ def _dispatch(step: PipelineStep, df: pd.DataFrame, ctx: dict[str, Any]) -> Any:
         return result
 
     if op == "timeseries_stationarity":
-        from app.core.timeseries.stationarity import run_stationarity_tests
+        from app.core.timeseries.stationarity import test_stationarity
         cols = params.get("columns") or [c for c in df.select_dtypes(include="number").columns]
         res = {}
         for c in cols[:10]:
             try:
-                res[c] = run_stationarity_tests(df[c].dropna())
+                res[c] = test_stationarity(df[c].dropna())
             except Exception as e:
                 res[c] = {"error": str(e)}
         return res

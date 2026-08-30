@@ -45,15 +45,24 @@ export function ModelingTab({
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-purple-400" />
               <span className="text-sm text-purple-300">Meilleur modèle:</span>
-              <code className="text-purple-200 font-semibold bg-purple-500/20 px-2 py-0.5 rounded">
+              <code className="text-white font-bold bg-purple-600/40 border border-purple-400/30 px-2.5 py-1 rounded-md shadow-sm">
                 {bestModel.model_name || result.best_model_key}
               </code>
             </div>
             {bestModel.metrics?.r2 !== undefined && (
-              <span className="text-sm font-mono text-emerald-300 font-bold bg-emerald-500/20 px-2.5 py-1 rounded">
+              <span
+                className={`text-sm font-mono font-bold px-2.5 py-1 rounded ${
+                  bestModel.metrics.r2 < 0
+                    ? 'text-rose-300 bg-rose-500/20 border border-rose-500/30'
+                    : bestModel.metrics.r2 > 0.5
+                    ? 'text-emerald-300 bg-emerald-500/20 border border-emerald-500/30'
+                    : 'text-amber-300 bg-amber-500/20 border border-amber-500/30'
+                }`}
+              >
                 R² = {(bestModel.metrics.r2 * 100).toFixed(1)}%
               </span>
             )}
+
             {bestModel.metrics?.f1_weighted !== undefined && (
               <span className="text-sm font-mono text-purple-300 font-bold bg-purple-500/20 px-2.5 py-1 rounded">
                 F1 Score = {(bestModel.metrics.f1_weighted * 100).toFixed(1)}%
@@ -155,24 +164,33 @@ export function ModelingTab({
             </h4>
 
             <div className="space-y-2">
-              {treeSummary.feature_importance_table.map((item: any, i: number) => {
-                const maxImp = treeSummary.feature_importance_table[0].importance || 1;
-                const pct = ((item.importance / maxImp) * 100).toFixed(1);
-                return (
-                  <div key={i} className="flex items-center gap-3 p-2 bg-surface-700/40 rounded-lg">
-                    <span className="text-sm font-medium text-surface-200 w-36 truncate">
-                      {item.feature}
-                    </span>
-                    <div className="flex-1 h-2 bg-surface-600 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+              {(() => {
+                const table = treeSummary.feature_importance_table;
+                const maxImp = Math.max(...table.map((t: any) => Math.abs(t.importance || 0)), 1e-6);
+                const sumImp = table.reduce((acc: number, t: any) => acc + Math.abs(t.importance || 0), 0) || 1;
+
+                return table.map((item: any, i: number) => {
+                  const absVal = Math.abs(item.importance || 0);
+                  const barWidth = Math.min(100, Math.max(2, (absVal / maxImp) * 100)).toFixed(1);
+                  const relPct = ((absVal / sumImp) * 100).toFixed(1);
+
+                  return (
+                    <div key={i} className="flex items-center gap-3 p-2 bg-surface-700/40 rounded-lg">
+                      <span className="text-sm font-medium text-surface-200 w-44 truncate" title={item.feature}>
+                        {item.feature}
+                      </span>
+                      <div className="flex-1 h-2 bg-surface-600 rounded-full overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${barWidth}%` }} />
+                      </div>
+                      <span className="text-xs font-mono text-emerald-300 w-16 text-right font-semibold">
+                        {relPct}%
+                      </span>
                     </div>
-                    <span className="text-xs font-mono text-emerald-300 w-16 text-right font-semibold">
-                      {(item.importance * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
+
           </div>
         )}
 

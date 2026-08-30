@@ -11,6 +11,7 @@ Découpé en sous-modules pour respecter la limite de 350 lignes :
 from __future__ import annotations
 
 from app.api.v1.canvas.graph import _topo_sort, _has_prep_ancestor
+from app.api.v1.canvas.generation import generate_canvas_from_recipe
 
 # Enregistrement des routes sur api_v1_bp
 from app.api.v1.canvas import execution  # noqa: F401
@@ -21,4 +22,6 @@ from app.api.v1.canvas import export_routes  # noqa: F401
 __all__ = [
     "_topo_sort",
     "_has_prep_ancestor",
+    "generate_canvas_from_recipe",
 ]
+
