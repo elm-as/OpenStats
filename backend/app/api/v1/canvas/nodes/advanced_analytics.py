@@ -24,106 +24,27 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════════
 
 def execute_survival(node_data: dict[str, Any], dataset_id: int) -> dict[str, Any]:
-    """Calcule l'estimation Kaplan-Meier et la Régression de Cox."""
+    """Calcule l'estimation Kaplan-Meier, test Log-Rank et Régression de Cox."""
     df = dataset_manager.get_df(dataset_id)
     if df is None or df.empty:
         return {"status": "error", "message": "Dataset introuvable ou vide"}
 
-    duration_col = node_data.get("durationCol")
-    event_col = node_data.get("eventCol")
-    group_col = node_data.get("groupCol")
+    from app.core.survival_analysis import run_survival_analysis
 
-    # Auto-détection si non spécifié
-    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-    if not duration_col and num_cols:
-        duration_col = num_cols[0]
-
-    bin_cols = [c for c in df.columns if df[c].dropna().nunique() == 2]
-    if not event_col and bin_cols:
-        event_col = bin_cols[0]
-
-    if not duration_col or duration_col not in df.columns:
-        return {"status": "error", "message": f"Colonne de durée '{duration_col}' invalide"}
-
-    # Nettoyage
-    sub_cols = [duration_col]
-    if event_col and event_col in df.columns:
-        sub_cols.append(event_col)
-    if group_col and group_col in df.columns:
-        sub_cols.append(group_col)
-
-    clean_df = df[sub_cols].dropna().copy()
-    if clean_df.empty:
-        return {"status": "error", "message": "Aucune donnée valide après suppression des NaN"}
-
-    durations = clean_df[duration_col].values
-    events = clean_df[event_col].values if event_col and event_col in clean_df.columns else np.ones(len(clean_df))
-
-    # Estimation Kaplan-Meier empirique
-    unique_times = np.sort(np.unique(durations))
-    km_table = []
-    n_at_risk = len(durations)
-    surv_prob = 1.0
-
-    for t in unique_times:
-        n_events = np.sum((durations == t) & (events == 1))
-        n_censored = np.sum((durations == t) & (events == 0))
-        if n_at_risk > 0:
-            surv_prob *= (1.0 - (n_events / n_at_risk))
-        km_table.append({
-            "time": float(t),
-            "n_at_risk": int(n_at_risk),
-            "n_events": int(n_events),
-            "n_censored": int(n_censored),
-            "survival_probability": round(float(surv_prob), 4),
-        })
-        n_at_risk -= (n_events + n_censored)
-
-    # Cox Proportional Hazards si des covariables numériques sont sélectionnées
-    cox_results = None
-    feature_cols = [c for c in num_cols if c != duration_col and c != event_col][:5]
-    if feature_cols and event_col:
-        try:
-            import statsmodels.duration.hazard_regression as ph
-            cox_data = df[[duration_col, event_col] + feature_cols].dropna().copy()
-            if len(cox_data) >= 10:
-                formula = f"{duration_col} ~ " + " + ".join(feature_cols)
-                mod = ph.PHReg.from_formula(formula, cox_data, status=cox_data[event_col])
-                res = mod.fit()
-                cox_results = {
-                    "features": feature_cols,
-                    "hazard_ratios": {col: round(float(np.exp(coef)), 4) for col, coef in zip(feature_cols, res.params)},
-                    "p_values": {col: round(float(pv), 4) for col, pv in zip(feature_cols, res.pvalues)},
-                    "log_likelihood": round(float(res.llf), 2),
-                }
-        except Exception as e:
-            logger.warning(f"Cox PHReg failed: {e}")
-
-    median_surv = None
-    for row in km_table:
-        if row["survival_probability"] <= 0.5:
-            median_surv = row["time"]
-            break
-
-    return {
-        "status": "success",
-        "message": f"Analyse de survie calculée sur '{duration_col}' ({len(clean_df)} obs)",
-        "duration_column": duration_col,
-        "event_column": event_col,
-        "n_observations": len(clean_df),
-        "n_events": int(np.sum(events == 1)),
-        "median_survival_time": median_surv,
-        "kaplan_meier": km_table[:30],
-        "cox_regression": cox_results,
-    }
+    return run_survival_analysis(
+        df=df,
+        duration_col=node_data.get("durationCol"),
+        event_col=node_data.get("eventCol"),
+        group_col=node_data.get("groupCol"),
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 2. Inférence Causale (DiD & 2SLS)
+# 2. Inférence Causale (DiD, 2SLS & PSM)
 # ═══════════════════════════════════════════════════════════════════
 
 def execute_causal(node_data: dict[str, Any], dataset_id: int) -> dict[str, Any]:
-    """Exécute l'estimation Diff-in-Diff (DiD) ou 2SLS (Variables Instrumentales)."""
+    """Exécute l'estimation Diff-in-Diff (DiD), 2SLS ou Propensity Score Matching (PSM)."""
     df = dataset_manager.get_df(dataset_id)
     if df is None or df.empty:
         return {"status": "error", "message": "Dataset introuvable ou vide"}
@@ -143,7 +64,22 @@ def execute_causal(node_data: dict[str, Any], dataset_id: int) -> dict[str, Any]
     if not outcome_col or outcome_col not in df.columns or not treatment_col or treatment_col not in df.columns:
         return {"status": "error", "message": "Colonnes résultat et traitement requises"}
 
+    if method == "psm":
+        from app.core.causal_inference import run_propensity_score_matching
+        covs = node_data.get("covariates")
+        if isinstance(covs, str):
+            covs = [c.strip() for c in covs.split(",") if c.strip()]
+        caliper = float(node_data.get("caliper") or 0.2)
+        return run_propensity_score_matching(
+            df=df,
+            treatment_col=treatment_col,
+            outcome_col=outcome_col,
+            covariates=covs,
+            caliper=caliper,
+        )
+
     if method == "did":
+
         time_col = node_data.get("timeCol")
         if not time_col:
             # Chercher une colonne binaire temps (avant/après)

@@ -68,7 +68,8 @@ const categories: SidebarCategory[] = [
       { type: 'pca', label: 'ACP', icon: Layers, color: '#06b6d4' },
       { type: 'ca', label: 'AFC', icon: Grid3X3, color: '#06b6d4' },
       { type: 'mca', label: 'ACM', icon: Layers, color: '#06b6d4' },
-      { type: 'clustering', label: 'Clustering', icon: Radar, color: '#06b6d4' },
+      { type: 'clustering', label: 'Clustering K-Means', icon: Radar, color: '#06b6d4' },
+      { type: 'hierarchicalClustering', label: 'Clustering Hiérarchique (CAH)', icon: Radar, color: '#0ea5e9', badge: 'Dendro' },
     ],
   },
   {
@@ -82,9 +83,10 @@ const categories: SidebarCategory[] = [
   {
     title: 'Analyses Avancées & Causalité',
     items: [
-      { type: 'survival', label: 'Analyse de Survie (KM)', icon: Activity, color: '#ec4899', badge: 'Survie' },
-      { type: 'causal', label: 'Inférence Causale (DiD)', icon: GitCompare, color: '#06b6d4', badge: 'Causal' },
+      { type: 'survival', label: 'Analyse de Survie (KM & Cox)', icon: Activity, color: '#ec4899', badge: 'Survie' },
+      { type: 'causal', label: 'Inférence Causale (PSM / DiD)', icon: GitCompare, color: '#06b6d4', badge: 'Causal' },
       { type: 'manifold', label: 't-SNE & DBSCAN', icon: Layers, color: '#8b5cf6', badge: 'Manifold' },
+
     ],
   },
   {

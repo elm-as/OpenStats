@@ -192,3 +192,38 @@ def execute_explainability(data, dataset_id):
         "message": f"Explicabilité SHAP calculée sur '{target}' ({res.get('n_features', 0)} variables)",
         "result": _sanitize(res),
     }
+
+
+def execute_hierarchical_clustering(data, dataset_id):
+    """Exécute un clustering hiérarchique avec dendrogramme et découpage en k clusters."""
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
+    if df is None or df.empty:
+        return {"status": "error", "message": "DataFrame vide ou introuvable"}
+
+    from app.core.clustering_hierarchical import run_hierarchical_clustering
+
+    features = data.get("features")
+    if isinstance(features, str):
+        features = [f.strip() for f in features.split(",") if f.strip()]
+
+    n_clusters = int(data.get("k") or data.get("n_clusters") or 3)
+    method = data.get("method") or "ward"
+    metric = data.get("metric") or "euclidean"
+
+    res = run_hierarchical_clustering(
+        df=df,
+        features=features,
+        n_clusters=n_clusters,
+        method=method,
+        metric=metric,
+    )
+    if res.get("status") == "error":
+        return {"status": "error", "message": res.get("message", "Erreur clustering hiérarchique")}
+
+    return {
+        "status": "success",
+        "message": f"Clustering hiérarchique ({method}) : {res['n_clusters']} clusters identifiés",
+        "result": _sanitize(res),
+    }
+

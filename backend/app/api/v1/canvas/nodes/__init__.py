@@ -13,7 +13,13 @@ from .preparation import execute_typing, execute_cleaning, execute_transform, ex
 from .descriptive import execute_descriptive_numeric, execute_descriptive_categorical, execute_correlation, execute_vif, execute_bootstrap, execute_outliers
 from .tests import execute_test_compare_means, execute_test_correlation, execute_test_independence, execute_test_stationarity, execute_test_normality, execute_test_anova
 from .factorielle import execute_pca, execute_ca, execute_mca
-from .modeling import execute_clustering, execute_regression, execute_classification, execute_explainability
+from .modeling import (
+    execute_clustering,
+    execute_hierarchical_clustering,
+    execute_regression,
+    execute_classification,
+    execute_explainability,
+)
 from .timeseries import execute_timeseries, execute_multivariate_timeseries, execute_granger, execute_cointegration, execute_ts_decomposition
 from .simulation import execute_simulation
 from .visualization import execute_visualization
@@ -48,6 +54,8 @@ NODE_EXECUTORS = {
     "ca": execute_ca,
     "mca": execute_mca,
     "clustering": execute_clustering,
+    "hierarchicalClustering": execute_hierarchical_clustering,
+
     "regression": execute_regression,
     "classification": execute_classification,
     "explainability": execute_explainability,

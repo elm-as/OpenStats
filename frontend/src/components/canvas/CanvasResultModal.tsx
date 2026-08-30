@@ -21,6 +21,8 @@ import {
   ClusteringResultView,
   RegressionClassificationResultView,
 } from './results/ModelingResultView';
+import { HierarchicalClusteringResultView } from './results/HierarchicalClusteringResultView';
+
 import { TimeSeriesResultView } from './results/TimeSeriesResultView';
 import { FactorAnalysisResultView } from './results/FactorAnalysisResultView';
 import {
@@ -104,7 +106,9 @@ export default function CanvasResultModal({
     if (type === 'explainability') return <ExplainabilityResultView resultData={data} />;
     if (type === 'manifold') return <ManifoldResultView resultData={data} />;
     if (type === 'clustering') return <ClusteringResultView resultData={data} />;
+    if (type === 'hierarchicalClustering') return <HierarchicalClusteringResultView resultData={data} />;
     if (type === 'regression' || type === 'classification') {
+
       return <RegressionClassificationResultView nodeType={type} resultData={data} />;
     }
 
