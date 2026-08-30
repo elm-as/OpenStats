@@ -36,7 +36,7 @@ instance/
 *.db
 *.sqlite
 
-# Debug screenshots
+# Debug screenshots and scratch
 screenshots-debug/
-
-
+scratch/
+scratch_*

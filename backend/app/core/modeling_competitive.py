@@ -46,9 +46,9 @@ def train_competitive(
 
     valid_results = [r for r in results if "error" not in r]
     if task_type == "regression":
-        valid_results.sort(key=lambda r: r["metrics"].get("r2", 0), reverse=True)
+        valid_results.sort(key=lambda r: r["metrics"].get("r2", -999999.0), reverse=True)
     else:
-        valid_results.sort(key=lambda r: r["metrics"].get("f1_weighted", 0), reverse=True)
+        valid_results.sort(key=lambda r: r["metrics"].get("f1_weighted", -1.0), reverse=True)
 
     ranking = []
     best_model = None

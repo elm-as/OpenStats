@@ -23,14 +23,21 @@ def extract_regression_ols_summary(model, X_train: pd.DataFrame, y_train: pd.Ser
         if isinstance(model, Pipeline):
             preprocessor = model.named_steps.get("preprocessor")
             if preprocessor is not None:
+                transformed_data = preprocessor.transform(X_train)
+                # Si transform() retourne une matrice sparse
+                if hasattr(transformed_data, "toarray"):
+                    transformed_data = transformed_data.toarray()
                 X_sm = pd.DataFrame(
-                    preprocessor.transform(X_train),
+                    transformed_data,
                     columns=[n.split("__")[-1] for n in preprocessor.get_feature_names_out()],
+                    index=y_train.index,
                 )
             else:
                 X_sm = X_train.copy()
+                X_sm.index = y_train.index
         else:
             X_sm = X_train.copy()
+            X_sm.index = y_train.index
 
         X_sm_const = sm.add_constant(X_sm, has_constant="add")
         ols_model = sm.OLS(y_train, X_sm_const).fit()
