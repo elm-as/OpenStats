@@ -20,6 +20,7 @@ import { useCanvasPipeline } from './useCanvasPipeline';
 import { useCanvasExport } from './useCanvasExport';
 import { useCanvasHistory } from './useCanvasHistory';
 import { useCanvasLayout } from './useCanvasLayout';
+import { useCanvasWorkspace } from './useCanvasWorkspace';
 import { CanvasActionToolbar } from './CanvasActionToolbar';
 import { CanvasPipelineResultsPanel } from './CanvasPipelineResultsPanel';
 import { CanvasShareModal } from './CanvasShareModal';
@@ -108,6 +109,19 @@ function DnDFlow() {
     setSelectedResultNode,
   });
 
+  const workspace = useCanvasWorkspace({
+    nodes: graph.nodes,
+    setNodes: graph.setNodes,
+    edges: graph.edges,
+    setEdges: graph.setEdges,
+    pipelineResults: pipeline.pipelineResults,
+    setPipelineResults: pipeline.setPipelineResults,
+    onSuccess: msg => addLog(msg, 'success'),
+    onError: err => addLog(err, 'error'),
+    onTakeSnapshot: history.takeSnapshot,
+    fitView: graph.reactFlowInstance?.fitView,
+  });
+
   const exporter = useCanvasExport({
     nodes: graph.nodes,
     edges: graph.edges,
@@ -143,6 +157,12 @@ function DnDFlow() {
           }}
           onInit={graph.setReactFlowInstance}
           onDrop={e => {
+            const file = e.dataTransfer.files?.[0];
+            if (file && (file.name.endsWith('.openstats') || file.name.endsWith('.json'))) {
+              e.preventDefault();
+              workspace.importWorkspaceFromFile(file);
+              return;
+            }
             history.takeSnapshot();
             graph.onDrop(e);
           }}
@@ -183,6 +203,8 @@ function DnDFlow() {
           onAutoLayout={handleAutoLayout}
           onToggleMiniMap={() => setShowMiniMap(prev => !prev)}
           onOpenSearch={() => setIsSearchOpen(true)}
+          onExportWorkspace={() => workspace.exportWorkspace()}
+          onImportWorkspace={workspace.importWorkspaceFromFile}
           onOpenGlobalCodeModal={exporter.handleOpenGlobalCodeModal}
           onSaveTemplate={exporter.handleSaveTemplate}
           onShare={exporter.handleShare}

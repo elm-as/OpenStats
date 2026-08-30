@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Play,
   Loader2,
@@ -10,6 +10,8 @@ import {
   LayoutGrid,
   Map,
   Search,
+  FolderDown,
+  FolderUp,
 } from 'lucide-react';
 
 interface CanvasActionToolbarProps {
@@ -24,6 +26,8 @@ interface CanvasActionToolbarProps {
   onAutoLayout: () => void;
   onToggleMiniMap: () => void;
   onOpenSearch: () => void;
+  onExportWorkspace: () => void;
+  onImportWorkspace: (file: File) => void;
   onOpenGlobalCodeModal: () => void;
   onSaveTemplate: () => void;
   onShare: () => void;
@@ -42,15 +46,35 @@ export function CanvasActionToolbar({
   onAutoLayout,
   onToggleMiniMap,
   onOpenSearch,
+  onExportWorkspace,
+  onImportWorkspace,
   onOpenGlobalCodeModal,
   onSaveTemplate,
   onShare,
   onRun,
 }: CanvasActionToolbarProps) {
   const isDisabled = nodesCount === 0;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImportWorkspace(file);
+      e.target.value = '';
+    }
+  };
 
   return (
     <div className="absolute bottom-8 right-8 flex items-center gap-2.5 z-10">
+      {/* Input de fichier masqué pour charger un projet */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".openstats,.json"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
       {/* Outils Navigation & Historique */}
       <div className="flex items-center bg-surface-900/90 border border-white/[0.08] rounded-full p-1 shadow-xl backdrop-blur-md">
         <button
@@ -96,6 +120,25 @@ export function CanvasActionToolbar({
           title="Rechercher un nœud (Ctrl+F)"
         >
           <Search size={15} />
+        </button>
+      </div>
+
+      {/* Projet (.openstats) */}
+      <div className="flex items-center bg-surface-900/90 border border-white/[0.08] rounded-full p-1 shadow-xl backdrop-blur-md">
+        <button
+          className="p-2.5 rounded-full text-surface-300 hover:text-emerald-400 hover:bg-white/10 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+          title="Ouvrir un projet (.openstats)"
+        >
+          <FolderUp size={15} />
+        </button>
+        <button
+          className="p-2.5 rounded-full text-surface-300 hover:text-emerald-400 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+          onClick={onExportWorkspace}
+          disabled={isDisabled}
+          title="Exporter le projet complet (.openstats)"
+        >
+          <FolderDown size={15} />
         </button>
       </div>
 
