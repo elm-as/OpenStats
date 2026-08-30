@@ -276,3 +276,31 @@ class TestModelRegistries:
             assert "class" in info
             assert "name" in info
             assert "params" in info
+
+
+class TestTaskTypeInference:
+    def test_small_sample_binary_target_is_classification(self):
+        # 20 rows with 0/1 target should be detected as classification (NOT regression)
+        df = pd.DataFrame({
+            "feat_a": np.random.randn(20),
+            "target": [0, 1] * 10
+        })
+        data = prepare_data(df, target_col="target", test_size=0.2)
+        assert data["task_type"] == "classification"
+
+    def test_user_override_task_type(self):
+        df = pd.DataFrame({
+            "feat_a": np.random.randn(50),
+            "target": np.random.randint(1, 5, size=50)
+        })
+        data = prepare_data(df, target_col="target", task_type="regression")
+        assert data["task_type"] == "regression"
+
+    def test_single_value_target_raises_clear_error(self):
+        df = pd.DataFrame({
+            "feat_a": [1, 2, 3, 4],
+            "target": [1, 1, 1, 1]
+        })
+        import pytest
+        with pytest.raises(ValueError, match="au moins 2"):
+            prepare_data(df, target_col="target")

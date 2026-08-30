@@ -31,7 +31,7 @@ export default function Dashboard() {
           <div className="max-w-xl text-center md:text-left">
             <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mb-3">Plateforme d'analyse statistique</p>
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tighter leading-[1.1] mb-3">
-              OpenStats
+              OpenStats by Elmas
             </h1>
             <p className="text-surface-400 text-[13px] md:text-sm mb-5 leading-relaxed max-w-lg">
               Importez vos donnees, construisez des pipelines visuels, executez des analyses statistiques et exportez vos resultats.

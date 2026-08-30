@@ -5,7 +5,7 @@ Routes — Diagnostics, auto-pipeline, insights et recommandations.
 from flask import request, jsonify
 from app.api.v1 import api_v1_bp
 from app.services.dataset_service import dataset_manager
-from app.api.v1.analysis._helpers import _sanitize_for_json
+from app.api.v1.analysis.chart_data_builder import _sanitize_for_json
 
 
 @api_v1_bp.route("/datasets/<dataset_id>/diagnostics", methods=["GET"])
@@ -30,8 +30,13 @@ def auto_pipeline_detect(dataset_id):
 
     from app.core.auto_pipeline import detect_dataset_profile
     df = dataset_manager.get_df(dataset_id)
+    if df is None or df.empty:
+        return jsonify({"error": "Dataset introuvable ou vide"}), 404
     hint = request.args.get("target")
-    profile = detect_dataset_profile(df, user_hint_target=hint)
+    exclude_columns = request.args.getlist("exclude_columns") or request.args.getlist("exclude_columns[]")
+    type_overrides = ds.get("type_overrides") or {}
+    stored_profile = ds.get("profile") or {}
+    profile = detect_dataset_profile(df, user_hint_target=hint, type_overrides=type_overrides, exclude_columns=exclude_columns, ds_profile=stored_profile)
     return jsonify({"profile": profile.to_dict()})
 
 
@@ -46,10 +51,25 @@ def auto_pipeline_recipe(dataset_id):
     df = dataset_manager.get_df(dataset_id)
     body = request.get_json(silent=True) or {}
     hint = body.get("target") or request.args.get("target")
-    profile = detect_dataset_profile(df, user_hint_target=hint)
-    recipe = build_recipe(profile)
+    task_type = body.get("task_type") or request.args.get("task_type")
+    selected_analyses = body.get("selected_analyses")
+    custom_steps = body.get("custom_steps") or body.get("steps")
+    exclude_columns = body.get("exclude_columns") or request.args.getlist("exclude_columns") or request.args.getlist("exclude_columns[]") or []
+    type_overrides = ds.get("type_overrides") or {}
+    stored_profile = ds.get("profile") or {}
+    profile = detect_dataset_profile(df, user_hint_target=hint, type_overrides=type_overrides, exclude_columns=exclude_columns, ds_profile=stored_profile)
+    recipe = build_recipe(profile, target=hint, task_type=task_type, selected_analyses=selected_analyses, custom_steps=custom_steps)
 
     return jsonify({"profile": profile.to_dict(), "recipe": recipe.to_dict()})
+
+
+@api_v1_bp.route("/datasets/<dataset_id>/auto-pipeline/canvas", methods=["GET", "POST", "OPTIONS"])
+def auto_pipeline_canvas(dataset_id):
+    """Génère le graphe Canvas ReactFlow pour le dataset spécifié."""
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    from app.api.v1.canvas import generate_canvas_from_recipe
+    return generate_canvas_from_recipe(dataset_id=dataset_id)
 
 
 @api_v1_bp.route("/datasets/<dataset_id>/auto-pipeline/execute", methods=["POST"])
@@ -59,22 +79,51 @@ def auto_pipeline_execute(dataset_id):
     Body JSON (optionnel) :
       {
         "target": "col_y",
+        "task_type": "auto",
+        "selected_analyses": ["clean", "descriptive", ...],
+        "recipe": { "steps": [...] },
         "execute_optional": false,
+        "exclude_columns": ["id", "col_x"]
       }
     """
     ds = dataset_manager.get(dataset_id)
     if ds is None:
         return jsonify({"error": "Dataset introuvable"}), 404
 
-    from app.core.auto_pipeline import detect_dataset_profile, build_recipe, execute_recipe
+    from app.core.auto_pipeline import detect_dataset_profile, build_recipe, execute_recipe, PipelineRecipe, PipelineStep
 
     body = request.get_json(silent=True) or {}
     hint = body.get("target")
+    task_type = body.get("task_type")
+    selected_analyses = body.get("selected_analyses")
+    custom_steps = body.get("custom_steps") or body.get("steps")
     execute_optional = bool(body.get("execute_optional", False))
+    exclude_columns = body.get("exclude_columns") or []
 
     df = dataset_manager.get_df(dataset_id)
-    profile = detect_dataset_profile(df, user_hint_target=hint)
-    recipe = build_recipe(profile)
+    if exclude_columns:
+        cols_to_drop = [c for c in exclude_columns if c in df.columns]
+        if cols_to_drop:
+            df = df.drop(columns=cols_to_drop)
+
+    type_overrides = ds.get("type_overrides") or {}
+    stored_profile = ds.get("profile") or {}
+    profile = detect_dataset_profile(df, user_hint_target=hint, type_overrides=type_overrides, exclude_columns=exclude_columns, ds_profile=stored_profile)
+
+    if body.get("recipe") and isinstance(body.get("recipe"), dict) and "steps" in body.get("recipe"):
+        raw_r = body["recipe"]
+        raw_steps = [PipelineStep(**s) if isinstance(s, dict) else s for s in raw_r.get("steps", [])]
+        recipe = PipelineRecipe(
+            title=raw_r.get("title", "Pipeline personnalisé"),
+            description=raw_r.get("description", ""),
+            problem_type=raw_r.get("problem_type", profile.problem_type),
+            target=raw_r.get("target", hint),
+            steps=raw_steps,
+            estimated_duration_sec=raw_r.get("estimated_duration_sec", 30),
+            confidence=raw_r.get("confidence", "high"),
+        )
+    else:
+        recipe = build_recipe(profile, target=hint, task_type=task_type, selected_analyses=selected_analyses, custom_steps=custom_steps)
 
     import threading
     execution_result: dict = {}
@@ -108,8 +157,17 @@ def auto_pipeline_execute(dataset_id):
             analysis_results["vif"] = steps["vif"]["result"]
         ds["analysis_results"] = analysis_results
 
+        if "clean" in steps and steps["clean"].get("status") == "success":
+            ds["cleaning_log"] = steps["clean"]["result"].get("actions", [])
+        if "transform" in steps and steps["transform"].get("status") == "success":
+            ds["transform_logs"] = steps["transform"]["result"]
+        elif "stationarization_transform" in steps and steps["stationarization_transform"].get("status") == "success":
+            ds["transform_logs"] = steps["stationarization_transform"]["result"]
         if "model" in steps and steps["model"].get("status") == "success":
-            ds["model_results"] = steps["model"]["result"]
+            model_res = steps["model"]["result"]
+            if "explainability" in steps and steps["explainability"].get("status") == "success":
+                model_res["shap"] = steps["explainability"]["result"]
+            ds["model_results"] = model_res
         if "timeseries" in steps and steps["timeseries"].get("status") == "success":
             ds["timeseries_results"] = steps["timeseries"]["result"]
         if "timeseries_multivariate" in steps and steps["timeseries_multivariate"].get("status") == "success":

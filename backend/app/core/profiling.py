@@ -112,38 +112,57 @@ def infer_statistical_type(series: pd.Series, col_name: str = "") -> str:
     Infère le type statistique d'une colonne :
     Continu, Discret, Catégoriel Nominal, Catégoriel Ordinal, Binaire, Temporel
     """
-    if series.dropna().empty:
+    clean_s = series.dropna()
+    if clean_s.empty:
         return "inconnu"
 
     # Tentative datetime (type natif pandas)
     if pd.api.types.is_datetime64_any_dtype(series):
         return "temporel"
 
-    # Tentative datetime (chaînes avec multi-format)
-    if series.dtype == object:
-        is_date, _ = try_parse_dates(series)
-        if is_date:
-            return "temporel"
+    col_lower = (col_name or "").lower().strip()
+    is_temporal_name = bool(re.search(r'(?:^|[_\s])(date|datetime|time|timestamp|year|annee|année|mois|month|semaine|week|trimestre|quarter|an)(?:$|[_\s\d])', col_lower))
 
     # Binaire
-    unique_vals = series.dropna().unique()
+    unique_vals = clean_s.unique()
     if len(unique_vals) <= 2:
         return "binaire"
 
     # Numérique
     if pd.api.types.is_numeric_dtype(series):
-        n_unique = series.nunique()
-        ratio = n_unique / len(series.dropna()) if len(series.dropna()) > 0 else 0
+        # Détection d'année calendaire (ex: 'annee', 'year' avec entiers dans [1000, 3000])
+        try:
+            clean_num = pd.to_numeric(clean_s, errors="coerce").dropna()
+            if not clean_num.empty and (clean_num == clean_num.round()).all():
+                if is_temporal_name and clean_num.between(1000, 3000).mean() > 0.8:
+                    return "temporel"
+                if clean_num.between(1800, 2100).all() and 2 <= clean_num.nunique() <= 200 and is_temporal_name:
+                    return "temporel"
+        except Exception:
+            pass
+
+        n_unique = clean_s.nunique()
+        ratio = n_unique / len(clean_s) if len(clean_s) > 0 else 0
         if pd.api.types.is_integer_dtype(series) and n_unique <= 20:
             return "discret"
         if ratio < 0.05 and n_unique <= 30:
             return "discret"
         return "continu"
 
+    # Chaînes de caractères / objet
+    if series.dtype == object or pd.api.types.is_string_dtype(series):
+        is_date, _ = try_parse_dates(series)
+        if is_date:
+            return "temporel"
+        if is_temporal_name:
+            try:
+                parsed = pd.to_datetime(clean_s.head(50), errors="coerce", dayfirst=True)
+                if parsed.notna().mean() > 0.7:
+                    return "temporel"
+            except Exception:
+                pass
+
     # Catégoriel
-    n_unique = series.nunique()
-    if n_unique <= 50:
-        return "catégoriel_nominal"
     return "catégoriel_nominal"
 
 

@@ -107,12 +107,12 @@ class ReportBuilder:
         if not profile:
             return self
 
-        n_rows = profile.get("n_rows", 0)
-        n_cols = profile.get("n_cols", 0)
-        n_num = len(profile.get("numeric_cols", [])) + len(profile.get("discrete_cols", []))
-        n_cat = len(profile.get("categorical_cols", [])) + len(profile.get("binary_cols", []))
-        n_temp = len(profile.get("temporal_cols", []))
-        n_id = len(profile.get("id_cols", []))
+        n_rows = profile.get("n_rows", 0) or 0
+        n_cols = profile.get("n_cols", 0) or 0
+        n_num = len(profile.get("numeric_cols") or []) + len(profile.get("discrete_cols") or [])
+        n_cat = len(profile.get("categorical_cols") or []) + len(profile.get("binary_cols") or [])
+        n_temp = len(profile.get("temporal_cols") or [])
+        n_id = len(profile.get("id_cols") or [])
 
         # Build count details
         details = []
@@ -204,18 +204,25 @@ class ReportBuilder:
             return self
 
         task = model_results.get("task_type") or model_results.get("task")
-        all_models = model_results.get("models") or model_results.get("comparison") or []
-        best = model_results.get("best_model") or {}
+        all_models = model_results.get("ranking") or model_results.get("models") or model_results.get("comparison") or []
+        
+        best = None
+        if isinstance(all_models, list) and len(all_models) > 0 and isinstance(all_models[0], dict):
+            best = all_models[0]
+        elif isinstance(model_results.get("best"), dict):
+            best = model_results["best"]
+        elif isinstance(model_results.get("best_model"), dict):
+            best = model_results["best_model"]
 
         if not best and all_models:
             key = "r2" if task == "regression" else "accuracy"
             try:
-                best = max(all_models, key=lambda m: (m.get("test_metrics") or m.get("metrics") or {}).get(key, -1))
+                best = max(all_models, key=lambda m: (m.get("test_metrics") or m.get("metrics") or {}).get(key, -1) if isinstance(m, dict) else -1)
             except (TypeError, ValueError):
-                best = all_models[0]
+                best = all_models[0] if isinstance(all_models[0], dict) else {}
 
         bullets = []
-        if best:
+        if isinstance(best, dict) and best:
             metrics = best.get("test_metrics") or best.get("metrics") or {}
             name = best.get("name") or best.get("model_key") or "Meilleur modèle"
             bullets.append(f"**Meilleur modèle** : {name}")

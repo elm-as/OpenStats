@@ -1,154 +1,187 @@
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Play, Network, Upload, BarChart3, Cpu,
-  ArrowRight, Database, Layers, Target,
-  FileText, Gauge, Hash, Wand2,
+  ANALYSES_DATA,
+  ANALYSES_CATEGORIES,
+  AnalysisDoc,
+} from '../docs/analysesData';
+import { AnalysisDocDetail } from '../components/docs/AnalysisDocDetail';
+import {
+  Search,
+  BookOpen,
+  Target,
+  Sparkles,
+  ArrowRight,
+  Filter,
+  Layers,
+  ChevronRight,
+  HelpCircle,
+  Upload,
+  Cpu,
+  BarChart3,
+  Award,
+  Zap,
 } from 'lucide-react';
 
-const MODES = [
-  {
-    icon: Play,
-    color: 'text-accent-400',
-    bg: 'bg-accent-400/10',
-    border: 'border-accent-500/20',
-    title: 'Analyse Guidee',
-    path: '/workflow',
-    desc: 'Workflow pas a pas : import, profilage, nettoyage, analyses statistiques, modelisation, rapport. Ideal pour debuter.',
-    steps: ['Importer un dataset', 'Profilage automatique', 'Nettoyage des donnees', 'Analyses & visualisations', 'Export du rapport'],
-  },
-  {
-    icon: Network,
-    color: 'text-purple-400',
-    bg: 'bg-purple-400/10',
-    border: 'border-purple-500/20',
-    title: 'Canvas Libre',
-    path: '/canvas',
-    desc: 'Glissez-deposez des noeuds pour construire des pipelines complexes. 25+ blocs : sources, preparation, modelisation, series temporelles, simulations, visualisations.',
-    steps: ['Choisir un dataset source', 'Ajouter des noeuds (drag & drop)', 'Configurer les parametres', 'Executer le pipeline', 'Exporter les resultats'],
-  },
-  {
-    icon: Wand2,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-400/10',
-    border: 'border-emerald-500/20',
-    title: 'Analyse Auto IA',
-    path: '/analyzer',
-    desc: "L'IA detecte le type de probleme, selectionne le pipeline optimal et execute l'analyse de A a Z. Nettoyage, modelisation, insights et rapport automatiques.",
-    steps: ['Selectionner un dataset', "L'IA detecte le probleme", 'Exclure les colonnes inutiles', 'Lancer l\'analyse', 'Consulter le rapport genere'],
-  },
-];
-
-const FEATURES = [
-  { icon: Database, label: 'Multi-format', desc: 'Import CSV, XLSX, JSON, Parquet' },
-  { icon: BarChart3, label: '30+ Modeles ML', desc: 'Regression, classification, clustering, series temporelles' },
-  { icon: Hash, label: '12 Tests Stats', desc: 'Normalite, correlation, stationnarite, cointegration' },
-  { icon: Cpu, label: 'SHAP & Explain', desc: 'Explicabilite des modeles avec SHAP' },
-  { icon: Layers, label: 'Marketplace', desc: 'Templates et extensions partageables' },
-  { icon: FileText, label: 'Rapports Pro', desc: 'Export PDF, DOCX, PPTX automatique' },
-];
-
 export default function DocsPage() {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisDoc | null>(null);
+
+  // Filter analyses based on category and search query
+  const filteredAnalyses = useMemo(() => {
+    return ANALYSES_DATA.filter((item) => {
+      if (selectedCategory !== 'all' && item.category !== selectedCategory) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          item.title.toLowerCase().includes(q) ||
+          item.summary.toLowerCase().includes(q) ||
+          item.useCase.toLowerCase().includes(q) ||
+          item.categoryLabel.toLowerCase().includes(q) ||
+          item.interpretationGuide.some(
+            (g) => g.metric.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q)
+          )
+        );
+      }
+      return true;
+    });
+  }, [selectedCategory, searchQuery]);
+
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-2xl bg-surface-900 border border-white/5 shadow-sm">
+    <div className="space-y-8 animate-fade-in pb-16">
+      {/* ─── Hero Banner ─── */}
+      <section className="relative overflow-hidden rounded-2xl bg-surface-900 border border-white/10 shadow-xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 px-6 py-8 md:px-10 md:py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="max-w-xl">
-            <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mb-3">Documentation</p>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-[1.1] mb-2">
-              Bienvenue sur OpenStats
+          <div className="max-w-2xl space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-500/10 text-accent-400 text-[11px] font-black uppercase tracking-wider border border-accent-500/20">
+              <Sparkles className="w-3.5 h-3.5 text-accent-400" /> Documentation & Formules Mathématiques
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-tight">
+              Encyclopédie des Analyses Statistiques & IA
             </h1>
-            <p className="text-surface-400 text-[13px] leading-relaxed max-w-lg">
-              Plateforme d'analyse statistique et de machine learning. Importez vos donnees, construisez des pipelines et exportez vos resultats.
+            <p className="text-surface-300 text-xs md:text-sm leading-relaxed">
+              Consultez les <strong>explications théoriques</strong>, les <strong>vraies formules mathématiques</strong> et les <strong>guides d'interprétation</strong> des p-values, R², VIF et métriques de chaque test.
             </p>
           </div>
+
           <Link to="/workflow" className="btn-primary shrink-0">
             <Upload className="w-4 h-4" />
-            Importer un dataset
+            Lancer une Analyse
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <div className="card">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-1 h-5 bg-accent-500 rounded-full" />
-          <h3 className="text-base font-black text-white tracking-tight">Fonctionnalites cles</h3>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {FEATURES.map(f => (
-            <div key={f.label} className="stat group">
-              <div className="stat-label">
-                <div className="w-4 h-4 rounded-md bg-accent-400/10 flex items-center justify-center">
-                  <f.icon className="w-2.5 h-2.5 text-accent-400" />
-                </div>
-                {f.label}
+      {/* ─── Detailed View Modal/Panel or Main Section ─── */}
+      {selectedAnalysis ? (
+        <AnalysisDocDetail
+          analysis={selectedAnalysis}
+          onBack={() => setSelectedAnalysis(null)}
+        />
+      ) : (
+        <div className="space-y-6">
+          {/* Search & Category Filter Bar */}
+          <div className="card space-y-4">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+              {/* Search Bar */}
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher une analyse, p-value, ANOVA, SHAP, VIF, ARIMA..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-900 border border-white/10 text-xs font-medium text-white placeholder:text-muted outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 transition-all shadow-inner"
+                />
               </div>
-              <p className="text-[11px] text-faint mt-1">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* 3 Modes */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-1 h-5 bg-accent-500 rounded-full" />
-          <h3 className="text-base font-black text-white tracking-tight">Modes d'analyse</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {MODES.map(mode => (
-            <div key={mode.title} className={`card group hover:${mode.border} transition-all`}>
-              <div className={`w-9 h-9 rounded-xl ${mode.bg} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                <mode.icon className={`w-5 h-5 ${mode.color}`} />
+              {/* Counter Badge */}
+              <div className="flex items-center gap-2 text-xs font-bold text-muted self-end md:self-auto">
+                <BookOpen className="w-4 h-4 text-accent-400" />
+                <span>
+                  {filteredAnalyses.length} fiche{filteredAnalyses.length > 1 ? 's' : ''} disponible{filteredAnalyses.length > 1 ? 's' : ''}
+                </span>
               </div>
-              <h4 className="text-sm font-bold text-white mb-1.5">{mode.title}</h4>
-              <p className="text-xs text-muted leading-relaxed mb-4">{mode.desc}</p>
-              <div className="space-y-1.5">
-                {mode.steps.map((step, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[11px] text-faint">
-                    <div className={`w-4 h-4 rounded-full ${mode.bg} flex items-center justify-center shrink-0`}>
-                      <span className={`text-[9px] font-bold ${mode.color}`}>{i + 1}</span>
-                    </div>
-                    {step}
-                  </div>
-                ))}
-              </div>
-              <Link
-                to={mode.path}
-                className={`mt-4 w-full py-1.5 rounded-lg ${mode.bg} hover:opacity-80 ${mode.color} text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5 border ${mode.border}`}
+            </div>
+
+            {/* Category Filter Chips */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-white/5">
+              {ANALYSES_CATEGORIES.map((cat) => {
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 border ${
+                      isSelected
+                        ? 'bg-accent-500 text-white border-accent-500 shadow-md font-black'
+                        : 'bg-white/[0.03] text-muted border-white/10 hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ─── Grid of Analyses ─── */}
+          {filteredAnalyses.length === 0 ? (
+            <div className="card text-center py-16 space-y-3">
+              <HelpCircle className="w-10 h-10 text-muted mx-auto" />
+              <h3 className="text-sm font-bold text-white">Aucune analyse ne correspond à votre recherche</h3>
+              <p className="text-xs text-muted max-w-sm mx-auto">
+                Essayez d'autres mots-clés comme "t-test", "régression", "p-value" ou "clustering".
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                }}
+                className="btn-secondary text-xs"
               >
-                Ouvrir <ArrowRight className="w-3 h-3" />
-              </Link>
+                Réinitialiser la recherche
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredAnalyses.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedAnalysis(item)}
+                  className="card group hover:border-accent-500/50 transition-all duration-200 cursor-pointer flex flex-col justify-between p-5 space-y-4 hover:shadow-xl hover:-translate-y-0.5 relative overflow-hidden bg-surface-900/60 border-white/10"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-accent-500/10 text-accent-400 border border-accent-500/20">
+                        {item.categoryLabel}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-muted group-hover:text-accent-400 group-hover:translate-x-1 transition-all" />
+                    </div>
 
-      {/* Quick Start */}
-      <div className="card">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-1 h-5 bg-emerald-500 rounded-full" />
-          <h3 className="text-base font-black text-white tracking-tight">Demarrage rapide</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { step: 1, title: 'Importer', desc: 'Glissez-deposez un fichier CSV, XLSX ou JSON sur la page d\'import.', icon: Upload },
-            { step: 2, title: 'Profiler', desc: "Le profilage automatique detecte les types de colonnes et suggere une cible.", icon: Target },
-            { step: 3, title: 'Analyser', desc: 'Choisissez un mode : guide, canvas ou auto. L\'IA fait le reste.', icon: Gauge },
-            { step: 4, title: 'Exporter', desc: 'Telechargez le rapport en PDF, DOCX ou PPTX avec tous les resultats.', icon: FileText },
-          ].map(item => (
-            <div key={item.step} className="text-center p-4 rounded-xl bg-white/[0.02] border border-white/5">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-                <item.icon className="w-4 h-4 text-emerald-400" />
-              </div>
-              <p className="text-xs font-bold text-white mb-1">{item.step}. {item.title}</p>
-              <p className="text-[11px] text-faint leading-relaxed">{item.desc}</p>
+                    <h3 className="text-base font-black text-white group-hover:text-accent-300 transition-colors leading-snug">
+                      {item.title}
+                    </h3>
+
+                    <p className="text-xs text-surface-400 leading-relaxed line-clamp-3">
+                      {item.summary}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between text-[11px] font-bold text-accent-400/80 group-hover:text-accent-300 transition-colors">
+                    <span>Consulter le cours</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

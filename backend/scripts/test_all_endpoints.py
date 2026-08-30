@@ -13,11 +13,12 @@ import time
 import argparse
 import textwrap
 import requests
+from pathlib import Path
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 
 DEFAULT_URL  = "http://127.0.0.1:5000/api/v1"
-DEFAULT_FILE = r"c:\Users\elmas\Desktop\Projets\Stats\backend\data\test_dataset_complet.csv"
+DEFAULT_FILE = str(Path(__file__).resolve().parent.parent / "data" / "test_dataset_complet.csv")
 
 # Colonnes connues du dataset de test
 COL_DATE     = "date_event"

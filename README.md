@@ -1,16 +1,19 @@
 <div align="center">
 
 # 🌌 OpenStats
-[<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=10b981&width=435&lines=OpenStats;SYSTEM+INITIALIZED;DATA+INTELLIGENCE" alt="Typing SVG" />](https://git.io/typing-svg)
+[<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&pause=1000&color=10b981&width=435&lines=OpenStats;SYSTEM+INITIALIZED;DATA+INTELLIGENCE;DESKTOP+%26+WEB+READY" alt="Typing SVG" />](https://git.io/typing-svg)
 
-**Plateforme d'analyse statistique et de Machine Learning avec interface nodale interactive.**
+**Plateforme d'analyse statistique, de Data Science et de Machine Learning avec canvas nodal visuel et application Desktop autonome.**
 
-Importez vos données, construisez vos pipelines visuellement, exécutez des analyses avancées et générez des rapports professionnels.
+*Signée par la charte de développement [ELMAS.md](ELMAS.md) — "From Data to Systems".*
+
+Importez vos données, construisez vos pipelines visuellement, exécutez des requêtes SQL ultra-rapides via DuckDB, entraînez des modèles ML explicables, réalisez des simulations avancées et générez des rapports professionnels ou du code source exportable.
 
 [![Status](https://img.shields.io/badge/Status-Operational-10b981?style=for-the-badge&logo=statuspage&logoColor=white)](#)
-[![Category](https://img.shields.io/badge/Category-Data_Science-black?style=for-the-badge&logo=micro-soft-academic&logoColor=white)](#)
-[![Build](https://img.shields.io/badge/Build-v1.1.0-gray?style=for-the-badge&logo=githubactions&logoColor=white)](#)
-[![Tests](https://img.shields.io/badge/Tests-120%20passed-10b981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Version](https://img.shields.io/badge/Version-v1.2.0-blue?style=for-the-badge&logo=github&logoColor=white)](#)
+[![Desktop](https://img.shields.io/badge/Desktop-Windows_.exe-0078D4?style=for-the-badge&logo=windows&logoColor=white)](#)
+[![Tests](https://img.shields.io/badge/Tests-Pytest_%7C_Vitest-10b981?style=for-the-badge&logo=pytest&logoColor=white)](#)
+[![Code Quality](https://img.shields.io/badge/Max_Lines-350L_Strict-purple?style=for-the-badge)](#)
 
 </div>
 
@@ -18,193 +21,204 @@ Importez vos données, construisez vos pipelines visuellement, exécutez des ana
 
 ![OpenStats Demo](assets/demo.gif)
 
-> **💡 Try it out!** Importez notre [Dataset d'Exemple (Titanic.csv)](assets/titanic_example.csv) pour tester immédiatement la puissance du nettoyage auto et des analyses descriptives.
+> **💡 Démarrez immédiatement !** Importez notre [Dataset d'Exemple (Titanic.csv)](assets/titanic_example.csv) pour tester le nettoyage automatique, l'AutoML, les visualisations Plotly et l'interprétation IA.
 
 ---
 
-## ✨ Ce qu'OpenStats sait déjà faire
+## ✨ Ce qu'OpenStats sait faire
 
-- **Canvas nodal configurable** interactif et fluide (ReactFlow + Plotly)
-- **30+ analyses statistiques et ML** (Séries temporelles, Régression, Classification, Clustering, Factorielle, Simulation Monte Carlo...)
-- **Pipeline automatique intelligent** — détection du type de problème et construction de recette
-- **Nettoyage automatique** et préparation des données (typage, valeurs manquantes, outliers)
-- **Import** depuis des fichiers CSV / XLSX / JSON / JSONL (validation par magic bytes)
-- **Interprétation IA** (via Claude / LLM) intégrée pour générer des insights textuels statistiques clairs
-- **Rapports automatiques** et export PDF, DOCX, PPTX professionnels
-- **🧩 Marketplace** de templates et extensions partageables — catalogue intégré, import/export JSON
-- **Suspense & lazy-loading** pour des performances optimales sur les pages lourdes
+- **🎨 Canvas Nodal Interactif et Fluide** — Interface visuelle basée sur ReactFlow, Plotly.js et Monaco Editor pour connecter vos étapes d'analyse.
+- **⚡ Moteur SQL DuckDB Intégré** — Exécution de requêtes SQL complexes ultra-rapides directement sur des fichiers CSV, Parquet, JSON ou SQLite sans configuration.
+- **🤖 Machine Learning & SHAP Explainability** — Classification & Régression (Scikit-Learn, XGBoost, LightGBM), AutoML compétitif, clustering (K-Means, DBSCAN) et valeurs SHAP / Feature Importance.
+- **📈 Séries Temporelles Univariées & Multivariées** — Tests de stationnarité (ADF, KPSS), décomposition saisonnière, modèles univariés (ARIMA, SARIMA, Prophet, Holt-Winters) et multivariés avancés (VAR, VECM, ARDL, BVAR, VARMAX, cointégration de Johansen, causalité de Granger).
+- **🧬 Analyses Factorielles Complètes** — Analyse en Composantes Principales (ACP/PCA), Analyse Factorielle des Correspondances (AFC/CA) et Analyse des Correspondances Multiples (ACM/MCA) avec représentations graphiques biplots et cercles de corrélation.
+- **🎲 Analytics Avancées & Simulations** — Simulation Monte Carlo, Bootstrapping (intervalles de confiance empiriques) et Scenario Builder (analyse prospective What-If & stress-testing).
+- **🐍 Nœud Python Sur-Mesure** — Éditeur Monaco complet avec coloration syntaxique et exécution sécurisée de scripts Python personnalisés sur les DataFrames.
+- **📜 Génération de Code Source Exportable** — Exportez votre canvas nodal visuel en un clic sous forme de script Python autonome (`.py`), script R (`.R`) ou Notebook Jupyter (`.ipynb`).
+- **📊 Rapports Professionnels Multi-Formats & IA** — Génération automatique de rapports aux formats **PDF**, **DOCX (Word)** ou **PPTX (PowerPoint)** enrichis par une interprétation analytique automatisée par IA.
+- **🖥️ Application Desktop Windows Autonome** — Binaire Windows `.exe` prêt à l'emploi (Electron + PyInstaller), fonctionnant sans prérequis Node/Python sur la machine utilisateur.
+- **🧩 Marketplace Local & Auto-Pipeline Intelligent** — Catalogue de templates de pipelines réutilisables (import/export JSON) et assistant de création automatique de recettes adaptées au jeu de données.
 
 ---
 
-## 🔄 Démo du workflow
+## 🏛️ Architecture Modulaire (Charte ElmasCore)
+
+Le projet respecte à 100% les standards de rigueur d'[ELMAS.md](ELMAS.md) :
+1. **Plafond strict de 350 lignes** par fichier sur l'intégralité du code (Backend & Frontend).
+2. **Organisation par domaine métier** : aucun dossier ou fichier fourre-tout (`helpers`, `utils`, `misc`, `common`).
+3. **Séparation stricte des responsabilités** : UI $\rightarrow$ services/logique métier $\rightarrow$ accès aux données.
+4. **Source unique de vérité** : un seul moteur unifié pour les exports et la génération de code.
 
 ```text
-       Données brutes (CSV/XLSX/JSON)
-                  ↓
-Nettoyage & Préparation automatique
-                  ↓
-Construction du Pipeline Visuel (Nœuds)
-                  ↓
-Analyses Statistiques & Machine Learning
-                  ↓
- Génération de Rapport & Interprétation IA
+Stats/
+├── backend/                              # Serveur Python & Moteurs Statistiques
+│   ├── app/
+│   │   ├── api/v1/                       # Contrôleurs API REST segmentés
+│   │   │   ├── analysis/                 # Routes descriptives, corrélations, charts
+│   │   │   ├── canvas/                   # Exécution, streaming, graphe et export canvas
+│   │   │   ├── datasets/                 # Ingestion, versions, requêtes DuckDB
+│   │   │   ├── modeling/                 # Entraînement et scoring de modèles ML
+│   │   │   ├── scenarios/                # Moteur de simulation stochastique
+│   │   │   └── timeseries/               # Endpoints séries temporelles uni/multivariées
+│   │   ├── core/                         # Logique métier pure (tous <= 350 lignes)
+│   │   │   ├── timeseries/               # ARIMA, SARIMA, VAR, VECM, ARDL, BVAR, etc.
+│   │   │   ├── auto_pipeline/            # Profilage heuristique, recettes et reporting
+│   │   │   ├── code_generation/          # Générateurs Python, R et Jupyter
+│   │   │   ├── interpretation/           # Moteur narratif d'insights statistiques
+│   │   │   ├── modeling_*.py             # Entraînement ML, métriques, SHAP, préparation
+│   │   │   ├── export_*.py               # Générateurs de rapports PDF, DOCX, Excel, HTML
+│   │   │   ├── transformations_*.py      # Catalogue et application de transformations
+│   │   │   ├── factor_*.py               # ACP, AFC, ACM et sérialisation
+│   │   │   └── hypothesis_testing.py     # Tests d'hypothèses et tailles d'effet (Cohen, etc.)
+│   │   └── services/                     # Couche service & persistance des datasets
+│   └── tests/                            # 120+ tests Pytest (core, services, api, e2e)
+│
+├── frontend/                             # Interface SPA React + TypeScript
+│   └── src/
+│       ├── components/                   # Composants modulaires par domaine métier
+│       │   ├── canvas/                   # Canvas nodal, nœuds visuels, modales de résultats
+│       │   ├── pipeline/                 # Assistant Auto-Pipeline et étapes
+│       │   ├── wizard/                   # Wizard d'analyse pas-à-pas
+│       │   ├── results/                  # Visualisation des résultats et interprétations
+│       │   ├── multivariateTS/           # Panneau dédié aux séries multivariées
+│       │   ├── factorAnalysis/           # Vues ACP, AFC, ACM et Scree plot
+│       │   ├── chartBuilder/             # Constructeur de graphiques interactifs
+│       │   ├── scenarios/                # Courbes de sensibilité et simulation
+│       │   ├── transform/                # Préparation et transformations de colonnes
+│       │   ├── extension/                # Extensions Python personnalisées
+│       │   ├── viz/                      # Wrappers Plotly, thèmes et outils d'export
+│       │   └── ui/                       # Composants atomiques (Toast, Tabs, Modal)
+│       ├── store/                        # Redux Toolkit & RTK Query segmenté (baseApi + endpoints)
+│       ├── styles/                       # Feuilles CSS modulaires (base, thème, canvas)
+│       └── types/                        # Typage strict segmenté (dataset, timeseries, platform)
+└── ELMAS.md                              # Charte d'architecture et de qualité ElmasCore
 ```
 
 ---
 
-## 🧩 Marketplace
+## 🧩 Catalogue des Nœuds du Canvas Nodal
 
-OpenStats intègre une marketplace locale de **templates de pipeline** et **extensions** :
-
-| Template | Type | Description |
-|----------|------|-------------|
-| Analyse Descriptive Rapide | `descriptive` | Stats, corrélations, VIF, heatmap automatique |
-| Pipeline de Classification | `classification` | Nettoyage → entraînement compétitif → SHAP |
-| Prévision de Séries Temporelles | `timeseries` | Stationnarité → ARIMA/SARIMA → prévisions |
-| Analyse Factorielle (PCA) | `pca` | Scree plot, biplot, cercle de corrélations |
-| Nettoyage Automatique | `cleaning` | Typage → nettoyage → export propre |
-| Simulation Monte Carlo | `simulation` | Régression → sensibilité → distribution |
-
-- 📥 **Import/Export JSON** — partagez vos templates entre utilisateurs
-- ⭐ **Featured** — les templates les plus utiles en vedette
-- 🔍 **Recherche et filtres** par catégorie, type ou mot-clé
-
----
-
-## 🛠️ Philosophie Open Source
-
-OpenStats est pensé comme une **app locale, gratuite et open-source** pour Data Scientists : pas de comptes, pas de paywall, pas de dépendance SaaS obligatoire.
-
-- Licence : **AGPLv3** (si quelqu'un modifie et redistribue, ou déploie une version accessible via réseau, il doit publier le code source des modifications).
-- Sécurité : validation des fichiers par **magic bytes**, pas de `os.urandom()` en fallback production, caches thread-safe.
+| Catégorie | Nœuds disponibles | Description |
+|-----------|-------------------|-------------|
+| 📥 **Source & Ingestion** | `DatasetNode`, `SqlNode` | Ingestion CSV, XLSX, JSON, JSONL, Parquet + Requêtes SQL DuckDB interactives. |
+| 🧹 **Data Prep & Nettoyage** | `TypingNode`, `CleaningNode`, `PreparationNodes` | Nettoyage auto (typage, outliers, valeurs manquantes), encodage, normalisation, jointures, filtrage. |
+| 📊 **Stats Descriptives & Tests** | `DescriptiveNodes`, `TestNodes` | Statistiques descriptives, matrices de corrélation, tables croisées (Khi-2), tests de normalité, ANOVA, tests t, Wilcoxon. |
+| 🧬 **Analyse Factorielle** | `FactorielleNodes` | Analyse en Composantes Principales (ACP/PCA), AFC, ACM, Scree plot, biplots et cercles de corrélation. |
+| 🤖 **Machine Learning & SHAP** | `ModelingNodes` | Algorithmes de régression/classification, AutoML compétitif, K-Means/DBSCAN, et explicabilité SHAP. |
+| 📈 **Séries Temporelles** | `TimeSeriesNodes` | Décomposition, tests ADF/KPSS, modèles ARIMA, SARIMA, Prophet, VAR, VECM, ARDL, BVAR. |
+| 🎲 **Simulations & Scénarios** | `SimulationNodes`, `AdvancedAnalyticsNodes` | Simulation Monte Carlo, rééchantillonnage Bootstrap et simulateur de scénarios What-If. |
+| 💻 **Custom Code** | `PythonNode`, `SqlNode` | Éditeurs interactifs (Monaco Editor) avec exécution directe sur les données du flux. |
+| 📉 **Visualisation & Export** | `VisualizationNodes`, `OutputNodes` | Visualisations Plotly (Scatter, Line, Bar, Box, Heatmap, 3D), export de code Python/R/Jupyter et rapports PDF/DOCX/PPTX. |
 
 ---
 
 ## 🛠️ Stack Technique
 
-**Frontend**
-- ![React](https://img.shields.io/badge/-React-10b981?style=for-the-badge&logo=react&logoColor=white) React 18 + TypeScript (strict mode)
-- ![Vite](https://img.shields.io/badge/-Vite-10b981?style=for-the-badge&logo=vite&logoColor=white) Vite + TailwindCSS (dark theme custom)
-- ![Redux](https://img.shields.io/badge/-Redux_Toolkit-10b981?style=for-the-badge&logo=redux&logoColor=white) Redux Toolkit + RTK Query
-- ReactFlow (canvas nodal), Plotly.js (visualisations), Monaco Editor
+### Frontend & UI Visuelle
+- **React 18** + **TypeScript** (mode strict)
+- **Vite** + **Vanilla CSS / Styles modulaires** (design épuré, chiffres tabulaires)
+- **ReactFlow** (`@xyflow/react`) — Canvas nodal visuel interactif
+- **Plotly.js** — Visualisations graphiques haute performance
+- **Monaco Editor** — Éditeur de code intégré avec coloration syntaxique
+- **Redux Toolkit** + RTK Query (endpoints injectés par domaine)
+- **KaTeX** — Rendu des formules mathématiques
 
-**Backend**
-- ![Flask](https://img.shields.io/badge/-Flask-10b981?style=for-the-badge&logo=flask&logoColor=white) Flask / Python 3.10+
-- ![Celery](https://img.shields.io/badge/-Celery-10b981?style=for-the-badge&logo=celery&logoColor=white) Celery / Redis (jobs asynchrones)
+### Desktop Packaging
+- **Electron** (v43+) + **Electron Builder**
+- **PyInstaller** — Compilation de l'exécutable backend Python autonome sous Windows
 
-**Stockage**
-- SQLite (par défaut) ou PostgreSQL + fichiers Parquet versionnés
+### Backend & Analytics Engine
+- **Flask** / Python 3.10+ (Architecture Blueprint par domaine & Services)
+- **DuckDB** — Moteur SQL analytique embarqué ultra-rapide
+- **Pandas**, **NumPy**, **PyArrow** — Manipulation de DataFrames et stockage Parquet versionné
+- **Scikit-Learn**, **XGBoost**, **LightGBM**, **Statsmodels**, **Prophet**, **SciPy** — ML, statistiques et séries temporelles
+- **SHAP** — Explicabilité des modèles de Machine Learning
+- **SQLite / PostgreSQL** + SQLAlchemy & Flask-Migrate
 
-**Machine Learning & Data**
-- Pandas, NumPy, Scikit-Learn, SciPy, Statsmodels, XGBoost, LightGBM, SHAP
-
-**Qualité**
-- ![Vitest](https://img.shields.io/badge/-Vitest-10b981?style=for-the-badge&logo=vitest&logoColor=white) Vitest + Testing Library (frontend)
-- ![Pytest](https://img.shields.io/badge/-Pytest-10b981?style=for-the-badge&logo=pytest&logoColor=white) Pytest 120+ tests (backend)
-- ![Playwright](https://img.shields.io/badge/-Playwright-10b981?style=for-the-badge&logo=playwright&logoColor=white) Playwright (E2E)
+### Exportation & Intégration IA
+- **ReportLab**, **python-docx**, **python-pptx**, **openpyxl** — Générateurs de rapports PDF, Word, PowerPoint et Excel
+- **Anthropic (Claude)** & **OpenAI** API — Génération d'interprétations analytiques automatisées
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Démarrage
 
-Si vous souhaitez faire tourner le projet en local, voici comment procéder :
+### 🌐 Mode Web (Développement Local)
 
 ```bash
-# 1. Cloner le projet
+# 1. Cloner le dépôt
 git clone https://github.com/elm-as/Stats.git
 cd Stats
 
-# 2. Configuration (optionnel — des valeurs par défaut sont fournies pour le dev local)
+# 2. Configurer les variables d'environnement (optionnel)
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 
-# 3. Installer les dépendances Backend
+# 3. Backend Python
 cd backend
 python -m venv venv
-# Activer l'environnement virtuel (Windows: venv\Scripts\activate, Linux/Mac: source venv/bin/activate)
+# Activer le venv :
+# Windows : venv\Scripts\activate | Linux/Mac : source venv/bin/activate
 pip install -r requirements.txt
-
-# 4. Installer les dépendances Frontend
-cd ../frontend
-npm install
-
-# 5. Lancer l'environnement de développement
-# Backend (dans un terminal)
-cd backend
 python run.py
 
-# Frontend (dans un autre terminal)
-cd frontend
+# 4. Frontend React (dans un second terminal)
+cd ../frontend
+npm install
 npm run dev
 ```
 
-### Variables d'environnement clés
+Accédez ensuite à `http://localhost:5173`.
 
-| Variable | Défaut | Description |
-|----------|--------|-------------|
-| `SECRET_KEY` | auto (dev) | Clé secrète Flask — **obligatoire en production** |
-| `LOCAL_DEV_MODE` | `false` | Mode développement (admin auto-créé, SQLite, pas d'auth) |
-| `DATABASE_URL` | SQLite locale | PostgreSQL supporté (`postgresql://...`) |
-| `MAX_UPLOAD_MB` | `200` | Taille max des fichiers uploadés |
-| `ANTHROPIC_API_KEY` | — | Clé API Anthropic pour les insights IA |
-
-## 🧪 Tests
+### 🖥️ Mode Desktop (Electron + PyInstaller)
 
 ```bash
-# Backend — 120+ tests
+# Lancement de développement Desktop :
+cd backend && python run_desktop.py 5000  # Terminal 1
+cd frontend && npm run electron:dev       # Terminal 2
+
+# Compilation de l'installateur Windows .exe complet :
+cd backend && python build_backend.py
+cd ../frontend && npm run build:desktop
+```
+L'installateur généré se trouve dans `frontend/release/OpenStats Desktop Setup 1.0.0.exe`.
+
+---
+
+## 🧪 Validation Qualité & Tests
+
+Conformément à la charte ElmasCore, toute modification doit valider l'ensemble des suites de tests :
+
+```bash
+# 1. Backend (120+ tests Pytest)
 cd backend
-pytest tests/ -v
+python -m pytest -p no:qt -q
 
-# Frontend — tests unitaires
+# 2. Frontend (Tests unitaires Vitest)
 cd frontend
-npm run test
+npx vitest run
 
-# Frontend — tests E2E
-npm run test:e2e
+# 3. Compilation TypeScript (Zéro erreur requise)
+cd frontend
+npx tsc -b
+
+# 4. Packaging de Production Vite
+cd frontend
+npm run build
 ```
 
 ---
 
-## 🗺️ Roadmap
+## 🛡️ Licence & Philosophie
 
-- [x] Canvas nodal interactif (ReactFlow)
-- [x] Import/Export de données (CSV, XLSX, JSON, JSONL)
-- [x] 30+ Analyses statistiques et modèles ML
-- [x] Rapports PDF, DOCX, PPTX automatiques avec IA
-- [x] Marketplace de modules et templates (import/export JSON)
-- [x] Pipeline automatique intelligent (auto-détection + recette)
-- [x] Validation des fichiers par magic bytes
-- [x] Cache thread-safe, pagination des APIs
-- [ ] Collaboration en temps réel
-- [ ] Export/import de workspace complet
-- [ ] Packaging desktop (Electron/Tauri)
+OpenStats est développé dans une optique **local-first, gratuite et open-source** : pas de compte obligatoire, pas de paywall, pas d'envoi forcé de vos données vers le cloud.
 
----
-
-## 🔗 Liens Utiles
-
-<div align="center">
-
-[![Website](https://img.shields.io/badge/Laboratory-elmas.solutions-3b82f6?style=for-the-badge&logo=google-chrome&logoColor=white)](https://elmas.solutions)
-[![LinkedIn](https://img.shields.io/badge/Founder-LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/elmas-dev)
-[![Twitter](https://img.shields.io/badge/Intelligence-Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com)
-
-</div>
+- Licence : **AGPLv3**
+- Sécurité : validation par magic bytes, isolation du code utilisateur, caches thread-safe.
 
 ---
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/render?type=rect&color=10b981&height=2&section=footer&fontSize=10&text=" width="100%" />
-  <br/>
-
-```text
-[EMERALD_PROTOCOL]
-> Initializing sequence... 4F8A2D7B9E1C5A30
-> Environment: PRODUCTION_READY
-> Security Protocol: API_SECURE
-> Status: OPERATIONAL
-```
-
-  <sub><b>ELMAS CORE LABORATORY</b> // <i>Proprietary Technology</i></sub><br/>
-  <sub>SYSTEM_STATUS: OPERATIONAL // AUTH_CODE: 4F8A2D7B9E1C5A30</sub>
+  <sub><b>ELMAS CORE LABORATORY</b> // <i>"From Data to Systems"</i></sub><br/>
+  <sub>SYSTEM_STATUS: OPERATIONAL // QUALITY_GATE: 100% COMPLIANT</sub>
 </div>

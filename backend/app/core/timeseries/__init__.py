@@ -12,19 +12,21 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-# Helpers publics
-from app.core.timeseries.helpers import (
+from app.core.timeseries.residual_diagnostics import (
     _sf,
     _sanitize,
+    _compute_residual_diagnostics,
+)
+from app.core.timeseries.series_preparation import (
     _parse_datetime_series,
     _prepare_series,
     _prepare_multivariate,
     _detect_seasonal_period,
     _infer_or_guess_freq,
     _build_forecast_dates,
-    _compute_residual_diagnostics,
     _normalize_french_date_text,
 )
+
 
 # Stationnarité
 from app.core.timeseries.stationarity import (

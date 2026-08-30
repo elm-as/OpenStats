@@ -1,553 +1,87 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
-  addEdge,
-  useNodesState,
-  useEdgesState,
   Controls,
   Background,
   MiniMap,
-  Connection,
-  Edge,
-  Node,
-  BaseEdge,
-  getBezierPath
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Play, Loader2, CheckCircle2, XCircle, AlertCircle, Share2, Copy, Eye, X } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
-import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
 
 import Sidebar from './Sidebar';
 import TemplateSelector from './TemplateSelector';
-import {
-  DatasetNode,
-  TypingNode, CleaningNode, TransformNode, ComputeVariableNode,
-  DescriptiveNumericNode, DescriptiveCategoricalNode,
-  CorrelationNode, VIFNode,
-  TestCompareMeansNode, TestCorrelationNode, TestIndependenceNode, TestStationarityNode,
-  PCANode, CANode, MCANode, ClusteringNode,
-  RegressionNode, ClassificationNode,
-  TimeSeriesNode, MultivariateTimeSeriesNode,
-  SimulationNode,
-  VisualizationNode,
-  AINode, ExtensionNode, InsightsNode, OutputNode,
-  SqlNode, PythonNode,
-  CanvasNodeData,
-} from './nodes';
+import CodeViewerModal from './CodeViewerModal';
 import CanvasResultModal from './CanvasResultModal';
+import CanvasLogConsole, { LogEntry } from './CanvasLogConsole';
+import { nodeTypes, edgeTypes } from './canvasGraphConfig';
+import { useCanvasGraph } from './useCanvasGraph';
+import { useCanvasPipeline } from './useCanvasPipeline';
+import { useCanvasExport } from './useCanvasExport';
+import { CanvasActionToolbar } from './CanvasActionToolbar';
+import { CanvasPipelineResultsPanel } from './CanvasPipelineResultsPanel';
+import { CanvasShareModal } from './CanvasShareModal';
 
-const initialNodes: Node[] = [];
-
-export const nodeTypes = {
-  dataset: DatasetNode,
-  typing: TypingNode,
-  cleaning: CleaningNode,
-  transform: TransformNode,
-  computeVariable: ComputeVariableNode,
-  descriptiveNumeric: DescriptiveNumericNode,
-  descriptiveCategorical: DescriptiveCategoricalNode,
-  correlation: CorrelationNode,
-  vif: VIFNode,
-  testCompareMeans: TestCompareMeansNode,
-  testCorrelation: TestCorrelationNode,
-  testIndependence: TestIndependenceNode,
-  testStationarity: TestStationarityNode,
-  pca: PCANode,
-  ca: CANode,
-  mca: MCANode,
-  clustering: ClusteringNode,
-  regression: RegressionNode,
-  classification: ClassificationNode,
-  timeseries: TimeSeriesNode,
-  multivariateTimeseries: MultivariateTimeSeriesNode,
-  simulation: SimulationNode,
-  visualization: VisualizationNode,
-  ai: AINode,
-  extension: ExtensionNode,
-  insights: InsightsNode,
-  output: OutputNode,
-  sql: SqlNode,
-  python: PythonNode,
-};
-
-
-interface NodeResult {
-  status: 'success' | 'error' | 'skipped';
-  message?: string;
-  error?: string;
-  result?: unknown;
-}
-
-const AnimatedDataEdge = ({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  markerEnd,
-  data,
-}: any) => {
-  const [edgePath] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetPosition,
-    targetX,
-    targetY,
-  });
-
-  const edgeColor = data?.color || '#38bdf8';
-  const edgeSpeed = data?.speed || '2.5s';
-  const edgeSpeedOffset = data?.speedOffset || '1.25s';
-
-  return (
-    <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{ ...style, stroke: edgeColor, strokeWidth: 2, strokeLinecap: 'round', opacity: 0.5 }} />
-      <circle r="3" fill={edgeColor} style={{ filter: `drop-shadow(0 0 5px ${edgeColor})` }}>
-        <animateMotion dur={edgeSpeed} repeatCount="indefinite" path={edgePath} />
-      </circle>
-      {/* Une deuxième particule décalée pour plus de fluidité */}
-      <circle r="2" fill="#ffffff" style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.8))' }}>
-        <animateMotion dur={edgeSpeed} begin={edgeSpeedOffset} repeatCount="indefinite" path={edgePath} />
-      </circle>
-    </>
-  );
-};
-
-export const edgeTypes = { animatedDataEdge: AnimatedDataEdge };
-
-let id = 1;
-const getId = () => `node_${id++}`;
+export { nodeTypes, edgeTypes };
 
 function DnDFlow() {
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [selectedResultNode, setSelectedResultNode] = useState<{
+    id: string;
+    type: string;
+    title: string;
+    result: any;
+  } | null>(null);
 
-  // Pipeline execution state
-  const [isRunning, setIsRunning] = useState(false);
-  const [pipelineResults, setPipelineResults] = useState<Record<string, NodeResult> | null>(null);
-  const [showResults, setShowResults] = useState(false);
-  const [selectedResultNode, setSelectedResultNode] = useState<{ id: string; type: string; title: string; result: any } | null>(null);
-  const [isSharing, setIsSharing] = useState(false);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [lastDroppedId, setLastDroppedId] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
+  const [logs, setLogs] = useState<LogEntry[]>([]);
 
-  useEffect(() => {
-    const datasetId = searchParams.get('dataset');
-    const templateEncoded = searchParams.get('template');
-    
-    if (templateEncoded && nodes.length === 0) {
-      try {
-        const payload = JSON.parse(decodeURIComponent(templateEncoded));
-        if (payload.nodes) {
-          const templateNodes = payload.nodes.map((n: any) => ({
-            ...n,
-            data: {
-              ...n.data,
-              onChange: onNodeDataChange,
-              onDelete: onNodeDelete,
-              getConnectedDatasetId,
-            },
-          }));
-          const templateEdges = (payload.edges || []).map((e: any) => ({
-            ...e,
-            type: 'animatedDataEdge',
-          }));
-          const maxId = templateNodes.reduce((max: number, n: any) => {
-            const num = parseInt(n.id.replace('node_', ''), 10);
-            return isNaN(num) ? max : Math.max(max, num);
-          }, 0);
-          id = Math.max(id, maxId + 1);
-          setNodes(templateNodes);
-          setEdges(templateEdges);
-        }
-      } catch {}
-      return;
-    }
-
-    if (datasetId && nodes.length === 0) {
-      const newNode: Node = {
-        id: 'ds_from_dashboard',
-        type: 'dataset',
-        position: { x: 100, y: 200 },
-        data: {
-          importMode: 'existing',
-          file: datasetId,
-          onChange: onNodeDataChange,
-          onDelete: onNodeDelete,
-          getConnectedDatasetId,
-        },
-      };
-      setNodes([newNode]);
-      id = Math.max(id, 2);
-    }
-  }, [searchParams]);
-
-  const onConnect = useCallback((params: Connection) => setEdges((eds) => {
-    // Déterminer la couleur/vitesse selon le nœud source
-    let color = '#38bdf8'; // Bleu (Data) par défaut
-    let speed = '2.5s';
-    let speedOffset = '1.25s';
-
-    setNodes((currentNodes) => {
-      const sourceNode = currentNodes.find(n => n.id === params.source);
-      if (sourceNode) {
-        if (['dataset', 'cleaning', 'transform', 'computeVariable', 'typing'].includes(sourceNode.type as string)) {
-          color = '#38bdf8'; // Bleu (Data/Prépa)
-          speed = '2s';
-          speedOffset = '1s';
-        } else if (['descriptiveNumeric', 'descriptiveCategorical', 'correlation', 'vif', 'pca', 'ca', 'mca', 'clustering'].includes(sourceNode.type as string)) {
-          color = '#8b5cf6'; // Violet (Analyse)
-          speed = '3s';
-          speedOffset = '1.5s';
-        } else if (['regression', 'classification', 'timeseries', 'multivariateTimeseries', 'simulation'].includes(sourceNode.type as string)) {
-          color = '#10b981'; // Vert Émeraude (ML)
-          speed = '1.5s'; // Plus rapide pour simuler du calcul intense
-          speedOffset = '0.75s';
-        } else {
-          color = '#f59e0b'; // Ambre (Test/Output)
-          speed = '2.5s';
-          speedOffset = '1.25s';
-        }
-      }
-      return currentNodes;
-    });
-
-    return addEdge({
-      ...params,
-      type: 'animatedDataEdge',
-      data: { color, speed, speedOffset },
-    }, eds);
-  }), [setEdges, setNodes]);
-
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const onNodeDataChange = useCallback((nodeId: string, key: string, value: string) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          return {
-            ...node,
-            data: { ...node.data, [key]: value },
-          };
-        }
-        return node;
-      })
-    );
-  }, [setNodes]);
-
-  const onNodeDelete = useCallback((nodeId: string) => {
-    setNodes((nds) => nds.filter((n) => n.id !== nodeId));
-    setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
-  }, [setNodes, setEdges]);
-
-  // Trace path backwards to find the dataset ID
-  const getConnectedDatasetId = useCallback((nodeId: string): string | null => {
-    let currentId = nodeId;
-    const visited = new Set<string>();
-
-    while (currentId) {
-      if (visited.has(currentId)) return null; // Cycle
-      visited.add(currentId);
-
-      const node = nodes.find(n => n.id === currentId);
-      if (node?.type === 'dataset' && node.data?.file) {
-        return node.data.file as string;
-      }
-
-      // Find parent
-      const parentEdge = edges.find(e => e.target === currentId);
-      if (!parentEdge) return null;
-      currentId = parentEdge.source;
-    }
-    return null;
-  }, [nodes, edges]);
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      const type = event.dataTransfer.getData('application/reactflow');
-      if (typeof type === 'undefined' || !type) return;
-
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-
-      const newNodeId = getId();
-      const newNode: Node = {
-        id: newNodeId,
-        type,
-        position,
-        data: { 
-          onChange: onNodeDataChange, 
-          onDelete: onNodeDelete,
-          getConnectedDatasetId
-        },
-      };
-
-      setLastDroppedId(newNodeId);
-      setTimeout(() => setLastDroppedId(null), 500);
-
-      setNodes((nds) => nds.concat(newNode));
+  const addLog = useCallback(
+    (message: string, level: 'info' | 'success' | 'error' = 'info', nodeId?: string) => {
+      const time = new Date().toLocaleTimeString();
+      setLogs(prev => [
+        ...prev,
+        { id: Math.random().toString(36).slice(2), time, message, level, nodeId },
+      ]);
     },
-    [reactFlowInstance, setNodes, onNodeDataChange, onNodeDelete, getConnectedDatasetId],
+    []
   );
 
-  // ── Template loading ──
-  const loadTemplate = useCallback((templateNodes: Node[], templateEdges: Edge[]) => {
-    // Inject callbacks into template nodes
-    const injectedNodes = templateNodes.map(n => ({
-      ...n,
-      data: {
-        ...n.data,
-        onChange: onNodeDataChange,
-        onDelete: onNodeDelete,
-        getConnectedDatasetId,
-      },
-    }));
+  const graph = useCanvasGraph({
+    onResetPipeline: () => {
+      pipeline.setPipelineResults(null);
+      pipeline.setShowResults(false);
+    },
+  });
 
-    // Update the ID counter to avoid collisions
-    const maxId = templateNodes.reduce((max, n) => {
-      const num = parseInt(n.id.replace('node_', ''), 10);
-      return isNaN(num) ? max : Math.max(max, num);
-    }, 0);
-    id = maxId + 1;
+  const pipeline = useCanvasPipeline({
+    nodes: graph.nodes,
+    setNodes: graph.setNodes,
+    edges: graph.edges,
+    addLog,
+    setSelectedResultNode,
+  });
 
-    setNodes(injectedNodes);
-    setEdges(templateEdges);
-    setPipelineResults(null);
-    setShowResults(false);
-  }, [setNodes, setEdges, onNodeDataChange, onNodeDelete, getConnectedDatasetId]);
-
-  // ── Pipeline execution ──
-  const handleRun = async () => {
-    if (nodes.length === 0) return;
-    setIsRunning(true);
-    setPipelineResults(null);
-    setShowResults(false);
-
-    // Build payload — strip callbacks from data
-    const pipeline = {
-      nodes: nodes.map(n => ({
-        id: n.id,
-        type: n.type,
-        data: Object.fromEntries(
-          Object.entries(n.data).filter(([k]) => k !== 'onChange' && k !== 'onDelete')
-        ),
-      })),
-      edges: edges.map(e => ({ source: e.source, target: e.target })),
-    };
-
-    // Update node borders to "running" state
-    setNodes((nds) => nds.map(n => ({
-      ...n,
-      data: { ...n.data, runStatus: 'processing' },
-    })));
-
-    try {
-      const authEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true';
-      const token = authEnabled ? (localStorage.getItem('access_token') || '') : '';
-      // Timeout de 15 minutes pour les pipelines complets (9 algorithmes + ACP + clustering)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 900_000);
-      let response: Response;
-      try {
-        response = await fetch(`${API_V1_BASE}/canvas/run_pipeline`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Client-Id': (() => { try { return getAnonymousClientId(); } catch { return ''; } })(),
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify(pipeline),
-          signal: controller.signal,
-        });
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        const nodeResults: Record<string, NodeResult> = result.results || {};
-        setPipelineResults(nodeResults);
-        setShowResults(true);
-
-        // Color nodes by result status and attach result data + open result handler
-        setNodes((nds) => nds.map(n => {
-          const r = nodeResults[n.id];
-          return {
-            ...n,
-            data: {
-              ...n.data,
-              runStatus: r?.status || 'idle',
-              runResult: r?.result,
-              runError: r?.error,
-              runMessage: r?.message,
-              onOpenResult: (targetId: string) => {
-                const targetNode = nds.find(tn => tn.id === targetId) || n;
-                const type = targetNode.type || '';
-                const title = getNodeLabel(targetId);
-                const resData = nodeResults[targetId]?.result || targetNode.data?.runResult;
-                setSelectedResultNode({ id: targetId, type, title, result: resData });
-              },
-            },
-          };
-        }));
-      } else {
-        // Global error
-        setPipelineResults({ _global: { status: 'error', error: result.error || 'Erreur inconnue' } });
-        setShowResults(true);
-        // Reset borders
-        setNodes((nds) => nds.map(n => ({
-          ...n,
-          data: { ...n.data, runStatus: 'error' },
-        })));
-      }
-    } catch (e: any) {
-      console.error('Pipeline error:', e);
-      let errorMessage = 'Connexion au serveur échouée';
-      if (e instanceof TypeError && e.message?.includes('Failed to fetch')) {
-        errorMessage = `Connexion au serveur impossible. Vérifiez que le backend est démarré (${API_V1_BASE}). Si en production, vérifiez la configuration CORS.`;
-      } else if (e instanceof TypeError && e.message?.includes('NetworkError')) {
-        errorMessage = 'Erreur réseau : le serveur est injoignable. Vérifiez votre connexion internet et l\'URL du backend.';
-      } else if (e?.name === 'AbortError') {
-        errorMessage = 'La requête a été annulée (timeout). Le pipeline est peut-être trop lourd.';
-      } else if (e?.message) {
-        errorMessage = `Erreur: ${e.message}`;
-      }
-      setPipelineResults({ _global: { status: 'error', error: errorMessage } });
-      setShowResults(true);
-      setNodes((nds) => nds.map(n => ({
-        ...n,
-        data: { ...n.data, runStatus: 'error' },
-      })));
-    } finally {
-      setIsRunning(false);
-    }
-  };
-
-  // ── Share Pipeline ──
-  const handleShare = async () => {
-    if (nodes.length === 0) return;
-    setIsSharing(true);
-    setShareUrl(null);
-    
-    const pipeline = {
-      nodes: nodes.map(n => ({
-        id: n.id,
-        type: n.type,
-        data: Object.fromEntries(
-          Object.entries(n.data).filter(([k]) => k !== 'onChange' && k !== 'onDelete')
-        ),
-        position: n.position,
-      })),
-      edges: edges.map(e => ({ source: e.source, target: e.target })),
-      results: pipelineResults, // Inclure les résultats pour que les viewers puissent voir l'analyse
-    };
-    
-    try {
-      const response = await fetch(`${API_V1_BASE}/canvas/share`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Client-Id': (() => { try { return getAnonymousClientId(); } catch { return ''; } })(),
-        },
-        body: JSON.stringify(pipeline),
-      });
-      const result = await response.json();
-      if (result.success) {
-        const fullUrl = `${window.location.origin}${result.url}`;
-        setShareUrl(fullUrl);
-      } else {
-        alert("Erreur lors du partage : " + result.error);
-      }
-    } catch (e) {
-      console.error('Share error:', e);
-      alert("Erreur réseau lors du partage");
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  const copyToClipboard = () => {
-    if (shareUrl) {
-      navigator.clipboard.writeText(shareUrl);
-      // Feedback simple
-      const btn = document.getElementById('copy-btn');
-      if (btn) {
-        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="text-emerald-400"><path d="M20 6 9 17l-5-5"/></svg> Copié !';
-        setTimeout(() => {
-          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copier le lien';
-        }, 2000);
-      }
-    }
-  };
-
-  const resetResults = () => {
-    setPipelineResults(null);
-    setShowResults(false);
-    setNodes((nds) => nds.map(n => ({
-      ...n,
-      data: { ...n.data, runStatus: 'idle' },
-    })));
-  };
-
-  // Compute summary stats from results
-  const summary = pipelineResults ? (() => {
-    const entries = Object.entries(pipelineResults).filter(([k]) => k !== '_global');
-    return {
-      total: entries.length,
-      success: entries.filter(([, r]) => r.status === 'success').length,
-      error: entries.filter(([, r]) => r.status === 'error').length,
-      skipped: entries.filter(([, r]) => r.status === 'skipped').length,
-    };
-  })() : null;
-
-  // Build display-friendly label for a node ID
-  const getNodeLabel = (nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (!node) return nodeId;
-    const labels: Record<string, string> = {
-      dataset: 'Source', typing: 'Type', cleaning: 'Nettoyage', transform: 'Transf.',
-      computeVariable: 'Variable', descriptiveNumeric: 'Desc. Num.', descriptiveCategorical: 'Desc. Cat.',
-      correlation: 'Corrélation', vif: 'VIF', testCompareMeans: 'Moyennes', testCorrelation: 'Corr.',
-      testIndependence: 'Indép.', testStationarity: 'Stat.',
-      pca: 'ACP', ca: 'AFC', mca: 'ACM',
-      clustering: 'Clustering', regression: 'Régression', classification: 'Classif.',
-      timeseries: 'Séries Temp.', multivariateTimeseries: 'TS Multivarié', simulation: 'Simulation',
-      visualization: 'Graphique', ai: 'IA', extension: 'Extension', insights: 'Insights', output: 'Export',
-    };
-    return labels[node.type || ''] || node.type || nodeId;
-  };
+  const exporter = useCanvasExport({
+    nodes: graph.nodes,
+    edges: graph.edges,
+    pipelineResults: pipeline.pipelineResults,
+  });
 
   return (
     <div className="flex h-[calc(100vh-56px)] w-full text-surface-50">
       <Sidebar />
-      <div className="flex-1 h-full relative" ref={reactFlowWrapper}>
-        <TemplateSelector onSelect={loadTemplate} />
+      <div className="flex-1 h-full relative" ref={graph.reactFlowWrapper}>
+        <TemplateSelector onSelect={graph.loadTemplate} />
         <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onEdgeDoubleClick={(event, edge) => setEdges((eds) => eds.filter((e) => e.id !== edge.id))}
-          onInit={setReactFlowInstance}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
+          nodes={graph.nodes}
+          edges={graph.edges}
+          onNodesChange={graph.onNodesChange}
+          onEdgesChange={graph.onEdgesChange}
+          onConnect={graph.onConnect}
+          onEdgeDoubleClick={(_, edge) =>
+            graph.setEdges(eds => eds.filter(e => e.id !== edge.id))
+          }
+          onInit={graph.setReactFlowInstance}
+          onDrop={graph.onDrop}
+          onDragOver={graph.onDragOver}
           nodeTypes={nodeTypes as any}
           edgeTypes={edgeTypes as any}
           fitView
@@ -570,182 +104,70 @@ function DnDFlow() {
           />
         </ReactFlow>
 
-        <div className="absolute bottom-8 right-8 flex items-center gap-4 z-10">
-          <button
-            className={`px-5 py-3.5 rounded-full font-bold text-sm shadow-lg border border-white/[0.08] backdrop-blur-md transition-all flex items-center gap-2 ${
-              isSharing
-                ? 'bg-surface-800 text-surface-400 cursor-wait'
-                : 'bg-surface-900/80 hover:bg-surface-800 text-surface-200 hover:text-white'
-            }`}
-            onClick={handleShare}
-            disabled={isSharing || nodes.length === 0}
-            title="Générer un lien public en lecture seule"
-          >
-            {isSharing ? (
-              <><Loader2 size={16} className="animate-spin" /> ...</>
-            ) : (
-              <><Share2 size={16} /> Partager</>
-            )}
-          </button>
-          <button
-            className={`px-7 py-3.5 rounded-full font-black text-sm shadow-[0_0_30px_rgba(56,189,248,0.3)] hover:shadow-[0_0_40px_rgba(56,189,248,0.5)] hover:-translate-y-1 transition-all flex items-center gap-2.5 ${
-              isRunning
-                ? 'bg-surface-600 text-surface-300 cursor-wait'
-                : 'bg-accent-500 hover:bg-accent-400 text-surface-950'
-            }`}
-            onClick={handleRun}
-            disabled={isRunning || nodes.length === 0}
-          >
-            {isRunning ? (
-              <><Loader2 size={18} className="animate-spin" /> Exécution en cours...</>
-            ) : (
-              <><Play fill="currentColor" size={18} /> Exécuter le Workflow</>
-            )}
-          </button>
-        </div>
-        
-        {/* Modal / Toast de Partage */}
-        {shareUrl && (
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 bg-surface-900 border border-accent-500/30 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] rounded-2xl p-5 w-[400px] animate-in fade-in slide-in-from-top-4">
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="font-bold text-surface-50 text-lg flex items-center gap-2">
-                <Share2 className="text-accent-400" size={20} />
-                Lien généré !
-              </h3>
-              <button onClick={() => setShareUrl(null)} className="text-surface-400 hover:text-white">
-                <XCircle size={20} />
-              </button>
-            </div>
-            <p className="text-surface-300 text-sm mb-4">Ce lien permet à n'importe qui de consulter votre workflow et ses résultats en lecture seule.</p>
-            <div className="flex items-center gap-2 bg-black/40 p-2 rounded-xl border border-white/[0.06]">
-              <input type="text" readOnly value={shareUrl} className="bg-transparent border-none outline-none text-surface-200 text-xs w-full px-2" />
-              <button 
-                id="copy-btn"
-                onClick={copyToClipboard}
-                className="shrink-0 bg-white/10 hover:bg-white/20 text-surface-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
-              >
-                <Copy size={14} /> Copier le lien
-              </button>
-            </div>
-          </div>
-        )}
+        <CanvasActionToolbar
+          nodesCount={graph.nodes.length}
+          isRunning={pipeline.isRunning}
+          isSharing={exporter.isSharing}
+          onOpenGlobalCodeModal={exporter.handleOpenGlobalCodeModal}
+          onSaveTemplate={exporter.handleSaveTemplate}
+          onShare={exporter.handleShare}
+          onRun={pipeline.handleRun}
+        />
 
-        {/* ── Results Panel ── */}
-        {showResults && pipelineResults && (
-          <div className="absolute top-4 right-4 w-[380px] max-h-[calc(100vh-120px)] overflow-y-auto z-20 rounded-2xl card !p-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)]">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-white/[0.01]">
-              <div className="flex items-center gap-3">
-                {summary && summary.error > 0 ? (
-                  <div className="w-8 h-8 rounded-xl bg-danger-50 flex items-center justify-center border border-danger/10">
-                    <XCircle size={16} className="text-danger" />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center border border-green/10">
-                    <CheckCircle2 size={16} className="text-green-500" />
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-sm font-bold text-strong">Résultats du Pipeline</h3>
-                  {summary && (
-                    <p className="text-[10px] text-muted uppercase tracking-wider font-semibold mt-0.5">
-                      {summary.success} OK · {summary.error > 0 ? `${summary.error} FAIL · ` : ''}{summary.skipped > 0 ? `${summary.skipped} SKIP` : ''}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setSelectedResultNode({
-                    id: 'global_report',
-                    type: 'global',
-                    title: 'Rapport Global du Pipeline',
-                    result: pipelineResults
-                  })}
-                  className="text-accent-400 hover:text-accent-300 text-[11px] font-bold px-2.5 py-1.5 rounded-lg hover:bg-accent-500/10 transition-colors border border-accent-500/10 shrink-0"
-                >
-                  Rapport global
-                </button>
-                <button
-                  onClick={resetResults}
-                  className="text-muted hover:text-strong text-xs font-semibold p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                  title="Fermer"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
+        <CanvasShareModal
+          shareUrl={exporter.shareUrl}
+          onClose={() => exporter.setShareUrl(null)}
+          onCopy={exporter.copyToClipboard}
+        />
 
-            {/* Global error */}
-            {pipelineResults._global && (
-              <div className="px-5 py-3 bg-danger-50 border-b border-danger/10">
-                <p className="text-xs text-danger font-medium">{pipelineResults._global.error}</p>
-              </div>
-            )}
+        <CanvasPipelineResultsPanel
+          showResults={pipeline.showResults}
+          pipelineResults={pipeline.pipelineResults}
+          nodes={graph.nodes}
+          summary={pipeline.summary}
+          resolveNodeLabel={pipeline.resolveNodeLabel}
+          onOpenGlobalReport={() =>
+            setSelectedResultNode({
+              id: 'global_report',
+              type: 'global',
+              title: 'Rapport Global du Pipeline',
+              result: pipeline.pipelineResults,
+            })
+          }
+          onOpenNodeResult={(nodeId, nodeType, nodeName, result) =>
+            setSelectedResultNode({
+              id: nodeId,
+              type: nodeType,
+              title: nodeName,
+              result,
+            })
+          }
+          onResetResults={pipeline.resetResults}
+        />
 
-            {/* Per-node results */}
-            <div className="p-3 space-y-2 max-h-[400px] overflow-y-auto">
-              {Object.entries(pipelineResults)
-                .filter(([k]) => k !== '_global')
-                .map(([nodeId, result]) => {
-                  const nodeName = getNodeLabel(nodeId);
-                  const nodeType = nodes.find(n => n.id === nodeId)?.type || '';
-                  
-                  return (
-                    <div 
-                      key={nodeId} 
-                      className={`px-4 py-3 rounded-xl border transition-all duration-200 flex items-start justify-between gap-3 ${
-                        result.status === 'success' ? 'bg-green-50/20 border-green/10 hover:border-green/20' :
-                        result.status === 'error' ? 'bg-danger-50/20 border-danger/10 hover:border-danger/20' :
-                        'bg-amber-50/20 border-amber/10 hover:border-amber/20'
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          {result.status === 'success' && <CheckCircle2 size={14} className="text-green-500 shrink-0" />}
-                          {result.status === 'error' && <XCircle size={14} className="text-danger shrink-0" />}
-                          {result.status === 'skipped' && <AlertCircle size={14} className="text-amber shrink-0" />}
-                          <span className="text-xs font-bold text-strong truncate">{nodeName}</span>
-                        </div>
-                        <p className={`text-[11px] mt-1 ml-5 leading-relaxed ${
-                          result.status === 'success' ? 'text-default' :
-                          result.status === 'error' ? 'text-danger font-medium' :
-                          'text-amber'
-                        }`}>
-                          {result.message || result.error || 'Exécuté avec succès'}
-                        </p>
-                      </div>
-                      
-                      {result.status === 'success' && result.result !== undefined && (
-                        <button
-                          onClick={() => setSelectedResultNode({
-                            id: nodeId,
-                            type: nodeType,
-                            title: nodeName,
-                            result: result.result
-                          })}
-                          className="p-1.5 rounded-lg bg-white/5 border border-white/5 text-muted hover:text-accent-400 hover:border-accent-500/30 transition-all shrink-0"
-                          title="Voir les résultats"
-                        >
-                          <Eye size={14} />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-        
-        {/* Modal de détails */}
         <CanvasResultModal
           isOpen={!!selectedResultNode}
           onClose={() => setSelectedResultNode(null)}
           nodeTitle={selectedResultNode?.title || ''}
           nodeType={selectedResultNode?.type || ''}
           resultData={selectedResultNode?.result}
-          nodes={nodes}
-          pipelineResults={pipelineResults}
+          nodes={graph.nodes}
+          pipelineResults={pipeline.pipelineResults}
+        />
+
+        <CanvasLogConsole
+          logs={logs}
+          isRunning={pipeline.isRunning}
+          onClear={() => setLogs([])}
+        />
+
+        <CodeViewerModal
+          isOpen={exporter.showGlobalCodeModal}
+          onClose={() => exporter.setShowGlobalCodeModal(false)}
+          title="Script Pipeline Canvas Complet (Python & R)"
+          pythonCode={exporter.pythonCode}
+          rCode={exporter.rCode}
+          onExportNotebook={exporter.handleExportNotebook}
         />
       </div>
     </div>

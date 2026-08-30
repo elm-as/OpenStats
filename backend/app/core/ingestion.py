@@ -19,6 +19,7 @@ MAGIC_BYTES: dict[str, list[bytes]] = {
     "xls": [b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"],
     "json": [],
     "jsonl": [],
+    "parquet": [b"PAR1"],
 }
 
 
@@ -77,7 +78,7 @@ class CSVAdapter(BaseAdapter):
             "on_bad_lines": "warn",
             "engine": "python",
         }
-        read_kwargs.update({k: v for k, v in kwargs.items() if k not in ("encoding", "delimiter")})
+        read_kwargs.update({k: v for k, v in kwargs.items() if k not in ("encoding", "delimiter", "sheet_name")})
 
         if isinstance(source, (str, Path)):
             return pd.read_csv(source, **read_kwargs)
@@ -208,6 +209,15 @@ class JSONAdapter(BaseAdapter):
         return df
 
 
+class ParquetAdapter(BaseAdapter):
+    def read(self, source: str | io.BytesIO, **kwargs) -> pd.DataFrame:
+        if isinstance(source, (str, Path)):
+            return pd.read_parquet(source)
+        if hasattr(source, "seek"):
+            source.seek(0)
+        return pd.read_parquet(source)
+
+
 # Registre des adaptateurs
 ADAPTERS = {
     "csv": CSVAdapter,
@@ -215,6 +225,7 @@ ADAPTERS = {
     "xls": ExcelAdapter,
     "json": JSONAdapter,
     "jsonl": JSONAdapter,
+    "parquet": ParquetAdapter,
 }
 
 
@@ -268,3 +279,15 @@ def list_excel_sheets(filepath: str) -> list[str]:
         except Exception:
             return []
     return []
+
+
+def read_excel_sheets(filepath: str) -> list[str]:
+    """Retourne la liste des feuilles d'un classeur Excel."""
+    return list_excel_sheets(filepath)
+
+
+def read_excel_sheet(filepath: str, sheet_name: str | int = 0) -> pd.DataFrame:
+    """Lit une feuille spécifique d'un classeur Excel."""
+    adapter = ExcelAdapter()
+    return adapter.read(filepath, sheet_name=sheet_name)
+

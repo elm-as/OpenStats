@@ -10,7 +10,7 @@ from app.core.interpretation.base import (
     insight,
     sort_insights,
 )
-from app.core.interpretation.narrators._helpers import _fmt_pct, _fmt_num
+from app.core.interpretation.narrators.narrator_formatting import _fmt_pct, _fmt_num
 
 
 def narrate_pca(results: dict[str, Any]) -> list[Insight]:

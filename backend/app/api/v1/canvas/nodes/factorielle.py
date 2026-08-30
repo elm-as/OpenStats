@@ -1,5 +1,6 @@
 """
 Nœuds factoriels (ACP, AFC, ACM).
+Avec auto-sélection des variables si non spécifiées.
 """
 
 from app.services.dataset_service import dataset_manager
@@ -7,7 +8,8 @@ from ._shared import _sanitize
 
 def execute_pca(data, dataset_id):
     from app.core.factor_analysis import run_pca
-    df = dataset_manager.get_df(dataset_id)
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable pour l'ACP"}
     numeric_df = df.select_dtypes(include=["number"]).dropna(axis=1, how="all")
@@ -28,17 +30,27 @@ def execute_pca(data, dataset_id):
 
 
 def execute_ca(data, dataset_id):
-    row_col = data.get("rowCol", "")
-    col_col = data.get("colCol", "")
-    if not row_col or not col_col:
-        return {"status": "error", "error": "Variables en ligne et colonne requises pour l'AFC"}
-    from app.core.factor_analysis import run_ca
-    df = dataset_manager.get_df(dataset_id)
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable pour l'AFC"}
-    missing_cols = [c for c in [row_col, col_col] if c not in df.columns]
-    if missing_cols:
-        return {"status": "error", "error": f"Colonnes introuvables dans le dataset: {', '.join(missing_cols)}"}
+
+    row_col = data.get("rowCol", "")
+    col_col = data.get("colCol", "")
+
+    if not row_col or not col_col:
+        cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+        if not cat_cols:
+            cat_cols = [c for c in df.columns if df[c].dropna().nunique() <= 10]
+        if not row_col and len(cat_cols) >= 1:
+            row_col = cat_cols[0]
+        if not col_col and len(cat_cols) >= 2:
+            col_col = cat_cols[1]
+
+    if not row_col or not col_col or row_col not in df.columns or col_col not in df.columns:
+        return {"status": "error", "error": "Variables en ligne et colonne requises pour l'AFC"}
+
+    from app.core.factor_analysis import run_ca
     result = run_ca(df, row_col, col_col)
     ds = dataset_manager.get(dataset_id)
     if ds:
@@ -46,14 +58,15 @@ def execute_ca(data, dataset_id):
         factor["ca"] = result
     return {
         "status": "success",
-        "message": "AFC calculée",
+        "message": f"AFC calculée ({row_col} x {col_col})",
         "result": _sanitize(result),
     }
 
 
 def execute_mca(data, dataset_id):
     from app.core.factor_analysis import run_mca
-    df = dataset_manager.get_df(dataset_id)
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable pour l'ACM"}
     cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()

@@ -7,7 +7,8 @@ from ._shared import _sanitize
 
 def execute_clustering(data, dataset_id):
     method = data.get("method", "kmeans")
-    df = dataset_manager.get_df(dataset_id)
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable"}
     numeric_df = df.select_dtypes("number").dropna(axis=1, how="all")
@@ -33,20 +34,21 @@ def execute_clustering(data, dataset_id):
         from sklearn.metrics import silhouette_score
         best_k, best_score = 2, -1.0
         best_labels = None
-        for k in range(2, min(11, len(X))):
-            km = KMeans(n_clusters=k, n_init=10, random_state=42)
+        max_k = min(7, len(X))
+        for k in range(2, max_k):
+            km = KMeans(n_clusters=k, n_init=3, random_state=42)
             labels = km.fit_predict(X)
             if len(set(labels)) < 2:
                 continue
             try:
-                s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
+                s = silhouette_score(X, labels, sample_size=min(500, len(X)))
                 if s > best_score:
                     best_k, best_score = k, s
                     best_labels = labels
             except Exception:
                 continue
         if best_labels is None:
-            km = KMeans(n_clusters=min(2, max(1, len(X))), n_init=10, random_state=42)
+            km = KMeans(n_clusters=min(2, max(1, len(X))), n_init=3, random_state=42)
             best_labels = km.fit_predict(X)
             best_k = len(set(best_labels))
             best_score = 0.0
@@ -63,13 +65,14 @@ def execute_clustering(data, dataset_id):
         from sklearn.metrics import silhouette_score
         best_k, best_score = 2, -1.0
         best_labels = None
-        for k in range(2, min(11, len(X))):
+        max_k = min(7, len(X))
+        for k in range(2, max_k):
             ac = AgglomerativeClustering(n_clusters=k)
             labels = ac.fit_predict(X)
             if len(set(labels)) < 2:
                 continue
             try:
-                s = silhouette_score(X, labels, sample_size=min(1000, len(X)))
+                s = silhouette_score(X, labels, sample_size=min(500, len(X)))
                 if s > best_score:
                     best_k, best_score = k, s
                     best_labels = labels
@@ -101,7 +104,8 @@ def execute_clustering(data, dataset_id):
 
 
 def execute_regression(data, dataset_id):
-    df = dataset_manager.get_df(dataset_id)
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable"}
 
@@ -116,7 +120,7 @@ def execute_regression(data, dataset_id):
     models_val = data.get("models", "auto")
     models = None if models_val == "auto" else [models_val]
     try:
-        result = dataset_manager.train_models(dataset_id, target, model_keys=models)
+        result = dataset_manager.train_models(dataset_id, target, model_keys=models, task_type="regression")
     except Exception as e:
         return {"status": "error", "error": f"Erreur d'entraînement régression: {str(e)}"}
     return {
@@ -127,7 +131,8 @@ def execute_regression(data, dataset_id):
 
 
 def execute_classification(data, dataset_id):
-    df = dataset_manager.get_df(dataset_id)
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable"}
 
@@ -143,11 +148,47 @@ def execute_classification(data, dataset_id):
     models_val = data.get("models", "auto")
     models = None if models_val == "auto" else [models_val]
     try:
-        result = dataset_manager.train_models(dataset_id, target, model_keys=models)
+        result = dataset_manager.train_models(dataset_id, target, model_keys=models, task_type="classification")
     except Exception as e:
         return {"status": "error", "error": f"Erreur d'entraînement classification: {str(e)}"}
     return {
         "status": "success",
         "message": f"Classification entraînée (cible: {target})",
         "result": _sanitize(result),
+    }
+
+
+def execute_explainability(data, dataset_id):
+    cleaned = data.get("_cleaned", True)
+    df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
+    if df is None or df.empty:
+        return {"status": "error", "error": "DataFrame vide ou introuvable"}
+
+    target = data.get("targetCol", "")
+    num_cols = df.select_dtypes(include=["number"]).columns.tolist()
+    if not target and num_cols:
+        target = num_cols[-1]
+
+    if not target or target not in df.columns:
+        return {"status": "error", "error": "Variable cible requise pour l'explicabilité SHAP"}
+
+    X = df[num_cols].drop(columns=[target], errors="ignore").dropna()
+    if X.shape[1] == 0:
+        return {"status": "error", "error": "Aucune variable explicative numérique trouvée"}
+    y = df.loc[X.index, target]
+
+    from sklearn.ensemble import RandomForestRegressor
+    from app.core.explainability import compute_shap_values
+
+    try:
+        rf = RandomForestRegressor(n_estimators=30, random_state=42)
+        rf.fit(X, y)
+        res = compute_shap_values(rf, X, max_samples=100)
+    except Exception as e:
+        return {"status": "error", "error": f"Erreur de calcul SHAP: {str(e)}"}
+
+    return {
+        "status": "success",
+        "message": f"Explicabilité SHAP calculée sur '{target}' ({res.get('n_features', 0)} variables)",
+        "result": _sanitize(res),
     }

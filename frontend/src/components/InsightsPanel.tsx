@@ -3,7 +3,7 @@ import {
   Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2, Lightbulb,
   ChevronDown, RefreshCw, Filter,
 } from 'lucide-react';
-import { api } from '../store/api';
+import { useGetInsightsQuery } from '../store/api';
 
 type Severity = 'critical' | 'warning' | 'info' | 'success' | 'methodological';
 type Confidence = 'high' | 'medium' | 'low';
@@ -185,7 +185,7 @@ interface Props {
 }
 
 export default function InsightsPanel({ datasetId, defaultOpen = true, initialLimit = 8 }: Props) {
-  const { data, isLoading, refetch, isFetching } = api.useGetInsightsQuery(datasetId);
+  const { data, isLoading, refetch, isFetching } = useGetInsightsQuery(datasetId);
   const [open, setOpen] = useState(defaultOpen);
   const [filter, setFilter] = useState<Severity | 'all'>('all');
   const [showAll, setShowAll] = useState(false);

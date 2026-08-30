@@ -25,28 +25,42 @@ def _get_dev_user():
         pass
 
     # ── 2) Chercher ou créer l'utilisateur ──
-    user = db.session.get(User, client_id)
-    if user:
-        return user
+    try:
+        user = db.session.get(User, client_id)
+        if user:
+            return user
 
-    # Fallback : premier User existant (tests sans X-Client-Id).
-    user = db.session.query(User).first()
-    if user:
-        return user
+        # Fallback : premier User existant (tests sans X-Client-Id).
+        user = db.session.query(User).first()
+        if user:
+            return user
+    except Exception as exc:
+        db.session.rollback()
+        try:
+            db.create_all()
+        except Exception:
+            pass
 
     # ── 3) Création automatique ──
-    from flask import current_app
-    current_app.logger.info("Nouveau navigateur: création user_id=%s", client_id)
-    user = User(  # type: ignore
-        id=client_id,
-        email=f"local+{client_id}@openstats.local",
-        display_name=f"Local {client_id}",
-        role="admin",
-        is_active=True,
-    )
-    db.session.add(user)
-    db.session.commit()
-    return user
+    try:
+        from flask import current_app
+        current_app.logger.info("Nouveau navigateur: création user_id=%s", client_id)
+        user = User(  # type: ignore
+            id=client_id,
+            email=f"local+{client_id}@openstats.local",
+            display_name=f"Local {client_id}",
+            role="admin",
+            is_active=True,
+        )
+        db.session.add(user)
+        db.session.commit()
+        return user
+    except Exception as exc:
+        db.session.rollback()
+        existing = db.session.get(User, client_id)
+        if existing:
+            return existing
+        return User(id=client_id, email="local@openstats.local", display_name="Local User", role="admin", is_active=True)
 
 
 def login_required(f):

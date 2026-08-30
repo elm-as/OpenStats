@@ -117,3 +117,32 @@ export const TEMPLATES: CanvasTemplate[] = [
     ],
   },
 ];
+
+const LOCAL_STORAGE_KEY = 'openstats_user_templates';
+
+export const getUserTemplates = (): CanvasTemplate[] => {
+  try {
+    const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (data) {
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Failed to load user templates', err);
+  }
+  return [];
+};
+
+export const saveUserTemplate = (name: string, description: string, nodes: Node[], edges: Edge[]) => {
+  const existing = getUserTemplates();
+  const newTemplate: CanvasTemplate = {
+    id: `custom_${Date.now()}`,
+    name,
+    description,
+    icon: '✨',
+    nodes,
+    edges,
+  };
+  const updated = [newTemplate, ...existing];
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+  return newTemplate;
+};

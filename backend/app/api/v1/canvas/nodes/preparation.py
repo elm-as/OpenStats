@@ -3,6 +3,8 @@ Nœuds de préparation — Typage, Nettoyage, Transformation, Calcul.
 """
 
 import json
+import tempfile
+import os
 from app.services.dataset_service import dataset_manager
 from ._shared import _sanitize
 
@@ -46,9 +48,10 @@ def execute_typing(data, dataset_id):
         return {
             "status": "success",
             "message": f"Types détectés: {types_summary}",
+            "dataset_id": dataset_id,
             "result": {"types": types_summary, "columns": len(ds["profile"]["dictionary"])},
         }
-    return {"status": "success", "message": "Profil de types déjà calculé lors de l'import"}
+    return {"status": "success", "message": "Profil de types déjà calculé lors de l'import", "dataset_id": dataset_id}
 
 
 def _build_cleaning_pipeline_from_actions(actions):
@@ -88,21 +91,28 @@ def execute_cleaning(data, dataset_id):
         pipeline = _build_cleaning_pipeline_from_actions(actions)
 
     if not pipeline:
-        return {"status": "skipped", "message": "Aucune action de nettoyage configurée"}
+        return {"status": "skipped", "message": "Aucune action de nettoyage configurée", "dataset_id": dataset_id}
 
     result = dataset_manager.clean(dataset_id, pipeline)
     return {
         "status": "success",
         "message": f"Nettoyage appliqué ({len(pipeline)} étapes)",
+        "dataset_id": dataset_id,
         "result": _sanitize(result),
     }
 
 
 def execute_transform(data, dataset_id):
-    action = data.get("action", "auto_recommend")
+    mode = data.get("mode", "auto")
+    action = data.get("action", "")
+    actions_str = data.get("actions", "")
     columns_str = data.get("columns", "")
 
-    if action == "auto_recommend":
+    actions = [a.strip() for a in actions_str.split(",") if a.strip()]
+    if not actions and action and action != "auto_recommend":
+        actions = [action]
+
+    if mode == "auto" or not actions:
         from app.core.transformations import recommend_transforms
         df = dataset_manager.get_df(dataset_id)
         ds = dataset_manager.get(dataset_id)
@@ -111,17 +121,32 @@ def execute_transform(data, dataset_id):
         return {
             "status": "success",
             "message": f"{len(recs)} recommandation(s) de transformation",
+            "dataset_id": dataset_id,
             "result": _sanitize(recs),
         }
     else:
         from app.core.transformations import apply_transforms_to_df
         df = dataset_manager.get_df(dataset_id, respect_exclusions=False)
+        if df is None:
+            return {"status": "error", "error": "Dataset introuvable"}
+
         cols = [c.strip() for c in columns_str.split(",") if c.strip()] if columns_str else df.select_dtypes("number").columns.tolist()
-        transforms = [{"column": c, "transform": action, "params": {}} for c in cols]
+        transforms = [{"column": c, "transform": act, "params": {}} for act in actions for c in cols]
         df_result, logs = apply_transforms_to_df(df, transforms)
+
+        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
+        os.close(fd)
+        try:
+            df_result.to_parquet(temp_path)
+            new_dataset_id = dataset_manager.ingest(temp_path, name=f"Transformed_{dataset_id}")
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
         return {
             "status": "success",
             "message": f"{len(logs)} transformation(s) appliquée(s)",
+            "dataset_id": new_dataset_id,
             "result": _sanitize({"logs": logs, "shape": {"rows": df_result.shape[0], "columns": df_result.shape[1]}}),
         }
 
@@ -133,11 +158,25 @@ def execute_compute_variable(data, dataset_id):
         return {"status": "error", "error": "Nom de colonne et formule requis"}
     from app.core.compute_variable import compute_new_variable
     df = dataset_manager.get_df(dataset_id, respect_exclusions=False)
+    if df is None:
+        return {"status": "error", "error": "Dataset introuvable"}
+
     df_result, log = compute_new_variable(df, new_col, formula)
     if not log["success"]:
         return {"status": "error", "error": log.get("error", "Erreur de calcul")}
+
+    fd, temp_path = tempfile.mkstemp(suffix=".parquet")
+    os.close(fd)
+    try:
+        df_result.to_parquet(temp_path)
+        new_dataset_id = dataset_manager.ingest(temp_path, name=f"Computed_{new_col}")
+    finally:
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
     return {
         "status": "success",
         "message": f"Variable '{new_col}' créée",
+        "dataset_id": new_dataset_id,
         "result": _sanitize(log),
     }

@@ -8,4 +8,4 @@ cmds = [
 ]
 
 [start]
-cmd = "cd backend && gunicorn run:app --bind 0.0.0.0:$PORT"
+cmd = "cd backend && gunicorn -c gunicorn_conf.py run:app"

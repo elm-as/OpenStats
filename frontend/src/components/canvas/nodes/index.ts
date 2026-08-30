@@ -11,3 +11,4 @@ export * from './VisualizationNodes';
 export * from './OutputNodes';
 export * from './SqlNode';
 export * from './PythonNode';
+export * from './AdvancedAnalyticsNodes';

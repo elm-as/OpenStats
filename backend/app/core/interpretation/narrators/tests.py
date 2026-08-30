@@ -9,7 +9,7 @@ from app.core.interpretation.base import (
     InsightCategory,
     insight,
 )
-from app.core.interpretation.narrators._helpers import _fmt_num
+from app.core.interpretation.narrators.narrator_formatting import _fmt_num
 
 
 def narrate_hypothesis_test(test_result: dict[str, Any]) -> list[Insight]:

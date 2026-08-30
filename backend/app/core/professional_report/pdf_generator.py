@@ -86,6 +86,9 @@ def _make_styles():
 
 def _md_to_rl(text: str) -> str:
     """Convertit **bold** → <b>bold</b>, `code` → <font face=Courier>code</font>."""
+    if text is None:
+        return ""
+    text = str(text)
     if not text:
         return ""
     # Escape HTML brut
@@ -241,7 +244,7 @@ def _header_footer(canvas, doc):
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(GRAY_LIGHT)
     # Footer
-    canvas.drawString(2 * cm, 1.2 * cm, "Rapport Analytique — OpenStats")
+    canvas.drawString(2 * cm, 1.2 * cm, "Rapport Analytique — OpenStats byElmas")
     canvas.drawRightString(19 * cm, 1.2 * cm, f"Page {doc.page}")
     # Top bar
     canvas.setStrokeColor(ACCENT)

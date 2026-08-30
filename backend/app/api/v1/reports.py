@@ -157,7 +157,9 @@ def professional_report(dataset_id, fmt):
     factor = bundle.get("factor_analysis") or {}
 
     try:
-        profile = detect_dataset_profile(df)
+        type_overrides = ds.get("type_overrides") or {}
+        stored_profile = ds.get("profile") or {}
+        profile = detect_dataset_profile(df, type_overrides=type_overrides, ds_profile=stored_profile)
     except Exception as e:
         return jsonify({"error": f"Erreur lors de l'analyse du profil: {str(e)}"}), 500
 

@@ -30,3 +30,9 @@ openstats-backend/
 
 # Local Netlify folder
 .netlify
+
+# Database & local instances
+instance/
+*.db
+*.sqlite
+

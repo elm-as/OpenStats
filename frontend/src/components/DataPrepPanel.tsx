@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { api } from '../store/api';
+import { useCopyDatasetMutation, useCleanDatasetMutation, useGetDatasetQuery } from '../store/api';
 import { Loader2, Copy, Trash2, Plus, Settings2, Check, AlertCircle, Wand2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,9 +31,9 @@ export default function DataPrepPanel({ datasetId }: Props) {
   const [pipeline, setPipeline] = useState<PipelineStep[]>(DEFAULT_STEPS);
   const [copyName, setCopyName] = useState('');
   
-  const [copyDataset, { isLoading: isCopying, error: copyError }] = api.useCopyDatasetMutation();
-  const [cleanDataset, { isLoading: isCleaning, error: cleanError }] = api.useCleanDatasetMutation();
-  const { data: datasetDetails } = api.useGetDatasetQuery(datasetId);
+  const [copyDataset, { isLoading: isCopying, error: copyError }] = useCopyDatasetMutation();
+  const [cleanDataset, { isLoading: isCleaning, error: cleanError }] = useCleanDatasetMutation();
+  const { data: datasetDetails } = useGetDatasetQuery(datasetId);
   const navigate = useNavigate();
 
   const handleApply = async () => {
