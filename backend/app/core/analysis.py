@@ -11,17 +11,10 @@ from scipy import stats
 from app.core.hypothesis_testing import (
     _sf,
     _correlation_strength,
-    _cohen_d,
-    _interpret_cohen_d,
-    _interpret_eta2,
-    _interpret_cramers_v,
-    _interpret_p_value,
     run_normality_test,
     run_hypothesis_test,
-    _compare_means,
-    _test_correlation,
-    _test_independence,
 )
+from app.core.auto_pipeline.heuristics import _is_temporal, _is_id_like
 
 
 # ── Statistiques descriptives ──────────────────────────────────────────
@@ -36,7 +29,28 @@ def compute_descriptive_stats(df: pd.DataFrame, bootstrap_ci: bool = False, n_bo
         series = df[col]
         col_stats = {"name": col, "dtype": str(series.dtype)}
 
-        if pd.api.types.is_numeric_dtype(series):
+        if _is_temporal(series, name=col):
+            valid = series.dropna()
+            col_stats.update({
+                "type": "temporal",
+                "count": int(valid.count()),
+                "min": str(valid.min()) if not valid.empty else None,
+                "max": str(valid.max()) if not valid.empty else None,
+                "periods_count": int(valid.nunique()),
+                "null_count": int(series.isna().sum()),
+                "null_rate": _sf(series.isna().mean()),
+            })
+        elif _is_id_like(series, col_name=col):
+            valid = series.dropna()
+            col_stats.update({
+                "type": "id",
+                "count": int(valid.count()),
+                "cardinality": int(valid.nunique()),
+                "uniqueness_rate": _sf(valid.nunique() / max(len(valid), 1)),
+                "null_count": int(series.isna().sum()),
+                "null_rate": _sf(series.isna().mean()),
+            })
+        elif pd.api.types.is_numeric_dtype(series):
             valid = series.dropna()
             col_stats.update({
                 "type": "numeric",
@@ -88,23 +102,47 @@ def compute_correlation_matrix(df: pd.DataFrame, method: str = "pearson", bootst
     """
     Calcule la matrice de corrélation.
     method: "pearson" ou "spearman"
-    Si bootstrap_ci=True, ajoute les IC bootstrap.
+    Exclut les identifiants techniques et isole les tendances temporelles.
     """
     numeric_df = df.select_dtypes(include=[np.number])
     if numeric_df.empty:
-        return {"matrix": {}, "columns": [], "method": method}
+        return {"matrix": {}, "columns": [], "method": method, "significant_pairs": [], "temporal_trends": []}
 
-    # Optimisation grands jeux de données (> 100k+ lignes) : sous-échantillonnage statistique
-    if method == "spearman" and len(numeric_df) > 15000:
-        sample_df = numeric_df.sample(15000, random_state=42)
+    id_cols = [c for c in numeric_df.columns if _is_id_like(numeric_df[c], col_name=c)]
+    temporal_cols = [c for c in numeric_df.columns if _is_temporal(numeric_df[c], name=c)]
+
+    feature_df = numeric_df.drop(columns=id_cols, errors="ignore")
+    pure_numeric_cols = [c for c in feature_df.columns if c not in temporal_cols]
+
+    temporal_trends = []
+    if temporal_cols and pure_numeric_cols:
+        t_col = temporal_cols[0]
+        for c in pure_numeric_cols:
+            s_clean = feature_df[[t_col, c]].dropna()
+            if len(s_clean) >= 3:
+                r_val = s_clean[t_col].corr(s_clean[c], method=method)
+                if pd.notna(r_val):
+                    temporal_trends.append({
+                        "variable": c,
+                        "time_col": t_col,
+                        "coefficient": _sf(r_val),
+                        "direction": "croissante" if r_val > 0.3 else "décroissante" if r_val < -0.3 else "stable",
+                        "strength": _correlation_strength(r_val),
+                    })
+
+    corr_target_df = feature_df[pure_numeric_cols] if len(pure_numeric_cols) >= 2 else feature_df
+    if corr_target_df.empty:
+        corr_target_df = feature_df
+
+    if method == "spearman" and len(corr_target_df) > 15000:
+        sample_df = corr_target_df.sample(15000, random_state=42)
         corr = sample_df.corr(method=method)
-    elif len(numeric_df) > 30000:
-        sample_df = numeric_df.sample(30000, random_state=42)
+    elif len(corr_target_df) > 30000:
+        sample_df = corr_target_df.sample(30000, random_state=42)
         corr = sample_df.corr(method=method)
     else:
-        corr = numeric_df.corr(method=method)
+        corr = corr_target_df.corr(method=method)
 
-    # Identifier les corrélations significatives (|r| > 0.3)
     significant = []
     cols = corr.columns.tolist()
     for i in range(len(cols)):
@@ -123,11 +161,12 @@ def compute_correlation_matrix(df: pd.DataFrame, method: str = "pearson", bootst
         "columns": cols,
         "method": method,
         "significant_pairs": sorted(significant, key=lambda x: abs(x["coefficient"]), reverse=True),
+        "temporal_trends": temporal_trends,
     }
 
-    if bootstrap_ci and len(numeric_df) >= 20:
+    if bootstrap_ci and len(corr_target_df) >= 20:
         from app.core.bootstrap import bootstrap_correlation
-        ci_data = bootstrap_correlation(numeric_df, method=method, n_bootstrap=n_bootstrap)
+        ci_data = bootstrap_correlation(corr_target_df, method=method, n_bootstrap=n_bootstrap)
         result["ci_lower"] = ci_data["ci_lower"]
         result["ci_upper"] = ci_data["ci_upper"]
         result["ci_level"] = ci_data["ci_level"]
@@ -136,20 +175,29 @@ def compute_correlation_matrix(df: pd.DataFrame, method: str = "pearson", bootst
 
 
 def compute_vif(df: pd.DataFrame) -> list[dict]:
-    """Calcule le VIF (Variance Inflation Factor) pour chaque variable."""
+    """Calcule le VIF (Variance Inflation Factor) pour chaque variable explicative.
+    Exclut automatiquement les index temporels et identifiants pour éviter les fausses collinéarités."""
     from sklearn.linear_model import LinearRegression
 
     numeric_df = df.select_dtypes(include=[np.number]).dropna()
     if numeric_df.shape[1] < 2:
         return []
 
-    # Optimisation pour grands jeux de données : 10k lignes suffisent pour un VIF exact à 2 décimales
-    if len(numeric_df) > 10000:
-        numeric_df = numeric_df.sample(10000, random_state=42)
+    id_cols = [c for c in numeric_df.columns if _is_id_like(numeric_df[c], col_name=c)]
+    temporal_cols = [c for c in numeric_df.columns if _is_temporal(numeric_df[c], name=c)]
+    drop_candidates = id_cols + temporal_cols
+    remaining_cols = [c for c in numeric_df.columns if c not in drop_candidates]
+
+    target_df = numeric_df[remaining_cols] if len(remaining_cols) >= 2 else numeric_df.drop(columns=id_cols, errors="ignore")
+    if target_df.shape[1] < 2:
+        return []
+
+    if len(target_df) > 10000:
+        target_df = target_df.sample(10000, random_state=42)
 
     vifs = []
-    cols = numeric_df.columns.tolist()
-    X = numeric_df.values
+    cols = target_df.columns.tolist()
+    X = target_df.values
 
     for i, col in enumerate(cols):
         y = X[:, i]

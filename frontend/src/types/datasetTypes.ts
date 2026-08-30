@@ -132,18 +132,20 @@ export interface BootstrapCI {
 export interface DescriptiveStats {
   [column: string]: {
     name: string;
-    type: 'numeric' | 'categorical';
+    type: 'numeric' | 'categorical' | 'temporal' | 'id';
     count: number;
     mean?: number;
     median?: number;
     std?: number;
-    min?: number;
-    max?: number;
+    min?: number | string;
+    max?: number | string;
     skewness?: number;
     kurtosis?: number;
     null_count: number;
     null_rate: number;
     cardinality?: number;
+    periods_count?: number;
+    uniqueness_rate?: number;
     top_values?: Record<string, number>;
     confidence_intervals?: BootstrapCI;
   };
@@ -160,6 +162,13 @@ export interface CorrelationResult {
     var1: string;
     var2: string;
     coefficient: number;
+    strength: string;
+  }[];
+  temporal_trends?: {
+    variable: string;
+    time_col: string;
+    coefficient: number;
+    direction: string;
     strength: string;
   }[];
 }
