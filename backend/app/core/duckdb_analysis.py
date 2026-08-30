@@ -92,9 +92,62 @@ def compute_descriptive_stats_duckdb(parquet_path: str, columns_info: list[dict]
                     "null_count": null_count,
                     "null_rate": _sf(null_rate),
                 }
-            except Exception as e:
+            except Exception:
                 pass
-                
+        elif col_type in ("temporal", "date", "datetime"):
+            query = f"""
+            SELECT 
+                count({safe_col}) as count,
+                min({safe_col}) as min_val,
+                max({safe_col}) as max_val,
+                count(distinct {safe_col}) as periods_count,
+                sum(case when {safe_col} is null then 1 else 0 end) as null_count
+            FROM ds
+            """
+            try:
+                row = conn.execute(query).fetchone()
+                count, min_val, max_val, periods_count, null_count = row
+                null_count = int(null_count) if null_count is not None else 0
+                null_rate = null_count / total_rows if total_rows > 0 else 0
+                results[col] = {
+                    "name": col,
+                    "type": "temporal",
+                    "count": int(count) if count is not None else 0,
+                    "min": str(min_val) if min_val is not None else None,
+                    "max": str(max_val) if max_val is not None else None,
+                    "periods_count": int(periods_count) if periods_count is not None else 0,
+                    "null_count": null_count,
+                    "null_rate": _sf(null_rate),
+                }
+            except Exception:
+                pass
+
+        elif col_type == "id":
+            query = f"""
+            SELECT 
+                count({safe_col}) as count,
+                count(distinct {safe_col}) as cardinality,
+                sum(case when {safe_col} is null then 1 else 0 end) as null_count
+            FROM ds
+            """
+            try:
+                row = conn.execute(query).fetchone()
+                count, cardinality, null_count = row
+                null_count = int(null_count) if null_count is not None else 0
+                null_rate = null_count / total_rows if total_rows > 0 else 0
+                cardinality = int(cardinality) if cardinality is not None else 0
+                results[col] = {
+                    "name": col,
+                    "type": "id",
+                    "count": int(count) if count is not None else 0,
+                    "cardinality": cardinality,
+                    "uniqueness_rate": _sf(cardinality / total_rows) if total_rows > 0 else 0,
+                    "null_count": null_count,
+                    "null_rate": _sf(null_rate),
+                }
+            except Exception:
+                pass
+
         else:
             query = f"""
             SELECT 

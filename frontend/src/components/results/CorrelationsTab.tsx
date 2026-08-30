@@ -121,6 +121,36 @@ export function CorrelationsTab({ result }: { result?: any }) {
             </div>
           </div>
         )}
+
+        {result.temporal_trends && result.temporal_trends.length > 0 && (
+          <div className="mt-6 border-t border-white/10 pt-4">
+            <h4 className="text-sm font-medium text-surface-200 mb-1 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-cyan-400" />
+              Tendances Temporelles (Évolution au fil du temps — non causale)
+            </h4>
+            <p className="text-xs text-surface-400 mb-3">
+              Corrélation de chaque indicateur avec l'index chronologique <code className="text-cyan-300 bg-surface-700 px-1 py-0.5 rounded">{result.temporal_trends[0]?.time_col}</code>.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {result.temporal_trends.map((t: any, i: number) => (
+                <div key={i} className="flex items-center justify-between p-2.5 bg-surface-700/40 rounded-lg border border-white/5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-surface-200">{t.variable}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                      t.direction === 'croissante' ? 'bg-emerald-500/20 text-emerald-300' :
+                      t.direction === 'décroissante' ? 'bg-rose-500/20 text-rose-300' : 'bg-surface-600 text-surface-300'
+                    }`}>
+                      {t.direction}
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-cyan-300">
+                    r = {t.coefficient > 0 ? `+${t.coefficient.toFixed(3)}` : t.coefficient.toFixed(3)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {cols.length > 1 && (

@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
+from app.core.auto_pipeline.heuristics import _is_id_like, _is_temporal
 
 
 def detect_task_type(
@@ -137,6 +138,15 @@ def prepare_data(
     target_base = str(target_col).strip().lower()
     cols_to_drop = [target_col]
 
+    if split_strategy not in {"auto", "random", "time"}:
+        raise ValueError("split_strategy invalide (valeurs: auto, random, time)")
+
+    chosen_time_col = None
+    if split_strategy in {"auto", "time"}:
+        chosen_time_col = _choose_temporal_column(working_df, target_col, temporal_col)
+        if split_strategy == "time" and chosen_time_col is None:
+            raise ValueError("split temporel demandé mais aucune colonne temporelle valide trouvée")
+
     for col in working_df.columns:
         col_str = str(col).strip()
         col_lower = col_str.lower()
@@ -144,6 +154,21 @@ def prepare_data(
             continue
         if col_lower.startswith(f"{target_base}_") or col_lower.endswith(f"_{target_base}") or f"_{target_base}_" in col_lower:
             cols_to_drop.append(col)
+        elif _is_id_like(working_df[col], col_name=col_str):
+            cols_to_drop.append(col)
+
+    # Si d'autres variables explicatives physiques/économiques sont disponibles,
+    # exclure l'index temporel de X pour forcer le modèle à apprendre la vraie relation
+    non_target_non_time = [
+        c for c in working_df.columns
+        if c not in cols_to_drop and not _is_temporal(working_df[c], name=c) and c != chosen_time_col
+    ]
+    if non_target_non_time:
+        if chosen_time_col and chosen_time_col not in cols_to_drop:
+            cols_to_drop.append(chosen_time_col)
+        for c in working_df.columns:
+            if c not in cols_to_drop and _is_temporal(working_df[c], name=c):
+                cols_to_drop.append(c)
 
     X = working_df.drop(columns=list(set(cols_to_drop)), errors="ignore")
 
@@ -200,16 +225,7 @@ def prepare_data(
         )
     resolved_task_type = detect_task_type(y, user_override=user_override, explicit_task=task_type)
 
-    use_time_split = False
-    chosen_time_col = None
-    if split_strategy not in {"auto", "random", "time"}:
-        raise ValueError("split_strategy invalide (valeurs: auto, random, time)")
-
-    if split_strategy in {"auto", "time"}:
-        chosen_time_col = _choose_temporal_column(working_df, target_col, temporal_col)
-        use_time_split = chosen_time_col is not None
-        if split_strategy == "time" and chosen_time_col is None:
-            raise ValueError("split temporel demandé mais aucune colonne temporelle valide trouvée")
+    use_time_split = chosen_time_col is not None
 
     if use_time_split and chosen_time_col:
         parsed_time = _parse_temporal_for_split(working_df[chosen_time_col])

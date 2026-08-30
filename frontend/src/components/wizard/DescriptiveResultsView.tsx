@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Activity, TrendingUp, AlertTriangle, Clock, Tag } from 'lucide-react';
 import type { DescriptiveStats, CorrelationResult } from '../../types';
 import ReactPlotly from 'react-plotly.js';
 const Plot = (ReactPlotly as any).default || ReactPlotly;
@@ -21,12 +21,15 @@ export function CorrelationBar({ value }: { value: number }) {
 
 export function DescriptiveResults({ stats, type }: { stats: DescriptiveStats; type: string }) {
   const isNumeric = type === 'descriptive_numeric';
-  const entries = Object.entries(stats).filter(([, s]) =>
-    isNumeric ? s.type === 'numeric' : s.type === 'categorical'
-  );
+  const numericEntries = Object.entries(stats).filter(([, s]) => s.type === 'numeric');
+  const categoricalEntries = Object.entries(stats).filter(([, s]) => s.type === 'categorical');
+  const temporalEntries = Object.entries(stats).filter(([, s]) => s.type === 'temporal');
+  const idEntries = Object.entries(stats).filter(([, s]) => s.type === 'id');
 
-  if (entries.length === 0) {
-    return <div className="card p-6 text-center text-surface-400">Aucune variable de ce type trouvée</div>;
+  const entries = isNumeric ? numericEntries : categoricalEntries;
+
+  if (entries.length === 0 && temporalEntries.length === 0 && idEntries.length === 0) {
+    return <div className="card p-6 text-center text-surface-400">Aucune variable trouvée</div>;
   }
 
   return (
@@ -135,6 +138,72 @@ export function DescriptiveResults({ stats, type }: { stats: DescriptiveStats; t
           useResizeHandler
         />
       </div>
+
+      {isNumeric && temporalEntries.length > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-5 h-5 text-cyan-500" />
+            <h3 className="font-semibold text-gray-900">Dimensions Temporelles & Index</h3>
+            <span className="badge bg-cyan-100 text-cyan-800">{temporalEntries.length} index</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-surface-900 border-b">
+                  <th className="text-left py-2 px-3 font-medium text-surface-400">Variable</th>
+                  <th className="text-right py-2 px-3 font-medium text-surface-400">Début (Min)</th>
+                  <th className="text-right py-2 px-3 font-medium text-surface-400">Fin (Max)</th>
+                  <th className="text-right py-2 px-3 font-medium text-surface-400">Périodes</th>
+                  <th className="text-right py-2 px-3 font-medium text-surface-400">Nullité</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {temporalEntries.map(([col, s]) => (
+                  <tr key={col} className="hover:bg-surface-900">
+                    <td className="py-2 px-3 font-medium text-cyan-400">{col}</td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">{s.min ?? '—'}</td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">{s.max ?? '—'}</td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">{(s as any).periods_count ?? '—'}</td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">{(s.null_rate * 100).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {isNumeric && idEntries.length > 0 && (
+        <div className="card">
+          <div className="flex items-center gap-2 mb-4">
+            <Tag className="w-5 h-5 text-amber-500" />
+            <h3 className="font-semibold text-gray-900">Identifiants & Clés Techniques</h3>
+            <span className="badge bg-amber-100 text-amber-800">{idEntries.length} clé(s)</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-surface-900 border-b">
+                  <th className="text-left py-2 px-3 font-medium text-surface-400">Variable</th>
+                  <th className="text-right py-2 px-3 font-medium text-surface-400">Cardinalité</th>
+                  <th className="text-right py-2 px-3 font-medium text-surface-400">Taux d'unicité</th>
+                  <th className="text-right py-2 px-3 font-medium text-surface-400">Nullité</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {idEntries.map(([col, s]) => (
+                  <tr key={col} className="hover:bg-surface-900">
+                    <td className="py-2 px-3 font-medium text-amber-400">{col}</td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">{s.cardinality ?? s.count ?? '—'}</td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">{(((s as any).uniqueness_rate ?? 1) * 100).toFixed(1)}%</td>
+                    <td className="py-2 px-3 text-right font-mono text-xs">{(s.null_rate * 100).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </>
   );
 }
