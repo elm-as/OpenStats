@@ -133,3 +133,8 @@ def _summarize_integration_orders(diff_orders: dict[str, int]) -> dict[str, Any]
         "max_order": max_order,
         "interpretation": interpretation,
     }
+
+
+# Alias pour rétrocompatibilité
+run_stationarity_tests = test_stationarity
+

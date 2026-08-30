@@ -183,6 +183,9 @@ def apply_transforms_to_df(
             transformed, meta = apply_transform(df_out[col], key, params)
             new_col_name = t.get("new_column", f"{col}_{key}")
             df_out[new_col_name] = transformed
+            if (t.get("replace", False) or params.get("replace", False)) and new_col_name != col:
+                df_out.drop(columns=[col], inplace=True)
+
 
             new_stats = {
                 "mean": _safe_float(df_out[new_col_name].mean()),
