@@ -183,6 +183,18 @@ def build_chart_data(
         "log_y": log_y,
     }
 
+    if chart_type in ["raw_values", "box", "violin", "histogram"] and not x_col:
+        valid_cols = [c for c in y_cols if c in df.columns]
+        if not valid_cols:
+            return {"error": "Au moins une variable numérique valide est requise"}
+        records = []
+        for _, row in df[valid_cols].dropna(how="all").iterrows():
+            rec = {}
+            for c in valid_cols:
+                rec[c] = _safe_val(row[c])
+            records.append(rec)
+        return {**base_result, "data": records, "series": valid_cols}
+
     if chart_type == "pie":
         if not x_col:
             return {"error": "x_col (étiquettes) requis pour le diagramme circulaire"}

@@ -1,12 +1,57 @@
 import React from 'react';
-import { Trophy, Target, Zap } from 'lucide-react';
+import { Trophy, Target, Zap, AlertTriangle, Info } from 'lucide-react';
 import type { ModelResults } from '../../types';
 import { FeatureImportance } from '../viz';
 import { fmtMetric } from './WizardTypes';
 
 export function ModelingResults({ results }: { results: ModelResults }) {
+  const isCriticalR2 =
+    results.task_type === 'regression' &&
+    results.ranking.length > 0 &&
+    (results.ranking[0].metrics.r2 as number) < 0;
+
+  const isTimeSplit = results.data_split?.strategy === 'time';
+
   return (
     <>
+      {isCriticalR2 && (
+        <div className="card border border-amber-500/30 bg-amber-500/5 p-4 mb-4 rounded-xl space-y-2">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-sm space-y-1.5">
+              <h4 className="font-semibold text-amber-200">
+                Performance prédictive négative (R² &lt; 0) détectée
+              </h4>
+              <p className="text-muted leading-relaxed">
+                {isTimeSplit ? (
+                  <>
+                    L'évaluation est effectuée en <strong>scission temporelle (out-of-time)</strong>. La variable cible présente une tendance lourde ou un décalage de distribution entre la période passée (train) et la période future (test), alors que l'index temporel a été écarté pour éviter un ajustement fallacieux.
+                  </>
+                ) : (
+                  <>
+                    Les modèles prédictifs généralisent moins bien que la simple moyenne empirique. Les covariables explicatives actuelles ne suffisent pas à modéliser la variance de la cible.
+                  </>
+                )}
+              </p>
+              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-amber-300">
+                <span className="font-medium flex items-center gap-1">
+                  <Info className="w-3.5 h-3.5" /> Recommandations économétriques :
+                </span>
+                <span className="bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  Créer des retards (Lags Y<sub>t-1</sub>) via le menu Nettoyage / Transformations
+                </span>
+                <span className="bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  Différencier la série si non-stationnaire (I(1))
+                </span>
+                <span className="bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  Ou basculer en Scission Aléatoire (Random Split)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <div className="flex items-center gap-2 mb-4">
           <Trophy className="w-5 h-5 text-amber-500" />

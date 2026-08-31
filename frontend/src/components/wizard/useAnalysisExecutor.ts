@@ -97,6 +97,7 @@ export function useAnalysisExecutor(datasetId: string) {
           id: datasetId,
           target_column: targetCol,
           models: selectedModels.length > 0 ? selectedModels : undefined,
+          split_strategy: (config.split_strategy as any) || undefined,
         }).unwrap();
         setModelResults(res);
       } else if (analysis.key === 'timeseries' || analysis.key === 'timeseries_multivariate') {
