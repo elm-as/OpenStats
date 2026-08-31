@@ -15,13 +15,26 @@ def test_stationarity(series: pd.Series) -> dict[str, Any]:
         clean = series.dropna()
         if len(clean) > 10000:
             clean = clean.iloc[-10000:]
-        adf_stat, adf_p, adf_lag, adf_nobs, adf_crit, _ = adfuller(clean, autolag="AIC")
+
+        # Test ADF avec constante 'c' et avec constante + tendance 'ct'
+        adf_stat_c, adf_p_c, adf_lag_c, adf_nobs_c, adf_crit_c, _ = adfuller(clean, autolag="AIC", regression="c")
+        adf_stat_ct, adf_p_ct, adf_lag_ct, adf_nobs_ct, adf_crit_ct, _ = adfuller(clean, autolag="AIC", regression="ct")
+
+        # Choix de la spécification la plus appropriée
+        use_trend = adf_p_ct < 0.05 and adf_p_c >= 0.05
+        adf_stat = adf_stat_ct if use_trend else adf_stat_c
+        adf_p = adf_p_ct if use_trend else adf_p_c
+        adf_lag = adf_lag_ct if use_trend else adf_lag_c
+        adf_nobs = adf_nobs_ct if use_trend else adf_nobs_c
+        adf_crit = adf_crit_ct if use_trend else adf_crit_c
+
         results["adf"] = {
             "statistic": _sf(adf_stat),
             "p_value": _sf(adf_p),
             "lags_used": int(adf_lag),
             "n_obs": int(adf_nobs),
             "critical_values": {k: _sf(v) for k, v in adf_crit.items()},
+            "specification": "constante + tendance" if use_trend else "constante",
             "is_stationary": bool(adf_p < 0.05),
             "interpretation": (
                 "Série stationnaire (rejet de H0)" if adf_p < 0.05
@@ -33,12 +46,14 @@ def test_stationarity(series: pd.Series) -> dict[str, Any]:
 
     # KPSS (H0 : stationnaire)
     try:
-        kpss_stat, kpss_p, kpss_lag, kpss_crit = kpss(clean, regression="c", nlags="auto")
+        kpss_reg = "ct" if results.get("adf", {}).get("specification") == "constante + tendance" else "c"
+        kpss_stat, kpss_p, kpss_lag, kpss_crit = kpss(clean, regression=kpss_reg, nlags="auto")
         results["kpss"] = {
             "statistic": _sf(kpss_stat),
             "p_value": _sf(kpss_p),
             "lags_used": int(kpss_lag),
             "critical_values": {k: _sf(v) for k, v in kpss_crit.items()},
+            "specification": "stationnarité autour d'une tendance" if kpss_reg == "ct" else "stationnarité en niveau",
             "is_stationary": bool(kpss_p > 0.05),
             "interpretation": (
                 "Série stationnaire (H0 non rejetée)" if kpss_p > 0.05

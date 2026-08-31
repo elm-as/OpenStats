@@ -65,6 +65,7 @@ export interface GrangerCausalityResult {
     cause: string;
     effect: string;
     p_value: number | null;
+    optimal_lag?: number | null;
     significant: boolean;
     interpretation: string;
   }[];

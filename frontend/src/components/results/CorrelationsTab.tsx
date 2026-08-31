@@ -108,12 +108,17 @@ export function CorrelationsTab({ result }: { result?: any }) {
                       />
                     </div>
                     <span
-                      className={`text-xs font-mono ${
+                      className={`text-xs font-mono font-bold ${
                         pair.coefficient > 0 ? 'text-emerald-300' : 'text-red-300'
                       }`}
                     >
-                      {pair.coefficient.toFixed(3)}
+                      r = {pair.coefficient > 0 ? `+${pair.coefficient.toFixed(3)}` : pair.coefficient.toFixed(3)}
                     </span>
+                    {pair.p_value !== undefined && (
+                      <span className="text-[11px] font-mono text-surface-400">
+                        (p {pair.p_value < 0.001 ? '< 0.001' : `= ${pair.p_value.toFixed(3)}`})
+                      </span>
+                    )}
                   </div>
                   <span className="text-xs text-surface-400">{pair.strength}</span>
                 </div>

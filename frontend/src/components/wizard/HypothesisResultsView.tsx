@@ -213,7 +213,14 @@ export function StationarityResults({ result }: { result: StationarityResult }) 
     return (
       <div className={`card border-l-4 ${isSignificant ? 'border-l-green-500' : 'border-l-amber-400'}`}>
         <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-gray-900">{name}</h4>
+          <div>
+            <h4 className="font-semibold text-gray-900">{name}</h4>
+            {data.specification && (
+              <span className="text-[11px] text-purple-600 font-medium block">
+                Spécification : {data.specification}
+              </span>
+            )}
+          </div>
           <span
             className={`badge ${
               isSignificant ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
