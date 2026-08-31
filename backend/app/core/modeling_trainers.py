@@ -8,7 +8,7 @@ import logging
 from typing import Any
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score, GridSearchCV
+from sklearn.model_selection import cross_val_score, GridSearchCV, TimeSeriesSplit, KFold
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
@@ -79,10 +79,12 @@ def train_single_model(
         pipe.set_params(**fixed_params)
 
     scoring = "r2" if task_type == "regression" else "f1_weighted"
+    is_time_split = data.get("split_info", {}).get("strategy") == "time"
+    cv_scheme = TimeSeriesSplit(n_splits=cv_folds) if is_time_split else cv_folds
 
     if pipe_params or any(isinstance(v, list) for v in param_grid.values()):
         grid = GridSearchCV(
-            pipe, pipe_params, cv=cv_folds, scoring=scoring, n_jobs=1, error_score="raise"
+            pipe, pipe_params, cv=cv_scheme, scoring=scoring, n_jobs=1, error_score="raise"
         )
         grid.fit(X_train_fit, y_train_fit)
         model = grid.best_estimator_
@@ -103,14 +105,14 @@ def train_single_model(
         metrics = _classification_metrics(y_test, y_pred, model, X_test)
 
     try:
-        cv_scores = cross_val_score(model, X_train_fit, y_train_fit, cv=cv_folds, scoring=scoring, n_jobs=1)
+        cv_scores = cross_val_score(model, X_train_fit, y_train_fit, cv=cv_scheme, scoring=scoring, n_jobs=1)
     except Exception:
         cv_scores = np.array([0.0])
 
     cv_rmse_val = None
     if task_type == "regression":
         try:
-            cv_neg_mse = cross_val_score(model, X_train_fit, y_train_fit, cv=cv_folds, scoring="neg_mean_squared_error", n_jobs=1)
+            cv_neg_mse = cross_val_score(model, X_train_fit, y_train_fit, cv=cv_scheme, scoring="neg_mean_squared_error", n_jobs=1)
             cv_rmse_val = round(float(np.sqrt(np.maximum(0.0, -cv_neg_mse.mean()))), 4)
         except Exception:
             pass
@@ -210,6 +212,8 @@ def _train_polynomial(data: dict, cv_folds: int) -> dict:
     degrees = [2] if n_features > 10 else [2, 3]
 
     preprocessor = _build_preprocessor(X_train_fit, needs_scaling=True)
+    is_time_split = data.get("split_info", {}).get("strategy") == "time"
+    cv_scheme = TimeSeriesSplit(n_splits=cv_folds) if is_time_split else cv_folds
 
     for degree in degrees:
         pipe = Pipeline([
@@ -218,8 +222,8 @@ def _train_polynomial(data: dict, cv_folds: int) -> dict:
             ("reg", Ridge(alpha=1.0)),
         ])
         try:
-            cv_scores = cross_val_score(pipe, X_train_fit, y_train_fit, cv=cv_folds, scoring="r2", n_jobs=1)
-            cv_mse = cross_val_score(pipe, X_train_fit, y_train_fit, cv=cv_folds, scoring="neg_mean_squared_error", n_jobs=1)
+            cv_scores = cross_val_score(pipe, X_train_fit, y_train_fit, cv=cv_scheme, scoring="r2", n_jobs=1)
+            cv_mse = cross_val_score(pipe, X_train_fit, y_train_fit, cv=cv_scheme, scoring="neg_mean_squared_error", n_jobs=1)
             if cv_scores.mean() > best_score:
                 best_score = cv_scores.mean()
                 best_rmse = round(float(np.sqrt(np.maximum(0.0, -cv_mse.mean()))), 4)

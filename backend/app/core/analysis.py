@@ -52,21 +52,37 @@ def compute_descriptive_stats(df: pd.DataFrame, bootstrap_ci: bool = False, n_bo
             })
         elif pd.api.types.is_numeric_dtype(series):
             valid = series.dropna()
+            n_val = int(valid.count())
+            mean_val = float(valid.mean()) if n_val > 0 else 0.0
+            std_val = float(valid.std()) if n_val > 1 else 0.0
+            se_val = (std_val / np.sqrt(n_val)) if n_val > 1 else None
+
             col_stats.update({
                 "type": "numeric",
-                "count": int(valid.count()),
-                "mean": _sf(valid.mean()),
+                "count": n_val,
+                "mean": _sf(mean_val),
+                "std_error": _sf(se_val),
+                "ci_95": {
+                    "lower": _sf(mean_val - 1.96 * se_val) if se_val is not None else None,
+                    "upper": _sf(mean_val + 1.96 * se_val) if se_val is not None else None,
+                } if se_val is not None else None,
                 "median": _sf(valid.median()),
                 "mode": _sf(valid.mode().iloc[0]) if not valid.mode().empty else None,
-                "std": _sf(valid.std()),
+                "std": _sf(std_val),
                 "variance": _sf(valid.var()),
                 "min": _sf(valid.min()),
                 "max": _sf(valid.max()),
                 "range": _sf(valid.max() - valid.min()),
+                "p01": _sf(valid.quantile(0.01)),
+                "p05": _sf(valid.quantile(0.05)),
+                "p10": _sf(valid.quantile(0.10)),
                 "q1": _sf(valid.quantile(0.25)),
                 "q3": _sf(valid.quantile(0.75)),
+                "p90": _sf(valid.quantile(0.90)),
+                "p95": _sf(valid.quantile(0.95)),
+                "p99": _sf(valid.quantile(0.99)),
                 "iqr": _sf(valid.quantile(0.75) - valid.quantile(0.25)),
-                "cv": _sf(valid.std() / valid.mean() * 100) if valid.mean() != 0 else None,
+                "cv": _sf(std_val / mean_val * 100) if mean_val != 0 else None,
                 "skewness": _sf(valid.skew()),
                 "kurtosis": _sf(valid.kurtosis()),
                 "null_count": int(series.isna().sum()),

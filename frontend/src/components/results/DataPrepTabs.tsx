@@ -111,6 +111,8 @@ export function DescriptiveTab({ result }: { result?: any }) {
                 <th className="text-right py-2 px-3">Type</th>
                 <th className="text-right py-2 px-3">N</th>
                 <th className="text-right py-2 px-3">Moyenne</th>
+                <th className="text-right py-2 px-3 text-cyan-300" title="Erreur-type de la moyenne (s / √n)">SE (Moyenne)</th>
+                <th className="text-right py-2 px-3 text-cyan-300" title="Intervalle de confiance analytique à 95% de la moyenne">IC (95%)</th>
                 <th className="text-right py-2 px-3">Médiane</th>
                 <th className="text-right py-2 px-3">Écart-type</th>
                 <th className="text-right py-2 px-3">Min</th>
@@ -130,8 +132,16 @@ export function DescriptiveTab({ result }: { result?: any }) {
                     <td className="py-2 px-3 text-right text-surface-300 font-mono">
                       {s.count ?? s.n ?? '—'}
                     </td>
-                    <td className="py-2 px-3 text-right text-surface-200 font-mono">
+                    <td className="py-2 px-3 text-right text-surface-200 font-mono font-medium">
                       {formatNumber(s.mean)}
+                    </td>
+                    <td className="py-2 px-3 text-right text-cyan-300 font-mono">
+                      {s.std_error !== undefined && s.std_error !== null ? formatNumber(s.std_error) : '—'}
+                    </td>
+                    <td className="py-2 px-3 text-right text-cyan-200/80 font-mono text-xs">
+                      {s.ci_95
+                        ? `[${formatNumber(s.ci_95.lower)}, ${formatNumber(s.ci_95.upper)}]`
+                        : '—'}
                     </td>
                     <td className="py-2 px-3 text-right text-surface-200 font-mono">
                       {formatNumber(s.median)}
