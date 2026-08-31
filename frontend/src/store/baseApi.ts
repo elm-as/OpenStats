@@ -49,6 +49,7 @@ export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl: API_V1_BASE,
+    timeout: 120000,
     prepareHeaders: headers => {
       try {
         headers.set('X-Client-Id', getAnonymousClientId());

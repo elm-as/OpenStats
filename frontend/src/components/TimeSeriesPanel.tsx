@@ -51,7 +51,8 @@ export default function TimeSeriesPanel({
         setSelectedModel(res.best_model || null);
       }
     } catch (err: any) {
-      setError(err?.data?.error || "Erreur lors de l'analyse");
+      const msg = err?.data?.error || err?.error || err?.message || "Erreur lors de l'analyse";
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     }
   };
 

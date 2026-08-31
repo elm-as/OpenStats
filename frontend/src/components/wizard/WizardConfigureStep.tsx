@@ -176,6 +176,25 @@ export function WizardConfigureStep({
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stratégie de scission train / test
+              </label>
+              <select
+                value={configValues.split_strategy || 'auto'}
+                onChange={e => setConfigValues({ ...configValues, split_strategy: e.target.value })}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                title="Stratégie de scission"
+              >
+                <option value="auto">Automatique (temporelle si index temporel détecté)</option>
+                <option value="time">Scission temporelle (out-of-time, données chronologiques)</option>
+                <option value="random">Scission aléatoire (cross-section standard / shuffle)</option>
+              </select>
+              <p className="text-xs text-surface-400 mt-1">
+                En présence d'une forte tendance ou d'une série sans retards explicatifs, la scission aléatoire permet d'évaluer la représentativité globale sans biais de dérive temporelle.
+              </p>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Algorithmes (vide = tous)
               </label>
