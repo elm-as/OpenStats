@@ -149,3 +149,45 @@ def run_multivariate_timeseries(dataset_id):
         return jsonify({"error": str(e)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@api_v1_bp.route("/datasets/<dataset_id>/analysis/panel", methods=["POST"])
+def run_panel_analysis(dataset_id):
+    """
+    Exécute les régressions de données de panel (Pooled OLS, Fixed Effects, Random Effects, Test de Hausman).
+    Body JSON :
+    {
+        "entity_col": "pays",
+        "time_col": "annee",
+        "target_col": "pib",
+        "covariates": ["investissement", "inflation", "ouverture"]
+    }
+    """
+    payload = request.get_json(silent=True) or {}
+    entity_col = payload.get("entity_col")
+    time_col = payload.get("time_col")
+    target_col = payload.get("target_col")
+    covariates = payload.get("covariates") or []
+
+    if not entity_col or not time_col or not target_col or not covariates:
+        return jsonify({"error": "Paramètres 'entity_col', 'time_col', 'target_col' et 'covariates' requis"}), 400
+
+    df = dataset_manager.get_df(dataset_id)
+    if df is None:
+        return jsonify({"error": "Dataset introuvable"}), 404
+
+    try:
+        from app.core.panel_models import fit_panel_models
+        results = fit_panel_models(
+            df=df,
+            entity_col=entity_col,
+            time_col=time_col,
+            target_col=target_col,
+            covariates=covariates,
+        )
+        if "error" in results:
+            return jsonify(results), 400
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+

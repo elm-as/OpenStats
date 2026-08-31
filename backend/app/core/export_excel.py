@@ -23,6 +23,59 @@ from app.core.export_frames_models import (
 )
 
 
+def _inject_dynamic_excel_formulas(workbook) -> None:
+    """Injecte de vraies formules Excel recalculables reliant Stats Numeriques à Apercu."""
+    if "Apercu" not in workbook.sheetnames or "Stats Numeriques" not in workbook.sheetnames:
+        return
+
+    ws_data = workbook["Apercu"]
+    ws_stats = workbook["Stats Numeriques"]
+    max_data_row = ws_data.max_row
+    if max_data_row < 2:
+        return
+
+    # Index des colonnes de données dans Apercu
+    data_cols: dict[str, str] = {}
+    for col_idx in range(1, ws_data.max_column + 1):
+        val = str(ws_data.cell(row=1, column=col_idx).value or "").strip()
+        if val:
+            data_cols[val] = get_column_letter(col_idx)
+
+    # Index des colonnes cibles dans Stats Numeriques
+    stats_cols: dict[str, int] = {}
+    for col_idx in range(1, ws_stats.max_column + 1):
+        val = str(ws_stats.cell(row=1, column=col_idx).value or "").strip()
+        if val:
+            stats_cols[val] = col_idx
+
+    var_col_idx = stats_cols.get("Variable")
+    if not var_col_idx:
+        return
+
+    for row_idx in range(2, ws_stats.max_row + 1):
+        var_name = str(ws_stats.cell(row=row_idx, column=var_col_idx).value or "").strip()
+        col_letter = data_cols.get(var_name)
+        if not col_letter:
+            continue
+
+        rng = f"'Apercu'!${col_letter}$2:${col_letter}${max_data_row}"
+
+        if "Effectif" in stats_cols:
+            ws_stats.cell(row=row_idx, column=stats_cols["Effectif"], value=f"=COUNT({rng})")
+        if "Moyenne" in stats_cols:
+            ws_stats.cell(row=row_idx, column=stats_cols["Moyenne"], value=f"=AVERAGE({rng})")
+        if "Mediane" in stats_cols:
+            ws_stats.cell(row=row_idx, column=stats_cols["Mediane"], value=f"=MEDIAN({rng})")
+        if "Ecart-type" in stats_cols:
+            ws_stats.cell(row=row_idx, column=stats_cols["Ecart-type"], value=f"=STDEV.S({rng})")
+        if "Variance" in stats_cols:
+            ws_stats.cell(row=row_idx, column=stats_cols["Variance"], value=f"=VAR.S({rng})")
+        if "Min" in stats_cols:
+            ws_stats.cell(row=row_idx, column=stats_cols["Min"], value=f"=MIN({rng})")
+        if "Max" in stats_cols:
+            ws_stats.cell(row=row_idx, column=stats_cols["Max"], value=f"=MAX({rng})")
+
+
 def export_excel(output_path: str, payload: dict) -> str:
     """Exporte les resultats dans un classeur Excel multi-onglets."""
     numeric_stats, categorical_stats = _descriptive_frames(payload)
@@ -67,6 +120,8 @@ def export_excel(output_path: str, payload: dict) -> str:
             frame.to_excel(writer, sheet_name=sheet_name, index=False)
 
         workbook = writer.book
+        _inject_dynamic_excel_formulas(workbook)
+
         header_fill = PatternFill(start_color="16324F", end_color="16324F", fill_type="solid")
         header_font = Font(color="FFFFFF", bold=True, size=11)
         thin_border = Border(

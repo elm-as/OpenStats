@@ -2,6 +2,7 @@ import React from 'react';
 import { Brain, Trophy, BarChart3 } from 'lucide-react';
 import { EmptyState } from './ResultAtoms';
 import { LogitSummaryView, OlsSummaryView } from './RegressionSummaries';
+import { ModelComparisonTable } from './ModelComparisonTable';
 
 export function ModelingTab({
   result,
@@ -211,6 +212,9 @@ export function ModelingTab({
 
       {/* Résumé de Régression OLS */}
       <OlsSummaryView regSummary={regSummary} />
+
+      {/* Tableau comparatif multi-modèles (Stargazer / esttab) */}
+      <ModelComparisonTable ranking={ranking} />
     </div>
   );
 }

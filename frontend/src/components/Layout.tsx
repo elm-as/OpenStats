@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import logoOS from '../assets/logoOS.png';
 import { useAppDispatch } from '../hooks';
+import { PinnedDrawer } from './common/PinnedDrawer';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -187,6 +188,9 @@ export default function Layout() {
           </div>
         </main>
       </div>
+
+      {/* Carnet de bord de l'analyste universel */}
+      <PinnedDrawer />
     </div>
   );
 }

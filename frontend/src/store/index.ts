@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { api } from './api';
 import datasetReducer from './slices/datasetSlice';
+import pinnedNotesReducer from './slices/pinnedNotesSlice';
 
 export const store = configureStore({
   reducer: {
     [api.reducerPath]: api.reducer,
     dataset: datasetReducer,
+    pinnedNotes: pinnedNotesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
