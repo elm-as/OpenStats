@@ -20,7 +20,11 @@ from .modeling import (
     execute_classification,
     execute_explainability,
 )
-from .timeseries import execute_timeseries, execute_multivariate_timeseries, execute_granger, execute_cointegration, execute_ts_decomposition
+from .timeseries import (
+    execute_timeseries, execute_multivariate_timeseries,
+    execute_granger, execute_cointegration, execute_ts_decomposition,
+    execute_chow_test,
+)
 from .simulation import execute_simulation
 from .visualization import execute_visualization
 from .output import execute_ai, execute_extension, execute_insights, execute_output
@@ -68,6 +72,7 @@ NODE_EXECUTORS = {
     "granger": execute_granger,
     "cointegration": execute_cointegration,
     "tsDecomposition": execute_ts_decomposition,
+    "chowTest": execute_chow_test,
     "simulation": execute_simulation,
     "visualization": execute_visualization,
     "ai": execute_ai,

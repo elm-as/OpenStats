@@ -103,6 +103,30 @@ TRANSFORM_CATALOG: dict[str, dict[str, Any]] = {
         "applies_to": "numeric",
         "fixes": ["outliers", "non_normal", "skewness_positive", "skewness_negative"],
     },
+    "lag": {
+        "label": "Variable retardée (Lag : xₜ₋ₖ)",
+        "description": "Décale la série temporelle d'un ou plusieurs pas temporels pour modéliser la mémoire sérielle sans corrélation calendaire fallacieuse.",
+        "applies_to": "numeric",
+        "fixes": ["autocorrelation", "temporal_dependency"],
+    },
+    "rolling_mean": {
+        "label": "Moyenne mobile glissante",
+        "description": "Lisse les fluctuations à court terme et capte la dynamique tendancielle sur k périodes.",
+        "applies_to": "numeric",
+        "fixes": ["noise", "short_term_volatility"],
+    },
+    "rolling_std": {
+        "label": "Volatilité mobile glissante (Rolling Std)",
+        "description": "Mesure la dispersion et le risque temporel glissant sur k périodes.",
+        "applies_to": "numeric",
+        "fixes": ["volatility_clustering", "heteroscedasticity"],
+    },
+    "pct_change": {
+        "label": "Taux de variation relatif (Δx/x)",
+        "description": "Calcule le taux de croissance ou variation relative par rapport à la période précédente.",
+        "applies_to": "numeric",
+        "fixes": ["non_stationary", "scale_difference"],
+    },
 }
 
 

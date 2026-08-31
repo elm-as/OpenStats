@@ -61,6 +61,7 @@ from app.core.timeseries.multivariate import (
     _assess_model_suitability,
     run_multivariate_timeseries_analysis,
 )
+from app.core.timeseries.structural_break import compute_chow_test
 
 __all__ = [
     # helpers
@@ -99,4 +100,5 @@ __all__ = [
     "fit_varmax",
     "_assess_model_suitability",
     "run_multivariate_timeseries_analysis",
+    "compute_chow_test",
 ]
