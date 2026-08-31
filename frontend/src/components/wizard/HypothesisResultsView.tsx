@@ -1,7 +1,9 @@
-import React from 'react';
-import { GitCompare } from 'lucide-react';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { GitCompare, Bookmark, Check } from 'lucide-react';
 import type { TestResult } from '../../types';
 import type { StationarityResult } from '../../store/api';
+import { addPinnedItem } from '../../store/slices/pinnedNotesSlice';
 
 export function HypothesisTestResults({
   result,
@@ -10,6 +12,22 @@ export function HypothesisTestResults({
   result: TestResult;
   config: Record<string, string>;
 }) {
+  const dispatch = useDispatch();
+  const [pinned, setPinned] = useState(false);
+
+  const handlePin = () => {
+    dispatch(
+      addPinnedItem({
+        title: `${result.test} (${config.value_col || config.col1 || 'Variables'})`,
+        category: 'test',
+        badge: `p = ${result.p_value < 0.001 ? '< 0.001' : result.p_value.toFixed(4)} (${result.significant ? 'H₀ rejetée' : 'H₀ non rejetée'})`,
+        details: `Statistique: ${result.statistic.toFixed(4)} | Interprétation: ${result.interpretation || 'N/A'}`,
+      })
+    );
+    setPinned(true);
+    setTimeout(() => setPinned(false), 2000);
+  };
+
   return (
     <div className="space-y-4">
       <div
@@ -17,16 +35,27 @@ export function HypothesisTestResults({
           result.significant ? 'border-l-green-500' : 'border-l-gray-400'
         }`}
       >
-        <div className="flex items-center gap-2 mb-3">
-          <GitCompare className="w-5 h-5 text-purple-600" />
-          <h3 className="font-semibold text-gray-900">{result.test}</h3>
-          <span
-            className={`badge ${
-              result.significant ? 'bg-green-100 text-green-800' : 'bg-surface-800 text-surface-400'
-            }`}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <GitCompare className="w-5 h-5 text-purple-600" />
+            <h3 className="font-semibold text-gray-900">{result.test}</h3>
+            <span
+              className={`badge ${
+                result.significant ? 'bg-green-100 text-green-800' : 'bg-surface-800 text-surface-400'
+              }`}
+            >
+              {result.significant ? 'Significatif' : 'Non significatif'}
+            </span>
+          </div>
+
+          <button
+            onClick={handlePin}
+            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-surface-800 hover:bg-surface-700 text-surface-300 border border-white/10 transition-all"
+            title="Épingler ce résultat au carnet de bord"
           >
-            {result.significant ? 'Significatif' : 'Non significatif'}
-          </span>
+            {pinned ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Bookmark className="w-3.5 h-3.5" />}
+            {pinned ? 'Épinglé' : 'Épingler'}
+          </button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
