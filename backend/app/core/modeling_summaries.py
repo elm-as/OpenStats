@@ -41,17 +41,26 @@ def extract_regression_ols_summary(model, X_train: pd.DataFrame, y_train: pd.Ser
 
         X_sm_const = sm.add_constant(X_sm, has_constant="add")
         ols_model = sm.OLS(y_train, X_sm_const).fit()
+        # Estimation avec erreurs-types robustes à l'hétéroscédasticité (White / HC1 standard Stata)
+        try:
+            ols_robust = ols_model.get_robustcov_results(cov_type="HC1")
+        except Exception:
+            ols_robust = ols_model
 
         feature_names_ols = list(X_sm.columns)
         coefs = [{
             "variable": "Constante (β₀)",
             "coefficient": round(float(ols_model.params.iloc[0]), 6),
             "std_error": round(float(ols_model.bse.iloc[0]), 6),
+            "robust_std_error": round(float(ols_robust.bse.iloc[0]), 6),
             "t_statistic": round(float(ols_model.tvalues.iloc[0]), 4),
+            "robust_t_statistic": round(float(ols_robust.tvalues.iloc[0]), 4),
             "p_value": round(float(ols_model.pvalues.iloc[0]), 6),
+            "robust_p_value": round(float(ols_robust.pvalues.iloc[0]), 6),
             "ci_lower": round(float(ols_model.conf_int().iloc[0, 0]), 6),
             "ci_upper": round(float(ols_model.conf_int().iloc[0, 1]), 6),
             "significant": bool(ols_model.pvalues.iloc[0] < 0.05),
+            "robust_significant": bool(ols_robust.pvalues.iloc[0] < 0.05),
         }]
 
         for i, fname in enumerate(feature_names_ols):
@@ -60,11 +69,15 @@ def extract_regression_ols_summary(model, X_train: pd.DataFrame, y_train: pd.Ser
                 "variable": fname,
                 "coefficient": round(float(ols_model.params.iloc[idx]), 6),
                 "std_error": round(float(ols_model.bse.iloc[idx]), 6),
+                "robust_std_error": round(float(ols_robust.bse.iloc[idx]), 6),
                 "t_statistic": round(float(ols_model.tvalues.iloc[idx]), 4),
+                "robust_t_statistic": round(float(ols_robust.tvalues.iloc[idx]), 4),
                 "p_value": round(float(ols_model.pvalues.iloc[idx]), 6),
+                "robust_p_value": round(float(ols_robust.pvalues.iloc[idx]), 6),
                 "ci_lower": round(float(ols_model.conf_int().iloc[idx, 0]), 6),
                 "ci_upper": round(float(ols_model.conf_int().iloc[idx, 1]), 6),
                 "significant": bool(ols_model.pvalues.iloc[idx] < 0.05),
+                "robust_significant": bool(ols_robust.pvalues.iloc[idx] < 0.05),
             })
 
         equation_parts = [f"{coefs[0]['coefficient']:.4f}"]

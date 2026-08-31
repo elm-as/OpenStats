@@ -149,36 +149,50 @@ export function OlsSummaryView({ regSummary }: { regSummary: any }) {
                 <th className="p-2.5">Variable</th>
                 <th className="p-2.5 text-right">Coefficient (β)</th>
                 <th className="p-2.5 text-right">Erreur Type</th>
+                <th className="p-2.5 text-right text-cyan-300" title="Erreurs-types robustes à l'hétéroscédasticité (White / HC1 standard Stata)">SE Robuste (White)</th>
                 <th className="p-2.5 text-right">Stat t</th>
                 <th className="p-2.5 text-right">p-valeur</th>
+                <th className="p-2.5 text-right text-cyan-300" title="p-valeur robuste HC1">p-robuste</th>
                 <th className="p-2.5 text-right">IC (95%)</th>
                 <th className="p-2.5 text-center">Sig.</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 font-mono text-xs text-surface-200">
-              {regSummary.coefficients.map((c: any, i: number) => (
-                <tr key={i} className={c.significant ? 'bg-emerald-500/5' : ''}>
-                  <td className="p-2.5 font-sans font-medium text-surface-100">{c.variable}</td>
-                  <td className="p-2.5 text-right font-bold text-cyan-300">
-                    {c.coefficient > 0 ? `+${c.coefficient.toFixed(4)}` : c.coefficient.toFixed(4)}
-                  </td>
-                  <td className="p-2.5 text-right text-surface-400">{c.std_error.toFixed(4)}</td>
-                  <td className="p-2.5 text-right text-surface-300">{c.t_statistic.toFixed(2)}</td>
-                  <td
-                    className={`p-2.5 text-right font-bold ${
-                      c.p_value < 0.05 ? 'text-emerald-400' : 'text-amber-400'
-                    }`}
-                  >
-                    {c.p_value < 0.001 ? '< 0.001' : c.p_value.toFixed(4)}
-                  </td>
-                  <td className="p-2.5 text-right text-surface-400">
-                    [{c.ci_lower.toFixed(3)}, {c.ci_upper.toFixed(3)}]
-                  </td>
-                  <td className="p-2.5 text-center">
-                    {c.p_value < 0.001 ? '***' : c.p_value < 0.01 ? '**' : c.p_value < 0.05 ? '*' : 'ns'}
-                  </td>
-                </tr>
-              ))}
+              {regSummary.coefficients.map((c: any, i: number) => {
+                const isSig = c.robust_significant !== undefined ? c.robust_significant : c.significant;
+                const pVal = c.robust_p_value !== undefined ? c.robust_p_value : c.p_value;
+                return (
+                  <tr key={i} className={isSig ? 'bg-emerald-500/5' : ''}>
+                    <td className="p-2.5 font-sans font-medium text-surface-100">{c.variable}</td>
+                    <td className="p-2.5 text-right font-bold text-cyan-300">
+                      {c.coefficient > 0 ? `+${c.coefficient.toFixed(4)}` : c.coefficient.toFixed(4)}
+                    </td>
+                    <td className="p-2.5 text-right text-surface-400">{c.std_error?.toFixed(4) ?? '—'}</td>
+                    <td className="p-2.5 text-right text-cyan-200 font-semibold" title="Robuste HC1">
+                      {c.robust_std_error !== undefined ? c.robust_std_error.toFixed(4) : (c.std_error?.toFixed(4) ?? '—')}
+                    </td>
+                    <td className="p-2.5 text-right text-surface-300">
+                      {c.robust_t_statistic !== undefined ? c.robust_t_statistic.toFixed(2) : c.t_statistic?.toFixed(2)}
+                    </td>
+                    <td className="p-2.5 text-right text-surface-400">
+                      {c.p_value < 0.001 ? '< 0.001' : c.p_value?.toFixed(4)}
+                    </td>
+                    <td
+                      className={`p-2.5 text-right font-bold ${
+                        pVal < 0.05 ? 'text-emerald-400' : 'text-amber-400'
+                      }`}
+                    >
+                      {pVal < 0.001 ? '< 0.001' : pVal?.toFixed(4)}
+                    </td>
+                    <td className="p-2.5 text-right text-surface-400">
+                      [{c.ci_lower?.toFixed(3)}, {c.ci_upper?.toFixed(3)}]
+                    </td>
+                    <td className="p-2.5 text-center">
+                      {pVal < 0.001 ? '***' : pVal < 0.01 ? '**' : pVal < 0.05 ? '*' : 'ns'}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
