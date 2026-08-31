@@ -16,7 +16,7 @@ from app.core.export_frames_stats import (
     _log_frame, _versions_frame, _history_frame, _audit_frame
 )
 from app.core.export_frames_models import (
-    _model_ranking_frame, _feature_importance_frame, _shap_frame,
+    _model_ranking_frame, _regression_ols_summary_frame, _feature_importance_frame, _shap_frame,
     _timeseries_summary_frame, _timeseries_forecast_frame,
     _multivariate_summary_frame, _granger_frame, _johansen_frame,
     _pca_variance_frame, _pca_loadings_frame, _ca_coords_frame,
@@ -110,6 +110,10 @@ def export_html(output_path: str, payload: dict) -> str:
     modeling = _model_ranking_frame(payload)
     if not modeling.empty:
         sections.append(("Modelisation", _render_dataframe(modeling, max_rows=25)))
+
+    ols_summary = _regression_ols_summary_frame(payload)
+    if not ols_summary.empty:
+        sections.append(("Regression OLS & Coefficients", _render_dataframe(ols_summary, max_rows=40)))
 
     feature_importance = _feature_importance_frame(payload)
     if not feature_importance.empty:

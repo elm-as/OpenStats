@@ -21,8 +21,11 @@ const TRANSFORM_ACTIONS = [
   { key: 'sqrt', label: 'Racine carree', group: 'Asymetrie' },
   { key: 'winsorize', label: 'Winsorisation', group: 'Outliers' },
   { key: 'clip_iqr', label: 'Clip IQR', group: 'Outliers' },
+  { key: 'lag', label: 'Retard temporel (Lag Xt-1)', group: 'Series temporelles' },
   { key: 'diff', label: 'Differenciation (ordre 1)', group: 'Series temporelles' },
   { key: 'diff2', label: 'Differenciation (ordre 2)', group: 'Series temporelles' },
+  { key: 'rolling_mean', label: 'Moyenne mobile glissante', group: 'Series temporelles' },
+  { key: 'pct_change', label: 'Taux de variation relatif', group: 'Series temporelles' },
 ] as const;
 
 const TRANSFORM_GROUPS = [

@@ -138,6 +138,28 @@ def apply_transform(
     elif transform_key == "rank":
         result = series.rank(method="average", na_option="keep")
 
+    elif transform_key == "lag":
+        lag = int(params.get("lag", 1))
+        meta["lag"] = lag
+        result = series.shift(periods=lag)
+
+    elif transform_key == "rolling_mean":
+        window = int(params.get("window", 3))
+        min_periods = int(params.get("min_periods", 1))
+        meta["window"] = window
+        result = series.rolling(window=window, min_periods=min_periods).mean()
+
+    elif transform_key == "rolling_std":
+        window = int(params.get("window", 3))
+        min_periods = int(params.get("min_periods", 2))
+        meta["window"] = window
+        result = series.rolling(window=window, min_periods=min_periods).std()
+
+    elif transform_key == "pct_change":
+        periods = int(params.get("periods", 1))
+        meta["periods"] = periods
+        result = series.pct_change(periods=periods)
+
     else:
         raise ValueError(f"Transformation inconnue : {transform_key}")
 

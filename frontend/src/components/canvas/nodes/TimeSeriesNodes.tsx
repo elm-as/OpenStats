@@ -242,3 +242,28 @@ export function TSDecompositionNode({ id, data }: NodeProps<Node<CanvasNodeData>
     </NodeShell>
   );
 }
+
+export function ChowTestNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns } = useConnectedColumns(id);
+
+  return (
+    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Test de Rupture (Chow)" hasInput badge="Économétrie">
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Test d'instabilité structurelle des coefficients avant/après un choc ou une date clé.
+      </div>
+      <div>
+        <NodeLabel>Variable dépendante (Y)</NodeLabel>
+        <NodeColumnSelect name="targetCol" placeholder="-- Variable Cible --" value={(data.targetCol as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+      <div>
+        <NodeLabel>Variables explicatives (X)</NodeLabel>
+        <NodeMultiColumnInput name="featureCols" placeholder="Toutes (auto)" value={(data.featureCols as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+      <div>
+        <NodeLabel>Colonne temporelle (Optionnel)</NodeLabel>
+        <NodeColumnSelect name="dateCol" placeholder="-- Date (optionnel) --" value={(data.dateCol as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+    </NodeShell>
+  );
+}

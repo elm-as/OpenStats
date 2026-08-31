@@ -187,6 +187,24 @@ def recommend_transforms(
                     "category": "timeseries",
                 })
 
+        # Recommandation de mémoire sérielle (lags / rolling)
+        if value_col and len(df[value_col].dropna()) >= 10:
+            s_clean = df[value_col].dropna()
+            try:
+                autocorr_1 = s_clean.autocorr(lag=1)
+                if pd.notna(autocorr_1) and abs(autocorr_1) > 0.4:
+                    recommendations.append({
+                        "column": value_col,
+                        "issue": "autocorrelation",
+                        "issue_label": "Forte mémoire temporelle (Autocorrélation)",
+                        "detail": f"Autocorrélation d'ordre 1 = {autocorr_1:.2f}. Un retard (Lag) ou une moyenne mobile captera la dynamique sérielle.",
+                        "severity": "medium",
+                        "suggested_transforms": ["lag", "rolling_mean", "diff"],
+                        "category": "timeseries",
+                    })
+            except Exception:
+                pass
+
     seen = set()
     unique_recs = []
     for r in recommendations:

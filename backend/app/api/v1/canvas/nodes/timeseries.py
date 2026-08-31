@@ -182,7 +182,17 @@ def execute_ts_decomposition(data, dataset_id):
     if not value_col or value_col not in df.columns:
         return {"status": "error", "error": "Variable numérique requise pour la décomposition"}
 
-    series = df[value_col].dropna()
+    working = df.dropna(subset=[value_col]).copy()
+    if date_col and date_col in working.columns:
+        try:
+            working = working.sort_values(by=date_col)
+            dates = working[date_col].astype(str).tolist()
+        except Exception:
+            dates = [str(i) for i in range(len(working))]
+    else:
+        dates = [str(i) for i in range(len(working))]
+
+    series = working[value_col]
     if len(series) < 14:
         return {"status": "error", "error": "Série temporelle trop courte (min 14 obs)"}
 
@@ -190,12 +200,22 @@ def execute_ts_decomposition(data, dataset_id):
     from statsmodels.tsa.seasonal import seasonal_decompose
     try:
         decomp = seasonal_decompose(series, period=period, extrapolate_trend="freq")
+        trend_vals = [float(x) if pd.notna(x) else None for x in decomp.trend]
+        seasonal_vals = [float(x) if pd.notna(x) else None for x in decomp.seasonal]
+        resid_vals = [float(x) if pd.notna(x) else None for x in decomp.resid]
+        obs_vals = [float(x) if pd.notna(x) else None for x in series]
+
         res = {
             "column": value_col,
             "period": period,
             "trend_mean": float(decomp.trend.mean()),
             "seasonal_std": float(decomp.seasonal.std()),
             "resid_std": float(decomp.resid.std()),
+            "dates": dates,
+            "observed": obs_vals,
+            "trend": trend_vals,
+            "seasonal": seasonal_vals,
+            "residuals": resid_vals,
         }
     except Exception as e:
         return {"status": "error", "error": f"Erreur décomposition STL: {str(e)}"}
@@ -203,5 +223,55 @@ def execute_ts_decomposition(data, dataset_id):
     return {
         "status": "success",
         "message": f"Décomposition temporelle de '{value_col}' (période={period}) terminée",
+        "result": _sanitize(res),
+    }
+
+
+def execute_chow_test(data, dataset_id):
+    """Exécute le test de rupture structurelle de Chow."""
+    df = dataset_manager.get_df(dataset_id)
+    if df is None or df.empty:
+        return {"status": "error", "error": "DataFrame vide ou introuvable"}
+
+    target_col = data.get("targetCol", "")
+    date_col = data.get("dateCol", "") or _find_date_col(df)
+    break_point = data.get("breakPoint", None) or None
+
+    feature_cols_str = data.get("featureCols", "")
+    if feature_cols_str:
+        feature_cols = [c.strip() for c in feature_cols_str.split(",") if c.strip() in df.columns]
+    else:
+        ignored = {target_col}
+        if date_col:
+            ignored.add(date_col)
+        feature_cols = [c for c in df.select_dtypes(include=["number"]).columns if c not in ignored][:5]
+
+    if not target_col or target_col not in df.columns:
+        # Auto-sélection de la première numérique
+        nums = [c for c in df.select_dtypes(include=["number"]).columns if c != date_col]
+        if nums:
+            target_col = nums[0]
+            feature_cols = [c for c in nums[1:] if c != target_col][:5]
+        else:
+            return {"status": "error", "error": "Variable cible numérique requise pour le test de Chow"}
+
+    if not feature_cols:
+        return {"status": "error", "error": "Au moins une variable explicative requise pour le test de Chow"}
+
+    from app.core.timeseries.structural_break import compute_chow_test
+    try:
+        res = compute_chow_test(
+            data=df,
+            target_col=target_col,
+            feature_cols=feature_cols,
+            break_point=break_point,
+            date_col=date_col,
+        )
+    except Exception as e:
+        return {"status": "error", "error": f"Erreur test de Chow: {str(e)}"}
+
+    return {
+        "status": "success",
+        "message": f"Test de Chow ({target_col}) : {res['interpretation']}",
         "result": _sanitize(res),
     }

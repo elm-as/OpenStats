@@ -117,6 +117,7 @@ export default function CanvasResultModal({
         'granger',
         'cointegration',
         'tsDecomposition',
+        'chowTest',
         'outliers',
         'survival',
         'garch',

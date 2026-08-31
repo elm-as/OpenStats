@@ -98,6 +98,7 @@ const categories: SidebarCategory[] = [
       { type: 'multivariateTimeseries', label: 'Multivariée (VAR)', icon: Shuffle, color: '#f59e0b' },
       { type: 'granger', label: 'Causalité de Granger', icon: Shuffle, color: '#f59e0b' },
       { type: 'cointegration', label: 'Cointégration (Johansen)', icon: Shuffle, color: '#f59e0b' },
+      { type: 'chowTest', label: 'Rupture de Chow', icon: Shuffle, color: '#f59e0b', badge: 'Chow' },
     ],
   },
   {

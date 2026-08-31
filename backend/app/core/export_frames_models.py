@@ -44,6 +44,33 @@ def _feature_importance_frame(payload: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _regression_ols_summary_frame(payload: dict) -> pd.DataFrame:
+    """Extrait le tableau détaillé des coefficients OLS avec t-stat, p-valeurs et IC."""
+    modeling = payload.get("modeling") or {}
+    ranking = modeling.get("ranking") or []
+    ols_entry = next((m for m in ranking if "ols" in str(m.get("model_key", "")).lower() or "linear" in str(m.get("model_key", "")).lower()), None)
+    if not ols_entry or not ols_entry.get("model_summary"):
+        return pd.DataFrame()
+
+    summ = ols_entry["model_summary"]
+    coefs = summ.get("coefficients") or []
+    rows = []
+    for c in coefs:
+        p_val = c.get("p_value", 1)
+        stars = "***" if p_val < 0.001 else ("**" if p_val < 0.01 else ("*" if p_val < 0.05 else ""))
+        rows.append({
+            "Variable": c.get("variable"),
+            "Coefficient": c.get("coefficient"),
+            "Erreur standard": c.get("std_error"),
+            "t-stat": c.get("t_statistic"),
+            "p-valeur": c.get("p_value"),
+            "Signif.": stars,
+            "IC 95% Bas": c.get("ci_lower"),
+            "IC 95% Haut": c.get("ci_upper"),
+        })
+    return pd.DataFrame(rows)
+
+
 def _shap_frame(payload: dict) -> pd.DataFrame:
     shap = payload.get("modeling", {}).get("shap") or {}
     return pd.DataFrame(shap.get("global_importance") or [])
