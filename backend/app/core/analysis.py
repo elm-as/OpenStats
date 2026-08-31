@@ -161,16 +161,27 @@ def compute_correlation_matrix(df: pd.DataFrame, method: str = "pearson", bootst
 
     significant = []
     cols = corr.columns.tolist()
+    n_sample = len(corr_target_df.dropna())
     for i in range(len(cols)):
         for j in range(i + 1, len(cols)):
             r = corr.iloc[i, j]
-            if abs(r) > 0.3:
-                significant.append({
-                    "var1": cols[i],
-                    "var2": cols[j],
-                    "coefficient": _sf(r),
-                    "strength": _correlation_strength(r),
-                })
+            if pd.notna(r):
+                # Calcul de la p-value exacte du coefficient de corrélation
+                if n_sample > 2 and abs(r) < 1.0:
+                    t_val = r * np.sqrt((n_sample - 2) / (1 - r ** 2))
+                    p_val = float(2 * (1 - stats.t.cdf(abs(t_val), df=n_sample - 2)))
+                else:
+                    p_val = 0.0 if abs(r) == 1.0 else 1.0
+
+                if p_val < 0.05 and abs(r) > 0.1:
+                    significant.append({
+                        "var1": cols[i],
+                        "var2": cols[j],
+                        "coefficient": _sf(r),
+                        "p_value": _sf(p_val),
+                        "significant": True,
+                        "strength": _correlation_strength(r),
+                    })
 
     result = {
         "matrix": corr.where(corr.notna(), None).round(4).to_dict(),

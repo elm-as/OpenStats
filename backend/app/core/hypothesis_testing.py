@@ -100,10 +100,16 @@ def _compare_means(df: pd.DataFrame, group_col: str, value_col: str) -> dict:
     if n_groups < 2:
         return {"error": "Il faut au moins 2 groupes avec des données suffisantes"}
 
-    all_normal = all(
-        stats.shapiro(g[:5000] if len(g) > 5000 else g)[1] > 0.05
-        for g in group_list
-    )
+    # Règle statistique avancée : si chaque groupe a n >= 50, le Théorème Central Limite (TCL)
+    # garantit la normalité de la moyenne échantillonnale sauf asymétrie extrême (|skew| > 2).
+    # Pour n < 50, on applique Shapiro-Wilk.
+    def _check_group_normality(g: np.ndarray) -> bool:
+        if len(g) >= 50:
+            skew = abs(float(stats.skew(g)))
+            return skew < 2.0
+        return stats.shapiro(g[:5000])[1] > 0.05
+
+    all_normal = all(_check_group_normality(g) for g in group_list)
 
     if n_groups == 2:
         _, levene_p = stats.levene(*group_list)
@@ -111,7 +117,7 @@ def _compare_means(df: pd.DataFrame, group_col: str, value_col: str) -> dict:
 
         if all_normal:
             stat, p_value = stats.ttest_ind(*group_list, equal_var=equal_var)
-            test_name = "T-test de Student" + (" (Welch)" if not equal_var else "")
+            test_name = "T-test de Student" if equal_var else "T-test de Welch (variances inégales)"
             d = _cohen_d(group_list[0], group_list[1])
             effect_size = {"d_cohen": _sf(d), "interpretation": _interpret_cohen_d(d)}
         else:

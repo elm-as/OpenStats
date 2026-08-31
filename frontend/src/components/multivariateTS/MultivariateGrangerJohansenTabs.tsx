@@ -72,8 +72,8 @@ export function MultivariateGrangerTab({
               {results.granger_causality.details
                 .filter(d => d.significant)
                 .map((d, i) => (
-                  <span key={i} className="badge bg-green-100 text-green-700">
-                    {d.cause} → {d.effect} (p=
+                  <span key={i} className="badge bg-green-100 text-green-700 font-mono text-xs">
+                    {d.cause} → {d.effect} (lag {d.optimal_lag || 'opt'}, p=
                     {d.p_value != null && d.p_value < 0.001 ? '< 0.001' : d.p_value?.toFixed(3)})
                   </span>
                 ))}
