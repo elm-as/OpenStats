@@ -155,6 +155,24 @@ def _dispatch(step: PipelineStep, df: pd.DataFrame, ctx: dict[str, Any]) -> Any:
         result["target"] = target
         return result
 
+    if op == "count_model":
+        from app.core.count_models import ajuster_modele_comptage
+        return ajuster_modele_comptage(df, params["target_col"], params.get("covariates") or [])
+
+    if op == "regression_diagnostics":
+        from app.core.regression_diagnostics import diagnostiquer_regression
+        return diagnostiquer_regression(df, params["target_col"], params.get("feature_cols") or [])
+
+    if op == "panel":
+        from app.core.panel_models import fit_panel_models
+        return fit_panel_models(
+            df,
+            entity_col=params["entity_col"],
+            time_col=params["time_col"],
+            target_col=params["target_col"],
+            covariates=params.get("covariates"),
+        )
+
     if op == "timeseries_stationarity":
         from app.core.timeseries.stationarity import test_stationarity
         cols = params.get("columns") or [c for c in df.select_dtypes(include="number").columns]

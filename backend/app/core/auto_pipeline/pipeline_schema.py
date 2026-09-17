@@ -34,6 +34,9 @@ class PipelineRecipe:
     steps: list[PipelineStep] = field(default_factory=list)
     estimated_duration_sec: int = 0
     confidence: str = "high"  # high | medium | low
+    # Analyses demandees par l'utilisateur mais impossibles a poser, avec la
+    # raison : sans cela, une etape cochee disparait sans explication.
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
