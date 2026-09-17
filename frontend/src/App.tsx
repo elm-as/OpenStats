@@ -8,6 +8,7 @@ const WorkflowPage = lazy(() => import('./pages/WorkflowPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const CanvasPage = lazy(() => import('./pages/CanvasPage'));
 const AnalyzerPage = lazy(() => import('./pages/AnalyzerPage'));
+const ExplorerPage = lazy(() => import('./pages/ExplorerPage'));
 const AnalyzerResultsPage = lazy(() => import('./pages/AnalyzerResultsPage'));
 const SharedCanvasPage = lazy(() => import('./pages/SharedCanvasPage'));
 const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
@@ -50,6 +51,7 @@ export default function App() {
 
           {/* Analyseur Intelligent */}
           <Route path="analyzer" element={<AnalyzerPage />} />
+          <Route path="explorer" element={<ExplorerPage />} />
           <Route path="analyzer/results" element={<AnalyzerResultsPage />} />
 
           {/* Canvas Interactif */}

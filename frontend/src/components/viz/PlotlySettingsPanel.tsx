@@ -18,6 +18,7 @@ interface PlotlySettingsPanelProps {
   setOpacity: (o: number) => void;
   trendline: boolean;
   setTrendline: (t: boolean) => void;
+  onResetDefaults?: () => void;
   detectedChartType: string;
   isScatterNumeric: boolean;
 }
@@ -39,6 +40,7 @@ export function PlotlySettingsPanel({
   setOpacity,
   trendline,
   setTrendline,
+  onResetDefaults,
   detectedChartType,
   isScatterNumeric,
 }: PlotlySettingsPanelProps) {
@@ -176,6 +178,18 @@ export function PlotlySettingsPanel({
             </div>
           )}
         </>
+      )}
+
+      {onResetDefaults && (
+        <div className="col-span-2 md:col-span-4 flex justify-end pt-2 border-t border-white/5">
+          <button
+            type="button"
+            onClick={onResetDefaults}
+            className="text-[11px] text-surface-400 hover:text-surface-200 transition-colors underline cursor-pointer"
+          >
+            Rétablir les paramètres par défaut
+          </button>
+        </div>
       )}
     </div>
   );

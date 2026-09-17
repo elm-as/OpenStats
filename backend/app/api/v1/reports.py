@@ -164,7 +164,7 @@ def professional_report(dataset_id, fmt):
         return jsonify({"error": f"Erreur lors de l'analyse du profil: {str(e)}"}), 500
 
     try:
-        recipe = build_recipe(profile)
+        recipe = build_recipe(profile, df=df)
     except Exception as e:
         return jsonify({"error": f"Erreur lors de la construction de la recette: {str(e)}"}), 500
 

@@ -1,9 +1,10 @@
 import React from 'react';
 import { NodeProps, Node } from '@xyflow/react';
-import { Activity, TrendingUp, Layers, GitCompare } from 'lucide-react';
+import { Activity, TrendingUp, Layers, GitCompare, Grid3x3 } from 'lucide-react';
 import {
   NodeShell,
   NodeLabel,
+  NodeInput,
   NodeColumnSelect,
   NodeSelect,
   CanvasNodeData,
@@ -89,6 +90,68 @@ export function GarchNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
       <div>
         <NodeLabel>Série numérique</NodeLabel>
         <NodeColumnSelect name="valueCol" placeholder="-- Variable --" value={(data.valueCol as string) || ''} onChange={handleChange} columns={columns} />
+      </div>
+    </NodeShell>
+  );
+}
+
+
+export function PanelNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
+  const handleChange = useNodeUpdate(id, data);
+  const { columns } = useConnectedColumns(id);
+
+  return (
+    <NodeShell
+      id={id}
+      data={data}
+      color="#f97316"
+      icon={Grid3x3}
+      title="Économétrie de Panel"
+      hasInput
+      badge="Panel"
+    >
+      <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
+        Entités suivies dans le temps : effets fixes (within), effets aléatoires et test de
+        Hausman pour arbitrer entre les deux.
+      </div>
+      <div>
+        <NodeLabel>Colonne d'entité</NodeLabel>
+        <NodeColumnSelect
+          name="entityCol"
+          placeholder="-- auto --"
+          value={(data.entityCol as string) || ''}
+          onChange={handleChange}
+          columns={columns}
+        />
+      </div>
+      <div>
+        <NodeLabel>Colonne de période</NodeLabel>
+        <NodeColumnSelect
+          name="timeCol"
+          placeholder="-- auto --"
+          value={(data.timeCol as string) || ''}
+          onChange={handleChange}
+          columns={columns}
+        />
+      </div>
+      <div>
+        <NodeLabel>Variable expliquée</NodeLabel>
+        <NodeColumnSelect
+          name="targetCol"
+          placeholder="-- auto --"
+          value={(data.targetCol as string) || ''}
+          onChange={handleChange}
+          columns={columns}
+        />
+      </div>
+      <div>
+        <NodeLabel>Covariables (séparées par des virgules)</NodeLabel>
+        <NodeInput
+          name="covariates"
+          placeholder="-- toutes les numériques --"
+          value={(data.covariates as string) || ''}
+          onChange={handleChange}
+        />
       </div>
     </NodeShell>
   );

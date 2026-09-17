@@ -24,6 +24,8 @@ import {
 import { HierarchicalClusteringResultView } from './results/HierarchicalClusteringResultView';
 
 import { TimeSeriesResultView } from './results/TimeSeriesResultView';
+import { PanelResultView } from './results/PanelResultView';
+import { AnalyticResultView } from './results/AnalyticResultView';
 import { FactorAnalysisResultView } from './results/FactorAnalysisResultView';
 import {
   InsightsResultView,
@@ -132,6 +134,24 @@ export default function CanvasResultModal({
       return <FactorAnalysisResultView nodeType={type} resultData={data} />;
     }
 
+    if (type === 'panel') return <PanelResultView resultData={data} />;
+
+    const VUES_INFERENCE: Record<string, { titre: string; couleur: string }> = {
+      countModel: { titre: 'Modèle de comptage', couleur: '#14b8a6' },
+      regressionDiagnostics: { titre: 'Diagnostics de régression', couleur: '#ef4444' },
+      powerAnalysis: { titre: 'Puissance statistique', couleur: '#f59e0b' },
+      quantileRegression: { titre: 'Régression quantile', couleur: '#8b5cf6' },
+      equivalenceTest: { titre: "Test d'équivalence (TOST)", couleur: '#10b981' },
+    };
+    if (VUES_INFERENCE[type]) {
+      return (
+        <AnalyticResultView
+          resultData={data}
+          titre={VUES_INFERENCE[type].titre}
+          couleur={VUES_INFERENCE[type].couleur}
+        />
+      );
+    }
     if (type === 'insights') return <InsightsResultView resultData={data} />;
     if (type === 'visualization') return <VisualizationResultView resultData={data} />;
     if (type === 'output') return <OutputReportResultView resultData={data} />;

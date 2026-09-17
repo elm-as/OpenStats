@@ -128,26 +128,48 @@ def execute_causal(node_data: dict[str, Any], dataset_id: int) -> dict[str, Any]
             return {"status": "error", "message": "Variable instrumentale requise pour la 2SLS"}
 
         sub = df[[outcome_col, treatment_col, instrument_col]].dropna().copy()
-        import statsmodels.sandbox.regression.gmm as gmm
+        if len(sub) < 10:
+            return {"status": "error", "message": "Trop peu d'observations completes pour la 2SLS"}
+
+        import statsmodels.api as sm
+        from statsmodels.sandbox.regression.gmm import IV2SLS
 
         y = sub[outcome_col]
-        x = sub[treatment_col]
-        z = sub[instrument_col]
+        # La constante est indispensable : sans elle, 2SLS estime un rapport de
+        # moments non centres et le coefficient n'a pas d'interpretation.
+        X = sm.add_constant(sub[[treatment_col]], has_constant="add")
+        Z = sm.add_constant(sub[[instrument_col]], has_constant="add")
 
-        iv_mod = gmm.IV2SLS(y, x, z).fit()
-        coef = iv_mod.params[0]
-        p_val = iv_mod.pvalues[0]
+        iv_mod = IV2SLS(y, X, Z).fit()
+        coef = float(iv_mod.params[treatment_col])
+        p_val = float(iv_mod.pvalues[treatment_col])
+
+        # Premiere etape : un instrument faible rend l'estimation 2SLS moins
+        # fiable que les MCO qu'elle est censee corriger.
+        premiere = sm.OLS(sub[treatment_col],
+                          sm.add_constant(sub[[instrument_col]], has_constant="add")).fit()
+        f_premiere = float(premiere.fvalue) if premiere.fvalue is not None else None
+
+        mco = sm.OLS(y, X).fit()
+        coef_mco = float(mco.params[treatment_col])
 
         return {
             "status": "success",
-            "message": f"Régression 2SLS (Coef = {coef:.4f}, p = {p_val:.4f})",
+            "message": (f"Régression 2SLS (Coef = {coef:.4f}, p = {p_val:.4f}) — "
+                        f"MCO non instrumentées : {coef_mco:.4f}"),
             "method": "Two-Stage Least Squares (2SLS)",
             "outcome_column": outcome_col,
             "treatment_column": treatment_col,
             "instrument_column": instrument_col,
-            "coefficient": round(float(coef), 4),
-            "p_value": round(float(p_val), 4),
+            "coefficient": round(coef, 4),
+            "p_value": round(p_val, 4),
             "is_significant": bool(p_val < 0.05),
+            "ols_coefficient": round(coef_mco, 4),
+            "endogeneity_gap": round(coef_mco - coef, 4),
+            "first_stage_f": round(f_premiere, 2) if f_premiere is not None else None,
+            "weak_instrument": bool(f_premiere is not None and f_premiere < 10),
+            "first_stage_r2": round(float(premiere.rsquared), 4),
+            "n_observations": int(len(sub)),
         }
 
 
@@ -161,11 +183,14 @@ def execute_manifold(node_data: dict[str, Any], dataset_id: int) -> dict[str, An
     if df is None or df.empty:
         return {"status": "error", "message": "Dataset introuvable ou vide"}
 
-    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    from app.core.analysis_scope import variables_analysables
+
+    analysables = variables_analysables(df)
+    num_cols = analysables.columns.tolist()
     if len(num_cols) < 2:
         return {"status": "error", "message": "Au moins 2 variables numériques requises pour la projection"}
 
-    sub = df[num_cols].dropna().copy()
+    sub = analysables.dropna().copy()
     if len(sub) > 500:
         sub = sub.sample(n=500, random_state=42)
 
@@ -222,37 +247,37 @@ def execute_garch(node_data: dict[str, Any], dataset_id: int) -> dict[str, Any]:
     if not value_col or value_col not in df.columns:
         return {"status": "error", "message": f"Variable numérique '{value_col}' introuvable"}
 
-    series = df[value_col].dropna().values
-    returns = np.diff(np.log(series)) if np.all(series > 0) else np.diff(series)
+    from app.core.volatility import estimer_garch, rendements
 
-    if len(returns) < 10:
-        return {"status": "error", "message": "Nombre d'observations insuffisant pour GARCH"}
+    serie = df[value_col].dropna().values
+    rets = rendements(serie)
 
-    # Estimation empirique GARCH(1,1) des variances conditionnelles
-    var_uncond = np.var(returns)
-    alpha0 = var_uncond * 0.05
-    alpha1 = 0.10
-    beta1 = 0.85
+    if len(rets) < 30:
+        return {"status": "error",
+                "message": "Au moins 30 rendements sont requis pour estimer un GARCH(1,1)"}
 
-    cond_var = np.zeros(len(returns))
-    cond_var[0] = var_uncond
-    for t in range(1, len(returns)):
-        cond_var[t] = alpha0 + alpha1 * (returns[t - 1] ** 2) + beta1 * cond_var[t - 1]
-
-    cond_volatility = np.sqrt(cond_var)
+    ajustement = estimer_garch(rets)
+    volatilite = ajustement["volatilite_conditionnelle"]
+    persistance = ajustement["alpha"] + ajustement["beta"]
 
     return {
         "status": "success",
-        "message": f"Volatilité conditionnelle GARCH(1,1) estimée sur '{value_col}'",
+        "message": (f"GARCH(1,1) sur '{value_col}' — {ajustement['methode']}, "
+                    f"persistance {persistance:.3f}"),
         "variable": value_col,
-        "n_returns": len(returns),
-        "unconditional_volatility": round(float(np.sqrt(var_uncond)), 4),
-        "mean_conditional_volatility": round(float(np.mean(cond_volatility)), 4),
+        "n_returns": len(rets),
+        "estimation_method": ajustement["methode"],
+        "is_estimated": ajustement["estime"],
+        "log_likelihood": (round(ajustement["log_vraisemblance"], 2)
+                           if ajustement["log_vraisemblance"] is not None else None),
+        "unconditional_volatility": round(float(np.sqrt(ajustement["variance_inconditionnelle"])), 6),
+        "mean_conditional_volatility": round(float(np.mean(volatilite)), 6),
         "garch_parameters": {
-            "omega (alpha0)": round(float(alpha0), 6),
-            "alpha1 (arch)": round(float(alpha1), 4),
-            "beta1 (garch)": round(float(beta1), 4),
-            "persistence": round(float(alpha1 + beta1), 4),
+            "omega (alpha0)": round(float(ajustement["omega"]), 8),
+            "alpha1 (arch)": round(float(ajustement["alpha"]), 4),
+            "beta1 (garch)": round(float(ajustement["beta"]), 4),
+            "persistence": round(float(persistance), 4),
         },
-        "volatility_series": [round(float(v), 4) for v in cond_volatility[:50]],
+        "p_values": ajustement.get("p_values"),
+        "volatility_series": [round(float(v), 6) for v in volatilite[:200]],
     }

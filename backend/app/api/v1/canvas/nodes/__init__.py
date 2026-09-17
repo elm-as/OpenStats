@@ -15,6 +15,8 @@ from .tests import execute_test_compare_means, execute_test_correlation, execute
 from .factorielle import execute_pca, execute_ca, execute_mca
 from .modeling import (
     execute_clustering,
+    execute_panel,
+    execute_count_model,
     execute_hierarchical_clustering,
     execute_regression,
     execute_classification,
@@ -31,6 +33,12 @@ from .output import execute_ai, execute_extension, execute_insights, execute_out
 from .sql import execute_sql
 from .hybrid import execute_python
 from .advanced_analytics import execute_survival, execute_causal, execute_manifold, execute_garch
+from .inference import (
+    execute_equivalence_test,
+    execute_power_analysis,
+    execute_quantile_regression,
+    execute_regression_diagnostics,
+)
 from ._shared import _sanitize
 
 # Mapping de type de nœud vers la fonction d'exécution
@@ -60,6 +68,12 @@ NODE_EXECUTORS = {
     "clustering": execute_clustering,
     "hierarchicalClustering": execute_hierarchical_clustering,
 
+    "countModel": execute_count_model,
+    "regressionDiagnostics": execute_regression_diagnostics,
+    "powerAnalysis": execute_power_analysis,
+    "quantileRegression": execute_quantile_regression,
+    "equivalenceTest": execute_equivalence_test,
+    "panel": execute_panel,
     "regression": execute_regression,
     "classification": execute_classification,
     "explainability": execute_explainability,

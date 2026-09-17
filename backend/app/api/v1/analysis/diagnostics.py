@@ -58,7 +58,7 @@ def auto_pipeline_recipe(dataset_id):
     type_overrides = ds.get("type_overrides") or {}
     stored_profile = ds.get("profile") or {}
     profile = detect_dataset_profile(df, user_hint_target=hint, type_overrides=type_overrides, exclude_columns=exclude_columns, ds_profile=stored_profile)
-    recipe = build_recipe(profile, target=hint, task_type=task_type, selected_analyses=selected_analyses, custom_steps=custom_steps)
+    recipe = build_recipe(profile, target=hint, task_type=task_type, selected_analyses=selected_analyses, custom_steps=custom_steps, df=df)
 
     return jsonify({"profile": profile.to_dict(), "recipe": recipe.to_dict()})
 
@@ -117,7 +117,7 @@ def auto_pipeline_execute(dataset_id):
             confidence=raw_r.get("confidence", "high"),
         )
     else:
-        recipe = build_recipe(profile, target=hint, task_type=task_type, selected_analyses=selected_analyses, custom_steps=custom_steps)
+        recipe = build_recipe(profile, target=hint, task_type=task_type, selected_analyses=selected_analyses, custom_steps=custom_steps, df=df)
 
     import threading
     execution_result: dict = {}

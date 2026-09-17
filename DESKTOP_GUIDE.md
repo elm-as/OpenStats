@@ -35,6 +35,33 @@ npm run electron:dev
 
 ---
 
+---
+
+## ⚠️ Dépendances chargées paresseusement
+
+Les moteurs d'analyse importent XGBoost, LightGBM, Prophet et lifelines **à l'intérieur des
+fonctions**, pour ne pas alourdir le démarrage de l'application. PyInstaller n'analyse que
+les imports statiques : sans déclaration explicite, ces bibliothèques seraient absentes du
+binaire et les modèles correspondants échoueraient chez l'utilisateur final — silencieusement,
+puisque l'application signale simplement « bibliothèque absente » et écarte le candidat.
+
+`openstats-backend.spec` les déclare donc explicitement (`collect_all`). **Si vous ajoutez un
+modèle reposant sur une nouvelle bibliothèque, ajoutez-la à cette liste**, sinon il
+fonctionnera en développement et disparaîtra du binaire.
+
+Vérification après compilation :
+
+```bash
+# Depuis le dossier de l'exécutable généré
+./openstats-backend/openstats-backend.exe
+# puis, dans un autre terminal :
+curl -X POST http://localhost:5000/api/v1/datasets/<id>/methodology -d '{"target":"..."}'      -H "Content-Type: application/json" | grep -o '"applicable":false[^}]*'
+```
+
+Une bibliothèque manquante apparaît dans le motif d'exclusion des modèles.
+
+---
+
 ## 📦 2. Générer l'Installateur `.exe` Windows complet
 
 Pour produire un fichier d'installation tout-en-un que vous pouvez partager :

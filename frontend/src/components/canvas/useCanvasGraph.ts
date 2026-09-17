@@ -74,10 +74,54 @@ export function useCanvasGraph({ onResetPipeline }: UseCanvasGraphProps) {
   );
 
   const lastTemplateRef = useRef<string | null>(null);
+  // Vrai des qu'un graphe complet a ete importe : empeche le repli
+  // "noeud dataset seul" de l'ecraser au second passage des effets.
+  const importedRef = useRef(false);
+
+  const applyGraph = useCallback((payload: any) => {
+    if (!payload?.nodes) return false;
+    const importedNodes = payload.nodes.map((n: any) => ({
+      ...n,
+      data: {
+        ...n.data,
+        onChange: onNodeDataChange,
+        onDelete: onNodeDelete,
+        getConnectedDatasetId,
+      },
+    }));
+    const importedEdges = (payload.edges || []).map((e: any) => ({
+      ...e,
+      type: 'animatedDataEdge',
+    }));
+    const maxId = importedNodes.reduce((max: number, n: any) => {
+      const num = parseInt(String(n.id).replace(/\D+/g, ''), 10);
+      return isNaN(num) ? max : Math.max(max, num);
+    }, 0);
+    idCounter = Math.max(idCounter, maxId + 1);
+    importedRef.current = true;
+    setNodes(importedNodes);
+    setEdges(importedEdges);
+    return true;
+  }, [onNodeDataChange, onNodeDelete, getConnectedDatasetId, setNodes, setEdges]);
 
   useEffect(() => {
     const datasetId = searchParams.get('dataset');
     const templateEncoded = searchParams.get('template');
+
+    // Import depuis l'analyse methodique : le graphe transite par sessionStorage,
+    // une URL ne pouvant pas porter un pipeline complet sans risque de troncature.
+    if (searchParams.get('from') === 'methodology') {
+      if (importedRef.current) return;
+      try {
+        const raw = sessionStorage.getItem('openstats_canvas_import');
+        if (raw && applyGraph(JSON.parse(raw))) {
+          lastTemplateRef.current = 'methodology';
+          return;
+        }
+      } catch (e) {
+        console.error('Import du pipeline methodique impossible:', e);
+      }
+    }
 
     if (templateEncoded && templateEncoded !== lastTemplateRef.current) {
       lastTemplateRef.current = templateEncoded;
@@ -111,7 +155,7 @@ export function useCanvasGraph({ onResetPipeline }: UseCanvasGraphProps) {
       return;
     }
 
-    if (datasetId && nodes.length === 0) {
+    if (datasetId && nodes.length === 0 && !importedRef.current) {
       const newNode: Node = {
         id: 'ds_from_dashboard',
         type: 'dataset',

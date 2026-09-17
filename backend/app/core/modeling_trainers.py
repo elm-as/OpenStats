@@ -33,10 +33,17 @@ def train_single_model(
     data: dict,
     cv_folds: int = 5,
     is_competitive: bool = False,
+    hyperparams: dict | None = None,
 ) -> dict:
-    """Entraîne un modèle unique avec validation croisée et GridSearch."""
+    """Entraîne un modèle unique avec validation croisée et GridSearch.
+
+    `hyperparams` fige une valeur la ou le catalogue explorait une grille : un
+    reglage impose par l'utilisateur remplace la recherche, il ne s'y ajoute
+    pas. Les cles qui ne concernent pas le modele sont ignorees (une
+    profondeur d'arbre n'a pas de sens pour une regression lineaire).
+    """
     task_type = data["task_type"]
-    cv_folds = _safe_cv_folds(data["y_train"], cv_folds)
+    cv_folds = _safe_cv_folds(data["y_train"], cv_folds, task_type=task_type)
 
     registry = REGRESSION_MODELS if task_type == "regression" else CLASSIFICATION_MODELS
 
@@ -59,7 +66,10 @@ def train_single_model(
         y_train_fit = y_train.iloc[idx]
 
     model_cls = model_info["class"]
-    param_grid = model_info["params"]
+    param_grid = dict(model_info["params"])
+    for cle, valeur in (hyperparams or {}).items():
+        if valeur is not None and cle in param_grid:
+            param_grid[cle] = [valeur]
     needs_scaling = model_info.get("needs_scaling", False)
 
     label_encoder = None

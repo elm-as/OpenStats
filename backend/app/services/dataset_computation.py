@@ -142,6 +142,8 @@ class DatasetComputationMixin:
         split_strategy: str = "auto",
         temporal_col: str | None = None,
         task_type: str | None = None,
+        cv_folds: int = 5,
+        hyperparams: dict | None = None,
     ) -> dict:
         """Lance l'entraînement compétitif multi-algorithmes."""
         from app.core.modeling import prepare_data, train_competitive
@@ -164,7 +166,8 @@ class DatasetComputationMixin:
             task_type=task_type,
             user_override=target_override,
         )
-        results = train_competitive(data, model_keys=model_keys, task_type=task_type)
+        results = train_competitive(data, model_keys=model_keys, task_type=task_type,
+                                    cv_folds=cv_folds, hyperparams=hyperparams)
 
         shap_data = None
         if results.get("best_model") is not None:
@@ -194,6 +197,8 @@ class DatasetComputationMixin:
             "models": model_keys,
             "test_size": test_size,
             "split_strategy": split_strategy,
+            "cv_folds": cv_folds,
+            "hyperparams": hyperparams,
         }
         summary = {k: v for k, v in results.items() if k not in ("best_model", "trained_models")}
         self._save_analysis(dataset_id, "modeling", params, summary, duration)

@@ -63,6 +63,7 @@ def generate_canvas_from_recipe(dataset_id=None):
     if not dataset_id:
         return jsonify({"error": "dataset_id requis"}), 400
 
+    from app.api.v1.canvas.node_contract import traduire_params
     from app.services.dataset_service import dataset_manager
     from app.core.auto_pipeline import detect_dataset_profile, build_recipe
     from app.core.auto_pipeline.recipe import PipelineRecipe, PipelineStep
@@ -92,7 +93,7 @@ def generate_canvas_from_recipe(dataset_id=None):
     else:
         task_type = body.get("task_type") or request.args.get("task_type")
         selected_analyses = body.get("selected_analyses")
-        recipe = build_recipe(profile, target=target, task_type=task_type, selected_analyses=selected_analyses)
+        recipe = build_recipe(profile, target=target, task_type=task_type, selected_analyses=selected_analyses, df=df)
 
     problem = recipe.problem_type
     effective_target = recipe.target or target or ""
@@ -124,7 +125,10 @@ def generate_canvas_from_recipe(dataset_id=None):
         "transform": {"type": "transform", "label": "Transformations & Normalisation", "layer": 2, "y": 380},
         "transform_recommend": {"type": "transform", "label": "Recommandations de transformation", "layer": 2, "y": 380},
         "pca": {"type": "pca", "label": "ACP — Réduction de dimensions", "layer": 2, "y": 480},
-        "manifold": {"type": "manifold", "label": "Projection t-SNE / UMAP", "layer": 2, "y": 580},
+        "manifold": {"type": "manifold", "label": "Projection t-SNE & densité DBSCAN", "layer": 2, "y": 580},
+        "count_model": {"type": "countModel", "label": "Modèle de Comptage (Poisson / BN)", "layer": 3, "y": 420},
+        "regression_diagnostics": {"type": "regressionDiagnostics", "label": "Diagnostics du Modèle", "layer": 4, "y": 420},
+        "panel": {"type": "panel", "label": "Économétrie de Panel (FE / RE / Hausman)", "layer": 3, "y": 100},
         "survival": {"type": "survival", "label": "Analyse de Survie (Kaplan-Meier & Cox)", "layer": 3, "y": 150},
         "causal": {"type": "causal", "label": "Inférence Causale (DiD / PSM)", "layer": 3, "y": 350},
         "timeseries": {"type": "timeseries", "label": "Prévision Temporelle (ARIMA)", "layer": 3, "y": 200},
@@ -169,7 +173,10 @@ def generate_canvas_from_recipe(dataset_id=None):
             "mode": "auto",
         }
         if step.params:
-            data_payload.update(step.params)
+            # Les parametres de la recette sont traduits vers le vocabulaire des
+            # noeuds : sans cela ils sont ignores et le canvas genere execute
+            # une autre analyse que celle affichee dans la recette.
+            data_payload.update(traduire_params(node_type, step.params))
         if step_config["type"] == "output":
             data_payload["format"] = "pdf"
 

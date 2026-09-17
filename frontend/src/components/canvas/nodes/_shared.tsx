@@ -37,36 +37,23 @@ export function useNodeUpdate(id: string, data: CanvasNodeData) {
 
 function getNodeSummaryText(res: any): string | null {
   if (!res || typeof res !== 'object') return null;
-  if (res.name && res.rows !== undefined)
-    return `${res.name} (${res.rows.toLocaleString()} lg × ${res.columns} col)`;
-  if (res.shape_after)
-    return `${res.shape_after.rows.toLocaleString()} lg × ${res.shape_after.columns} col`;
-  if (res.rows !== undefined && res.columns !== undefined)
-    return `${res.rows.toLocaleString()} lg × ${res.columns} col`;
-  if (res.best_model_name) return `Modèle : ${res.best_model_name}`;
-  if (res.best_model_key) return `Modèle : ${res.best_model_key}`;
-  if (res.model_selected) return `Modèle : ${res.model_selected}`;
-  if (res.n_clusters !== undefined)
-    return `${res.n_clusters} clusters (Silhouette : ${(res.silhouette ?? 0).toFixed(2)})`;
+  if (res.name && res.rows !== undefined) return `${res.name} (${res.rows.toLocaleString()} lg × ${res.columns} col)`;
+  if (res.shape_after) return `${res.shape_after.rows.toLocaleString()} lg × ${res.shape_after.columns} col`;
+  if (res.rows !== undefined && res.columns !== undefined) return `${res.rows.toLocaleString()} lg × ${res.columns} col`;
+  if (res.best_model_name || res.best_model_key || res.model_selected) return `Modèle : ${res.best_model_name || res.best_model_key || res.model_selected}`;
+  if (res.n_clusters !== undefined) return `${res.n_clusters} clusters (Silhouette : ${(res.silhouette ?? 0).toFixed(2)})`;
   if (res.p_value !== undefined) {
-    const p =
-      typeof res.p_value === 'number'
-        ? res.p_value < 0.001
-          ? '< 0.001'
-          : res.p_value.toFixed(4)
-        : res.p_value;
+    const p = typeof res.p_value === 'number' ? (res.p_value < 0.001 ? '< 0.001' : res.p_value.toFixed(4)) : res.p_value;
     return `p-value : ${p} ${res.significant ? '(Significatif)' : ''}`;
   }
-  if (res.statistic !== undefined)
-    return `Statistique : ${typeof res.statistic === 'number' ? res.statistic.toFixed(2) : res.statistic}`;
+  if (res.statistic !== undefined) return `Statistique : ${typeof res.statistic === 'number' ? res.statistic.toFixed(2) : res.statistic}`;
   if (res.explained_variance_ratio) {
     const cum = res.cumulative_variance?.[1] ?? res.explained_variance_ratio[0] ?? 0;
     return `Variance cum. : ${(cum > 1 ? cum : cum * 100).toFixed(1)}%`;
   }
   if (res.chart_type) return `Graphique : ${res.chart_type}`;
   if (Array.isArray(res.insights)) return `${res.insights.length} insight(s)`;
-  if (res.mean_outcome !== undefined)
-    return `Moy. simulée : ${typeof res.mean_outcome === 'number' ? res.mean_outcome.toFixed(2) : res.mean_outcome}`;
+  if (res.mean_outcome !== undefined) return `Moy. simulée : ${typeof res.mean_outcome === 'number' ? res.mean_outcome.toFixed(2) : res.mean_outcome}`;
   if (res.message && typeof res.message === 'string') return res.message;
   return null;
 }
@@ -249,18 +236,40 @@ export function useConnectedColumns(id: string) {
     dsId: string | null;
     excludedCols: Set<string>;
     typingNodeId: string | null;
+    dynamicCols: Set<string>;
   } => {
     let currentId: string | null = id;
     const visited = new Set<string>();
     let dsId: string | null = null;
-    const excludedCols: Set<string> = new Set();
     let typingNodeId: string | null = null;
+    const excludedCols: Set<string> = new Set();
+    const dynamicCols: Set<string> = new Set();
 
     while (currentId) {
       if (visited.has(currentId)) break;
       visited.add(currentId);
       const node = allNodes.find(n => n.id === currentId);
       if (node) {
+        if (node.id !== id && node.data?.runResult) {
+          const res = node.data.runResult as any;
+          if (res.residuals || res.fitted_values) {
+            dynamicCols.add('_fitted_values');
+            dynamicCols.add('_residuals');
+          }
+          if (res.forecast || res.predictions) {
+            dynamicCols.add('_forecast');
+          }
+          if (res.clusters || res.cluster_labels || res.n_clusters) {
+            dynamicCols.add('_cluster');
+          }
+          if (Array.isArray(res.columns)) {
+            res.columns.forEach((c: string) => dynamicCols.add(c));
+          }
+          if (Array.isArray(res.records) && res.records.length > 0) {
+            Object.keys(res.records[0]).forEach(c => dynamicCols.add(c));
+          }
+        }
+
         if (node.type === 'typing') {
           typingNodeId = node.id;
           if (node.id !== id) {
@@ -290,16 +299,18 @@ export function useConnectedColumns(id: string) {
       currentId = parentEdge.source;
     }
 
-    return { dsId, excludedCols, typingNodeId };
+    return { dsId, excludedCols, typingNodeId, dynamicCols };
   };
 
-  const { dsId, excludedCols, typingNodeId } = walkBackwards();
+  const { dsId, excludedCols, typingNodeId, dynamicCols } = walkBackwards();
   const { data: dataset } = useGetDatasetQuery(dsId!, { skip: !dsId });
 
-  const rawColumns: string[] =
-    dataset?.profile?.dictionary?.map((c: any) =>
+  const rawColumns: string[] = [
+    ...(dataset?.profile?.dictionary?.map((c: any) =>
       typeof c === 'string' ? c : c.nom_brut || ''
-    ) || [];
+    ) || []),
+    ...Array.from(dynamicCols || []),
+  ];
 
   const columns =
     excludedCols.size > 0
@@ -311,28 +322,14 @@ export function useConnectedColumns(id: string) {
     const dtypes = dataset.profile?.dtypes || {};
     for (const entry of dataset.profile.dictionary) {
       const colName = typeof entry === 'string' ? entry : entry.nom_brut;
-      if (typeof entry === 'string') {
-        const dtype = dtypes[colName];
-        columnTypes[colName] = dtype
-          ? String(dtype)
-              .replace(/^(float|int)\d*$/, 'numerique')
-              .replace(/^(object|string|category)$/, 'categoriel')
-              .replace(/^(datetime|bool)$/, 'discret')
-          : '?';
-      } else {
-        columnTypes[colName] =
-          entry.type_statistique ||
-          (() => {
-            const dtype = dtypes[colName];
-            if (!dtype) return '?';
-            const ds = String(dtype);
-            if (/^(float|int)\d*$/.test(ds)) return 'numerique';
-            if (/^(object|string|category)$/.test(ds)) return 'categoriel';
-            if (/^datetime/.test(ds)) return 'temporel';
-            if (/^bool/.test(ds)) return 'binaire';
-            return ds;
-          })();
-      }
+      const dtype = String(dtypes[colName] || '');
+      const statType = typeof entry === 'object' ? entry.type_statistique : null;
+      columnTypes[colName] = statType || (
+        /^(float|int)\d*$/.test(dtype) ? 'numerique' :
+        /^(object|string|category)$/.test(dtype) ? 'categoriel' :
+        /^datetime/.test(dtype) ? 'temporel' :
+        /^bool/.test(dtype) ? 'binaire' : (dtype || '?')
+      );
     }
   }
 

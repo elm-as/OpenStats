@@ -45,72 +45,7 @@ def decompose_series(
         return {"error": str(e)}
 
 
-def _auto_arima_order(series: pd.Series, max_p: int = 3, max_d: int = 2, max_q: int = 3) -> tuple[int, int, int]:
-    """Sélection automatique de l'ordre ARIMA par AIC (grille limitée)."""
-    best_aic = np.inf
-    best_order = (1, 1, 1)
-
-    for d in range(max_d + 1):
-        for p in range(max_p + 1):
-            for q in range(max_q + 1):
-                if p == 0 and q == 0:
-                    continue
-                try:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        model = ARIMA(series, order=(p, d, q))
-                        fit = model.fit()
-                        if fit.aic < best_aic:
-                            best_aic = fit.aic
-                            best_order = (p, d, q)
-                except Exception:
-                    continue
-
-    return best_order
-
-
-def fit_arima(
-    series: pd.Series,
-    order: tuple[int, int, int] | None = None,
-    forecast_steps: int = 10,
-) -> dict[str, Any]:
-    """Ajuste un modèle ARIMA et produit des prévisions."""
-    if order is None:
-        order = _auto_arima_order(series)
-
-    try:
-        model = ARIMA(series, order=order)
-        fit = model.fit()
-
-        forecast_obj = fit.get_forecast(steps=forecast_steps)
-        fc_mean = forecast_obj.predicted_mean
-        fc_ci = forecast_obj.conf_int(alpha=0.05)
-
-        idx_hist = [d.isoformat() for d in series.index]
-        idx_fc = [d.isoformat() for d in fc_mean.index]
-
-        return {
-            "model": "ARIMA",
-            "order": list(order),
-            "aic": _sf(fit.aic),
-            "bic": _sf(fit.bic),
-            "history": {
-                "dates": idx_hist,
-                "values": [_sf(v) for v in series],
-                "fitted": [_sf(v) for v in fit.fittedvalues],
-            },
-            "forecast": {
-                "dates": idx_fc,
-                "values": [_sf(v) for v in fc_mean],
-                "lower_ci": [_sf(v) for v in fc_ci.iloc[:, 0]],
-                "upper_ci": [_sf(v) for v in fc_ci.iloc[:, 1]],
-            },
-            "residuals_mean": _sf(fit.resid.mean()),
-            "residuals_std": _sf(fit.resid.std()),
-        }
-    except Exception as e:
-        return {"error": str(e), "model": "ARIMA", "order": list(order) if order else None}
-
+from app.core.timeseries.arima_models import _auto_arima_order, fit_arima  # noqa: E402
 
 from app.core.timeseries.sarima_models import _auto_sarima_order, fit_sarima
 
@@ -176,12 +111,73 @@ def fit_exponential_smoothing(
         return {"error": str(e), "model": "Holt-Winters"}
 
 
+def _ordre_effectif(
+    series: pd.Series,
+    ar_order: int | None,
+    diff_order: int | None,
+    ma_order: int | None,
+) -> tuple[int, int, int] | None:
+    """Ordre ARIMA a utiliser : chaque composante fournie prime sur l'automatique.
+
+    Renseigner seulement la differenciation laisse donc l'AR et le MA
+    selectionnes par AIC, au lieu d'imposer un ordre complet arbitraire.
+    """
+    fournis = (ar_order, diff_order, ma_order)
+    if all(v is None for v in fournis):
+        return None
+    auto = _auto_arima_order(series)
+    return tuple(int(f) if f is not None else a for a, f in zip(auto, fournis))
+
+
+def _valider_previsions(series, models, period, ordre_impose,
+                        horizon=None, n_origines=None):
+    """Rejoue chaque modele en conditions reelles, contre une reference naive."""
+    from app.core.timeseries.backtest import valider_par_origine_glissante
+
+    def _valeurs(resultat):
+        valeurs = ((resultat or {}).get("forecast") or {}).get("values")
+        return None if not valeurs else valeurs
+
+    # L'ordre est choisi une seule fois, sur la premiere moitie de la serie :
+    # le relancer a chaque origine multiplierait le cout par le nombre
+    # d'origines, et selectionner l'ordre sur la serie entiere ferait entrer
+    # l'avenir dans l'ajustement.
+    ordre = ordre_impose or _auto_arima_order(series.iloc[:max(30, len(series) // 2)])
+
+    ajusteurs = {}
+    if "arima" in models:
+        ajusteurs["arima"] = lambda h, n: _valeurs(
+            fit_arima(h, order=ordre, forecast_steps=n))
+    if "sarima" in models:
+        ajusteurs["sarima"] = lambda h, n: _valeurs(
+            fit_sarima(h, order=ordre, forecast_steps=n, period=period))
+    if "exponential_smoothing" in models:
+        ajusteurs["exponential_smoothing"] = lambda h, n: _valeurs(
+            fit_exponential_smoothing(h, forecast_steps=n))
+
+    if not ajusteurs:
+        return {"status": "insuffisant", "raison": "Aucun modèle validable."}
+
+    return valider_par_origine_glissante(
+        series, ajusteurs, periode=max(1, period),
+        horizon=horizon or max(3, period),
+        n_origines=n_origines or 4,
+    )
+
+
 def run_timeseries_analysis(
     df: pd.DataFrame,
     date_col: str,
     value_col: str,
     models: list[str] | None = None,
     forecast_steps: int = 10,
+    ar_order: int | None = None,
+    diff_order: int | None = None,
+    ma_order: int | None = None,
+    seasonal_period: int | None = None,
+    backtest: bool = True,
+    backtest_horizon: int | None = None,
+    backtest_origins: int | None = None,
 ) -> dict[str, Any]:
     """Analyse complète d'une série temporelle."""
     series = _prepare_series(df, date_col, value_col)
@@ -189,7 +185,8 @@ def run_timeseries_analysis(
     if len(series) < 10:
         return {"error": "Série trop courte (minimum 10 observations requises)"}
 
-    period = _detect_seasonal_period(series)
+    period = int(seasonal_period) if seasonal_period else _detect_seasonal_period(series)
+    ordre_impose = _ordre_effectif(series, ar_order, diff_order, ma_order)
 
     results: dict[str, Any] = {
         "date_col": date_col,
@@ -201,6 +198,7 @@ def run_timeseries_analysis(
         },
         "frequency": series.index.freq.freqstr if series.index.freq else "unknown",
         "seasonal_period": period,
+        "arima_order_forced": list(ordre_impose) if ordre_impose else None,
     }
 
     results["stationarity"] = test_stationarity(series)
@@ -224,10 +222,12 @@ def run_timeseries_analysis(
     model_results = {}
 
     if "arima" in models:
-        model_results["arima"] = fit_arima(series, forecast_steps=forecast_steps)
+        model_results["arima"] = fit_arima(
+            series, order=ordre_impose, forecast_steps=forecast_steps)
 
     if "sarima" in models:
-        model_results["sarima"] = fit_sarima(series, forecast_steps=forecast_steps)
+        model_results["sarima"] = fit_sarima(
+            series, order=ordre_impose, forecast_steps=forecast_steps, period=period)
 
     if "exponential_smoothing" in models:
         model_results["exponential_smoothing"] = fit_exponential_smoothing(
@@ -238,6 +238,12 @@ def run_timeseries_analysis(
         model_results["prophet"] = fit_prophet(series, forecast_steps=forecast_steps)
 
     results["models"] = model_results
+    results["backtest"] = (
+        _valider_previsions(series, models, period, ordre_impose,
+                            backtest_horizon, backtest_origins)
+        if backtest else {"status": "desactive",
+                          "raison": "Validation hors échantillon désactivée dans le nœud."}
+    )
 
     ranking = []
     for key, res in model_results.items():
@@ -258,6 +264,18 @@ def run_timeseries_analysis(
             })
 
     ranking.sort(key=lambda x: x["aic"])
+
+    # Le classement suit l'erreur hors echantillon quand elle est disponible :
+    # l'AIC mesure l'ajustement au passe, pas la qualite des previsions.
+    backtest = results.get("backtest") or {}
+    classement_hors_echantillon = backtest.get("classement") or []
+    if classement_hors_echantillon:
+        rang = {cle: i for i, cle in enumerate(classement_hors_echantillon)}
+        ranking.sort(key=lambda x: (rang.get(x["key"], len(rang)), x["aic"]))
+        results["selection_criterion"] = "erreur de prévision hors échantillon (origine glissante)"
+    else:
+        results["selection_criterion"] = "AIC (ajustement dans l'échantillon)"
+
     results["ranking"] = ranking
     results["best_model"] = ranking[0]["key"] if ranking else None
 
