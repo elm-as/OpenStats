@@ -78,6 +78,7 @@ export const pipelineEndpoints = baseApi.injectEndpoints({
           target: string | null;
           estimated_duration_sec: number;
           confidence: string;
+          warnings?: string[];
           steps: Array<{
             key: string;
             operation: string;

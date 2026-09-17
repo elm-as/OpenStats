@@ -106,11 +106,16 @@ def detect_dataset_profile(
         profile.flags.append("high_dim")
 
     # 4. Structure temporelle / panel
-    if profile.has_temporal:
-        if profile.id_cols and (profile.numeric_cols or profile.discrete_cols):
+    if profile.has_temporal and (profile.numeric_cols or profile.discrete_cols):
+        from app.core.auto_pipeline.panel_structure import decrire_panel, detecter_panel
+
+        candidats = profile.categorical_cols + profile.id_cols + profile.discrete_cols
+        couple = detecter_panel(df, profile.temporal_cols, candidats)
+        if couple:
             profile.is_panel = True
             profile.is_cross_section = False
-        elif profile.numeric_cols or profile.discrete_cols:
+            profile.panel_structure = decrire_panel(df, couple[0], couple[1])
+        else:
             profile.is_timeseries = True
             profile.is_cross_section = False
 
@@ -190,7 +195,14 @@ def detect_dataset_profile(
     if profile.is_timeseries:
         profile.notes.append("Structure de série temporelle détectée — prévision possible.")
     if profile.is_panel:
-        profile.notes.append("Structure de panel détectée (entités × temps).")
+        forme = profile.panel_structure
+        profile.notes.append(
+            f"Structure de panel détectée : {forme.get('n_entities')} entités "
+            f"({forme.get('entity_column')}) × {forme.get('n_periods')} périodes "
+            f"({forme.get('time_column')}), "
+            + ("cylindré" if forme.get("is_balanced") else "non cylindré")
+            + ". Les modèles temporels univariés ne s'appliquent pas en l'état."
+        )
 
     return profile
 

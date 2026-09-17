@@ -128,6 +128,7 @@ export function useAutoPipeline(datasetId: string, onComplete?: (execution?: any
     handleGenerateCustomPipeline: recipe.handleGenerateCustomPipeline,
     pipelineTitle: recipe.pipelineTitle,
     pipelineDesc: recipe.pipelineDesc,
+    pipelineWarnings: recipe.pipelineWarnings,
     editableSteps: recipe.editableSteps,
     activeSteps: recipe.activeSteps,
     showAddStepModal: recipe.showAddStepModal,

@@ -136,6 +136,17 @@ export function getAvailableAnalyses(profile: any, selectedTarget: string | null
       badgeText: 'Prévision',
     },
     {
+      key: 'panel',
+      category: 'timeseries' as const,
+      label: 'Économétrie de Panel (Effets Fixes / Aléatoires)',
+      description:
+        "Entités suivies dans le temps : effets fixes, effets aléatoires et test de Hausman.",
+      icon: Layers,
+      recommended: Boolean(profile?.is_panel),
+      applicable: Boolean(profile?.is_panel),
+      badgeText: profile?.is_panel ? 'Structure détectée' : undefined,
+    },
+    {
       key: 'timeseries_multivariate',
       category: 'timeseries' as const,
       label: 'Modélisation Multivariée (VAR / VECM / ARDL)',
@@ -144,6 +155,28 @@ export function getAvailableAnalyses(profile: any, selectedTarget: string | null
       recommended: Boolean(profile?.has_temporal && (profile?.numeric_cols?.length || 0) >= 2),
       applicable: Boolean(profile?.has_temporal && (profile?.numeric_cols?.length || 0) >= 2),
       badgeText: 'Multivarié',
+    },
+    {
+      key: 'count_model',
+      category: 'model' as const,
+      label: 'Modèle de Comptage (Poisson / Binomiale négative)',
+      description:
+        "Pour une cible de dénombrement : teste la surdispersion et évite les prédictions négatives.",
+      icon: Binary,
+      recommended: false,
+      applicable: true,
+      badgeText: 'Comptage',
+    },
+    {
+      key: 'regression_diagnostics',
+      category: 'model' as const,
+      label: 'Diagnostics du Modèle (hypothèses)',
+      description:
+        "Homoscédasticité, indépendance des résidus et forme fonctionnelle : un R² élevé ne garantit pas des p-values fiables.",
+      icon: ShieldCheck,
+      recommended: true,
+      applicable: true,
+      badgeText: 'Hypothèses',
     },
     {
       key: 'vif',

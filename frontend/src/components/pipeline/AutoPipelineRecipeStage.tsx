@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Trash2,
   XCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import type { EditableStep } from './PipelineTypes';
 import { PipelineStepOptions } from './PipelineStepOptions';
@@ -18,6 +19,7 @@ import { PipelineStepOptions } from './PipelineStepOptions';
 interface AutoPipelineRecipeStageProps {
   pipelineTitle: string;
   pipelineDesc: string;
+  pipelineWarnings?: string[];
   editableSteps: EditableStep[];
   activeSteps: EditableStep[];
   isExecuting: boolean;
@@ -40,6 +42,7 @@ interface AutoPipelineRecipeStageProps {
 export function AutoPipelineRecipeStage({
   pipelineTitle,
   pipelineDesc,
+  pipelineWarnings = [],
   editableSteps,
   activeSteps,
   isExecuting,
@@ -60,6 +63,18 @@ export function AutoPipelineRecipeStage({
 }: AutoPipelineRecipeStageProps) {
   return (
     <div className="space-y-6">
+      {/* Analyses demandées que le profil ne permet pas de poser */}
+      {pipelineWarnings.length > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+          {pipelineWarnings.map((message, i) => (
+            <div key={i} className="flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-100 leading-relaxed">{message}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Header de l'éditeur */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-900/80 border border-white/10 shadow-xl backdrop-blur-xl">
         <div>

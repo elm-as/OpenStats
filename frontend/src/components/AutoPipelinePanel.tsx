@@ -41,6 +41,7 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
     handleGenerateCustomPipeline,
     pipelineTitle,
     pipelineDesc,
+    pipelineWarnings,
     editableSteps,
     activeSteps,
     showAddStepModal,
@@ -160,6 +161,7 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
         <AutoPipelineRecipeStage
           pipelineTitle={pipelineTitle}
           pipelineDesc={pipelineDesc}
+          pipelineWarnings={pipelineWarnings}
           editableSteps={editableSteps}
           activeSteps={activeSteps}
           isExecuting={isExecuting}

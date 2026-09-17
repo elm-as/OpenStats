@@ -15,6 +15,7 @@ export function usePipelineRecipe(
   const [editableSteps, setEditableSteps] = useState<EditableStep[]>([]);
   const [pipelineTitle, setPipelineTitle] = useState<string>('Pipeline Personnalisé');
   const [pipelineDesc, setPipelineDesc] = useState<string>('');
+  const [pipelineWarnings, setPipelineWarnings] = useState<string[]>([]);
   const [showAddStepModal, setShowAddStepModal] = useState(false);
 
   const activeSteps = useMemo(() => editableSteps.filter(s => s.enabled), [editableSteps]);
@@ -31,6 +32,7 @@ export function usePipelineRecipe(
       if (res.recipe) {
         setPipelineTitle(res.recipe.title);
         setPipelineDesc(res.recipe.description);
+        setPipelineWarnings(res.recipe.warnings ?? []);
         const steps: EditableStep[] = res.recipe.steps.map((s: any) => ({
           ...s,
           enabled: true,
@@ -115,6 +117,7 @@ export function usePipelineRecipe(
     activeSteps,
     pipelineTitle,
     pipelineDesc,
+    pipelineWarnings,
     showAddStepModal,
     setShowAddStepModal,
     isBuilding,

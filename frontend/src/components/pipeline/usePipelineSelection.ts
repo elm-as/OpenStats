@@ -90,6 +90,7 @@ export function usePipelineSelection(profile: any) {
     const isCat = profile?.categorical_cols?.includes(col) || colType === 'categorical';
     const isTemp = profile?.temporal_cols?.includes(col) || colType === 'temporal';
     const hasTimeStructure = Boolean(profile?.has_temporal && profile?.temporal_cols?.length > 0);
+    const isPanel = Boolean(profile?.is_panel);
 
     if (isTemp) {
       setSelectedTaskType('forecast');
@@ -110,6 +111,29 @@ export function usePipelineSelection(profile: any) {
       );
       setSmartFeedback(
         `Cible catégorielle détectée ('${col}'). Activation automatique du pipeline de Classification Supervisée.`
+      );
+    } else if (isPanel) {
+      // Empiler les entites sur les memes dates pour un ARIMA n'a pas de sens :
+      // on preselectionne l'econometrie de panel, pas les modeles univaries.
+      setSelectedTaskType('regression');
+      setSelectedAnalyses(
+        new Set([
+          'clean',
+          'descriptive',
+          'correlations',
+          'panel',
+          'vif',
+          'transform',
+          'model',
+          'explainability',
+          'insights',
+          'report',
+        ])
+      );
+      setSmartFeedback(
+        `Structure de panel détectée : ${profile?.panel_structure?.n_entities ?? '?'} entités × ` +
+          `${profile?.panel_structure?.n_periods ?? '?'} périodes. Effets fixes, effets aléatoires ` +
+          `et test de Hausman activés.`
       );
     } else if (hasTimeStructure) {
       setSelectedTaskType('forecast');

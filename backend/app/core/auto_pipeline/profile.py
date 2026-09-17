@@ -29,6 +29,7 @@ class DatasetProfile:
     has_temporal: bool = False
     is_timeseries: bool = False
     is_panel: bool = False
+    panel_structure: dict = field(default_factory=dict)
     is_cross_section: bool = True
 
     duplicate_rows: int = 0
