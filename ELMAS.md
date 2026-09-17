@@ -137,6 +137,20 @@
 - Les décisions structurantes (choix de stack, changement d'architecture) sont
   consignées, pas seulement discutées dans un chat qui disparaît.
 
+## 10. Résolution de bugs et cycle GitHub (CLI)
+
+À chaque fois qu'un bug est signalé par l'utilisateur et qu'une correction est apportée :
+- Aucun aller-retour manuel sur l'interface web de GitHub. L'intégralité du cycle est automatisée via la CLI `gh`.
+- Déroulé obligatoire du workflow :
+  1. **Créer l'issue** :
+     `gh issue create --title "<titre clair du bug>" --body "<description succincte du problème, cause et reproduction>"`
+  2. **Créer la branche et pousser le fix** :
+     Créer une branche dédiée (ex: `fix/<sujet>`), commiter le fix en liant l'issue (`Fixes #<id>`), et pousser vers le remote.
+  3. **Créer la Pull Request** :
+     `gh pr create --fill`
+  4. **Merger et nettoyer la branche** :
+     `gh pr merge --delete-branch` (ou avec l'option de fusion adaptée, ex. `--squash` ou `--merge`), puis se repositionner sur `main` et effectuer `git pull`.
+
 ---
 
 *Ces règles s'appliquent à tout agent IA (Claude Code, Cursor, etc.) travaillant sur ce
