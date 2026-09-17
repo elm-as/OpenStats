@@ -1,0 +1,375 @@
+/* ═══════════════════════════════════════════════════════════════════
+   TOKENS — socle du design system
+   ───────────────────────────────────────────────────────────────────
+   Une seule source de vérité pour les couleurs, la densité et la
+   typographie. Le thème clair ne fait que redéfinir des variables :
+   aucune règle `!important` par classe utilitaire n'est nécessaire ici.
+
+   Convention : tout composant du châssis et tout nouvel écran consomme
+   ces variables (ou les classes `.ui-*` plus bas), jamais des couleurs
+   Tailwind brutes du type `bg-white/[0.03]`.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Fonds, du plus profond au plus élevé ── */
+  --ui-bg-app: #0b0f1a;        /* fond de l'application */
+  --ui-bg-sunken: #080c15;     /* zones en creux (rails, gouttières) */
+  --ui-bg-panel: #111725;      /* panneaux, cartes */
+  --ui-bg-raised: #172032;     /* survol, éléments élevés */
+  --ui-bg-overlay: #1c2739;    /* popovers, menus, modales */
+  --ui-bg-input: #0d131f;      /* champs de saisie */
+
+  /* ── Bordures ── */
+  --ui-border: rgba(148, 163, 184, 0.14);
+  --ui-border-strong: rgba(148, 163, 184, 0.24);
+  --ui-border-focus: rgba(6, 182, 212, 0.55);
+
+  /* ── Texte ── */
+  --ui-text: #e8eef7;
+  --ui-text-secondary: #b3c0d1;
+  --ui-text-muted: #7d8da3;
+  --ui-text-faint: #5b6a7f;
+  --ui-text-inverse: #0b0f1a;
+
+  /* ── Accent et statuts ── */
+  --ui-accent: #22b8cf;
+  --ui-accent-hover: #3dcbe0;
+  --ui-accent-soft: rgba(34, 184, 207, 0.14);
+  --ui-accent-text: #67e8f9;
+
+  --ui-success: #34d399;
+  --ui-success-soft: rgba(52, 211, 153, 0.13);
+  --ui-warning: #fbbf24;
+  --ui-warning-soft: rgba(251, 191, 36, 0.13);
+  --ui-danger: #f87171;
+  --ui-danger-soft: rgba(248, 113, 113, 0.13);
+  --ui-info: #60a5fa;
+  --ui-info-soft: rgba(96, 165, 250, 0.13);
+
+  /* ── Ombres ── */
+  --ui-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ui-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --ui-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+  /* ── Densité : un outil est compact par défaut ── */
+  --ui-row-h: 30px;            /* hauteur de ligne de tableau/liste */
+  --ui-control-h: 30px;        /* hauteur des contrôles */
+  --ui-rail-w: 52px;           /* rail de navigation replié */
+  --ui-rail-w-open: 208px;
+  --ui-topbar-h: 44px;
+  --ui-statusbar-h: 26px;
+
+  --ui-gap-1: 4px;
+  --ui-gap-2: 8px;
+  --ui-gap-3: 12px;
+  --ui-gap-4: 16px;
+  --ui-gap-5: 24px;
+
+  --ui-pad-x: 12px;
+  --ui-pad-y: 8px;
+
+  /* ── Rayons : discrets, pas de pilules ── */
+  --ui-radius-sm: 4px;
+  --ui-radius: 6px;
+  --ui-radius-lg: 10px;
+
+  /* ── Typographie ── */
+  --ui-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --ui-fs-xs: 10.5px;
+  --ui-fs-sm: 11.5px;
+  --ui-fs-base: 12.5px;
+  --ui-fs-md: 13.5px;
+  --ui-fs-lg: 15px;
+  --ui-fs-xl: 19px;
+
+  color-scheme: dark;
+}
+
+/* ── Thème clair : redéfinition de variables, rien d'autre ── */
+:root[data-theme='light'] {
+  --ui-bg-app: #f5f7fa;
+  --ui-bg-sunken: #eceff4;
+  --ui-bg-panel: #ffffff;
+  --ui-bg-raised: #f2f5f9;
+  --ui-bg-overlay: #ffffff;
+  --ui-bg-input: #ffffff;
+
+  --ui-border: rgba(15, 23, 42, 0.12);
+  --ui-border-strong: rgba(15, 23, 42, 0.2);
+  --ui-border-focus: rgba(8, 145, 178, 0.55);
+
+  --ui-text: #0f172a;
+  --ui-text-secondary: #334155;
+  --ui-text-muted: #55637a;
+  --ui-text-faint: #7c8798;
+  --ui-text-inverse: #ffffff;
+
+  --ui-accent: #0891b2;
+  --ui-accent-hover: #0e7490;
+  --ui-accent-soft: rgba(8, 145, 178, 0.1);
+  --ui-accent-text: #0e7490;
+
+  --ui-success: #059669;
+  --ui-success-soft: rgba(5, 150, 105, 0.1);
+  --ui-warning: #b45309;
+  --ui-warning-soft: rgba(180, 83, 9, 0.1);
+  --ui-danger: #dc2626;
+  --ui-danger-soft: rgba(220, 38, 38, 0.09);
+  --ui-info: #2563eb;
+  --ui-info-soft: rgba(37, 99, 235, 0.09);
+
+  --ui-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.07);
+  --ui-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.09);
+  --ui-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.13);
+
+  color-scheme: light;
+}
+
+/* ── Variante confortable, pour les grands écrans ou par préférence ── */
+:root[data-density='comfortable'] {
+  --ui-row-h: 36px;
+  --ui-control-h: 34px;
+  --ui-pad-x: 16px;
+  --ui-pad-y: 10px;
+  --ui-fs-base: 13.5px;
+  --ui-fs-md: 14.5px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PRIMITIVES — les classes que consomment les écrans
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ui-root {
+  background: var(--ui-bg-app);
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  font-size: var(--ui-fs-base);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'tnum';
+}
+
+/* Les chiffres d'un outil de données s'alignent toujours. */
+.ui-num,
+.ui-table td,
+.ui-table th {
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-panel {
+  background: var(--ui-bg-panel);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+}
+
+.ui-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-gap-2);
+  height: var(--ui-row-h);
+  padding: 0 var(--ui-pad-x);
+  border-bottom: 1px solid var(--ui-border);
+  font-size: var(--ui-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ui-text-muted);
+}
+
+/* ── Contrôles ── */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--ui-control-h);
+  padding: 0 10px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-raised);
+  color: var(--ui-text-secondary);
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.ui-btn:hover:not(:disabled) {
+  background: var(--ui-bg-overlay);
+  border-color: var(--ui-border-strong);
+  color: var(--ui-text);
+}
+
+.ui-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ui-btn-primary {
+  background: var(--ui-accent);
+  border-color: var(--ui-accent);
+  color: #04141a;
+}
+
+.ui-btn-primary:hover:not(:disabled) {
+  background: var(--ui-accent-hover);
+  border-color: var(--ui-accent-hover);
+  color: #04141a;
+}
+
+.ui-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ui-text-muted);
+}
+
+.ui-btn-ghost:hover:not(:disabled) {
+  background: var(--ui-bg-raised);
+  color: var(--ui-text);
+}
+
+.ui-btn-icon {
+  width: var(--ui-control-h);
+  padding: 0;
+}
+
+.ui-input,
+.ui-select {
+  height: var(--ui-control-h);
+  padding: 0 8px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-input);
+  color: var(--ui-text);
+  font-size: var(--ui-fs-sm);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.ui-input:focus,
+.ui-select:focus {
+  border-color: var(--ui-border-focus);
+}
+
+.ui-input::placeholder {
+  color: var(--ui-text-faint);
+}
+
+/* ── Étiquettes de statut ── */
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid transparent;
+  font-size: var(--ui-fs-xs);
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.ui-tag-neutral { background: var(--ui-bg-raised); color: var(--ui-text-muted); border-color: var(--ui-border); }
+.ui-tag-accent  { background: var(--ui-accent-soft); color: var(--ui-accent-text); border-color: var(--ui-accent-soft); }
+.ui-tag-success { background: var(--ui-success-soft); color: var(--ui-success); border-color: var(--ui-success-soft); }
+.ui-tag-warning { background: var(--ui-warning-soft); color: var(--ui-warning); border-color: var(--ui-warning-soft); }
+.ui-tag-danger  { background: var(--ui-danger-soft); color: var(--ui-danger); border-color: var(--ui-danger-soft); }
+.ui-tag-info    { background: var(--ui-info-soft); color: var(--ui-info); border-color: var(--ui-info-soft); }
+
+/* ── Tableaux : un outil affiche des tableaux, pas des cartes ── */
+.ui-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--ui-fs-sm);
+}
+
+.ui-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--ui-row-h);
+  padding: 0 10px;
+  text-align: left;
+  font-size: var(--ui-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ui-text-muted);
+  background: var(--ui-bg-panel);
+  border-bottom: 1px solid var(--ui-border-strong);
+  white-space: nowrap;
+}
+
+.ui-table td {
+  height: var(--ui-row-h);
+  padding: 0 10px;
+  border-bottom: 1px solid var(--ui-border);
+  color: var(--ui-text-secondary);
+}
+
+.ui-table tbody tr:hover td {
+  background: var(--ui-bg-raised);
+}
+
+.ui-table .ui-td-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Utilitaires texte ── */
+.ui-t          { color: var(--ui-text); }
+.ui-t-secondary { color: var(--ui-text-secondary); }
+.ui-t-muted    { color: var(--ui-text-muted); }
+.ui-t-faint    { color: var(--ui-text-faint); }
+.ui-t-accent   { color: var(--ui-accent-text); }
+.ui-mono       { font-family: var(--ui-font-mono); font-size: var(--ui-fs-xs); }
+
+.ui-label {
+  font-size: var(--ui-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ui-text-faint);
+}
+
+.ui-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--ui-border);
+  flex-shrink: 0;
+}
+
+/* Barre de défilement fine, comme dans un IDE. */
+.ui-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.ui-scroll::-webkit-scrollbar-track { background: transparent; }
+.ui-scroll::-webkit-scrollbar-thumb {
+  background: var(--ui-border-strong);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.ui-scroll::-webkit-scrollbar-thumb:hover { background: var(--ui-text-faint); background-clip: content-box; }
+
+/* Anneau de focus visible au clavier uniquement. */
+.ui-focusable:focus-visible {
+  outline: 2px solid var(--ui-border-focus);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-root *,
+  .ui-root *::before,
+  .ui-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Statuts textuels utilises par les ecrans. */
+.ui-t-success { color: var(--ui-success); }
+.ui-t-warning { color: var(--ui-warning); }
+.ui-t-danger  { color: var(--ui-danger); }

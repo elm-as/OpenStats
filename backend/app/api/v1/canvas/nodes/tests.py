@@ -232,9 +232,26 @@ def execute_test_anova(data, dataset_id):
         return {"status": "error", "error": f"Erreur calcul ANOVA: {str(e)}"}
 
     sig = p_val < 0.05
+
+    # Une ANOVA significative dit qu'au moins deux groupes different, jamais
+    # lesquels : sans post-hoc, l'utilisateur doit deviner ou comparer a la main
+    # sans correction du risque global.
+    posthoc = None
+    if sig and len(groups) > 2:
+        from app.core.posthoc_tests import comparer_groupes
+        resultat_posthoc = comparer_groupes(df, group_col, value_col)
+        if resultat_posthoc.get("status") == "success":
+            posthoc = resultat_posthoc
+
+    complement = ""
+    if posthoc:
+        complement = (f" — {posthoc['test']} : {posthoc['n_significatives']}/"
+                      f"{posthoc['n_comparaisons']} paires distinctes")
+
     return {
         "status": "success",
-        "message": f"ANOVA ({group_col} x {value_col}) : F={stat:.3f}, p={p_val:.4f} ({'Significatif' if sig else 'Non-significatif'})",
+        "message": (f"ANOVA ({group_col} x {value_col}) : F={stat:.3f}, p={p_val:.4f} "
+                    f"({'Significatif' if sig else 'Non-significatif'}){complement}"),
         "result": _sanitize({
             "anova_f": float(stat),
             "anova_p": float(p_val),
@@ -242,5 +259,8 @@ def execute_test_anova(data, dataset_id):
             "kruskal_p": float(p_val_k),
             "is_significant": sig,
             "n_groups": len(groups),
+            "group_column": group_col,
+            "value_column": value_col,
+            "posthoc": posthoc,
         }),
     }

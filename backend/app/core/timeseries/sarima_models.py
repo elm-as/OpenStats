@@ -62,9 +62,14 @@ def fit_sarima(
     order: tuple[int, int, int] | None = None,
     seasonal_order: tuple[int, int, int, int] | None = None,
     forecast_steps: int = 10,
+    period: int | None = None,
 ) -> dict[str, Any]:
-    """Ajuste un modèle SARIMA et produit des prévisions."""
-    period = _detect_seasonal_period(series)
+    """Ajuste un modèle SARIMA et produit des prévisions.
+
+    `period` impose la periode saisonniere ; sans elle, elle est detectee.
+    """
+    if period is None:
+        period = _detect_seasonal_period(series)
 
     if period <= 1:
         return {"error": "Pas de saisonnalité détectée. Utilisez ARIMA.", "model": "SARIMA"}

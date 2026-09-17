@@ -4,10 +4,10 @@ Nœud de visualisation.
 
 from app.services.dataset_service import dataset_manager
 from app.api.v1.analysis.chart_data_builder import build_chart_data
-from ._shared import _sanitize
+from ._shared import _sanitize, lire_booleen, lire_entier, lire_texte
 
 def execute_visualization(data, dataset_id):
-    chart_type = data.get("chartType", "auto")
+    chart_type = data.get("chartType", "auto") or "auto"
     x_col = data.get("xCol", "")
     y_col = data.get("yCol", "")
     y_cols = data.get("yCols", [])
@@ -15,8 +15,13 @@ def execute_visualization(data, dataset_id):
     color_col = data.get("colorCol", "")
     size_col = data.get("sizeCol", "")
     chart_title = data.get("title", "")
-    log_scale = data.get("logScale", False)
-    top_n = int(data.get("topN", 20))
+    log_scale = lire_booleen(data, "logScale")
+    # `topN` arrive en chaine vide quand le champ est laisse tel quel : un
+    # int() direct levait une exception avalee par le try plus bas.
+    top_n = lire_entier(data, "topN", 20)
+    # Ce reglage existe dans l'interface depuis le debut ; il n'etait pas lu,
+    # et son absence faisait echouer chaque graphique du canvas.
+    aggregation = lire_texte(data, "aggregation", "none")
     cleaned = data.get("_cleaned", True)
     df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if chart_type == "auto":

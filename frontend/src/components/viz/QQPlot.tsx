@@ -50,17 +50,22 @@ export default function QQPlot({ values, height = 400, title = 'Q-Q Plot (Normal
     const sd = Math.sqrt(sorted.reduce((s, v) => s + (v - mean) ** 2, 0) / Math.max(n - 1, 1));
     const standardized = sorted.map(v => (v - mean) / (sd || 1));
 
-    // Quantiles théoriques (plotting positions de Blom)
-    const theoretical = Array.from({ length: n }, (_, i) =>
-      normalQuantile((i + 0.5) / n)
+    // Si N > 1000, sous-échantillonner 1000 quantiles uniformément espacés
+    const sampleSize = Math.min(n, 1000);
+    const sampledIndices = Array.from({ length: sampleSize }, (_, i) =>
+      Math.floor((i / (sampleSize - 1 || 1)) * (n - 1))
+    );
+    const subStandardized = sampledIndices.map(idx => standardized[idx]);
+    const theoretical = sampledIndices.map((origIdx) =>
+      normalQuantile((origIdx + 0.5) / n)
     );
 
-    const minQ = Math.min(theoretical[0], standardized[0]);
-    const maxQ = Math.max(theoretical[n - 1], standardized[n - 1]);
+    const minQ = Math.min(theoretical[0], subStandardized[0]);
+    const maxQ = Math.max(theoretical[sampleSize - 1], subStandardized[sampleSize - 1]);
 
     const pointsTrace: Data = {
       x: theoretical,
-      y: standardized,
+      y: subStandardized,
       mode: 'markers',
       type: 'scatter',
       marker: { size: 5, color: '#06b6d4', opacity: 0.7, line: { color: 'rgba(255,255,255,0.2)', width: 0.5 } },

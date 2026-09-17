@@ -43,10 +43,18 @@ import {
   BootstrapNode,
   OutliersNode,
   SurvivalNode,
+  PanelNode,
   CausalNode,
   ManifoldNode,
   GarchNode,
 } from './nodes';
+import {
+  CountModelNode,
+  RegressionDiagnosticsNode,
+  PowerAnalysisNode,
+  QuantileRegressionNode,
+  EquivalenceTestNode,
+} from './nodes/InferenceNodes';
 
 export interface NodeResult {
   status: 'success' | 'error' | 'skipped';
@@ -83,6 +91,12 @@ export const nodeTypes = {
   classification: ClassificationNode,
   explainability: ExplainabilityNode,
   survival: SurvivalNode,
+  panel: PanelNode,
+  countModel: CountModelNode,
+  regressionDiagnostics: RegressionDiagnosticsNode,
+  powerAnalysis: PowerAnalysisNode,
+  quantileRegression: QuantileRegressionNode,
+  equivalenceTest: EquivalenceTestNode,
   causal: CausalNode,
   manifold: ManifoldNode,
   garch: GarchNode,

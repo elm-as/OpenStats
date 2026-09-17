@@ -9,6 +9,25 @@ hiddenimports += collect_submodules('app')
 tmp_ret = collect_all('duckdb')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+# Les moteurs d'analyse importent ces bibliotheques a l'interieur des fonctions,
+# pour ne pas ralentir le demarrage. PyInstaller analyse les imports statiques :
+# sans cette declaration, elles seraient absentes du binaire et les modeles
+# correspondants echoueraient silencieusement chez l'utilisateur final.
+for _optional in ('xgboost', 'lightgbm', 'lifelines', 'prophet'):
+    try:
+        _ret = collect_all(_optional)
+    except Exception:
+        continue
+    datas += _ret[0]; binaries += _ret[1]; hiddenimports += _ret[2]
+
+hiddenimports += [
+    'sklearn.ensemble', 'sklearn.linear_model', 'sklearn.svm', 'sklearn.neighbors',
+    'sklearn.feature_selection', 'sklearn.model_selection', 'sklearn.decomposition',
+    'statsmodels.tsa.arima.model', 'statsmodels.tsa.holtwinters',
+    'statsmodels.tsa.stattools', 'statsmodels.stats.diagnostic',
+    'statsmodels.stats.multitest', 'statsmodels.stats.outliers_influence',
+]
+
 
 a = Analysis(
     ['run_desktop.py'],

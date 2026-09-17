@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { PlotlyChart, SCI_COLORS } from './PlotlyBase';
+import { safeMin, safeMax } from './chartAnalyticsExport';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -13,15 +14,19 @@ interface Props {
   xLabel?: string;
 }
 
-function gaussianKDE(values: number[], gridSize = 150): { x: number[]; y: number[] } {
-  if (values.length === 0) return { x: [], y: [] };
+function gaussianKDE(rawValues: number[], gridSize = 150): { x: number[]; y: number[] } {
+  const clean = rawValues.filter(v => typeof v === 'number' && !isNaN(v) && isFinite(v));
+  if (clean.length === 0) return { x: [], y: [] };
+
+  // Sous-échantillonnage régulier si > 5000 points pour réactivité instantanée
+  const values = clean.length > 5000 ? clean.filter((_, idx) => idx % Math.ceil(clean.length / 5000) === 0) : clean;
   const n = values.length;
   const mean = values.reduce((s, v) => s + v, 0) / n;
   const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / Math.max(n - 1, 1);
   const sd = Math.sqrt(variance);
   const bw = sd === 0 ? 1 : 1.06 * sd * Math.pow(n, -1 / 5);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = safeMin(values);
+  const max = safeMax(values);
   const pad = (max - min) * 0.15 || 1;
   const xs: number[] = [];
   const ys: number[] = [];
@@ -40,14 +45,15 @@ function gaussianKDE(values: number[], gridSize = 150): { x: number[]; y: number
   return { x: xs, y: ys };
 }
 
-function normalPdf(values: number[]): { x: number[]; y: number[] } {
+function normalPdf(rawValues: number[]): { x: number[]; y: number[] } {
+  const values = rawValues.filter(v => typeof v === 'number' && !isNaN(v) && isFinite(v));
   const n = values.length;
   if (n === 0) return { x: [], y: [] };
   const mean = values.reduce((s, v) => s + v, 0) / n;
   const variance = values.reduce((s, v) => s + (v - mean) ** 2, 0) / Math.max(n - 1, 1);
   const sd = Math.sqrt(variance) || 1;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = safeMin(values);
+  const max = safeMax(values);
   const pad = (max - min) * 0.15 || 1;
   const grid = 100;
   const step = (max - min + 2 * pad) / (grid - 1);

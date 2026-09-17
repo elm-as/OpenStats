@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -24,6 +24,7 @@ export default function TornadoChart({
   title = "Analyse de sensibilité (Tornado)",
   xLabel = 'Impact sur la prédiction',
 }: Props) {
+  const theme = useCurrentTheme();
   const sorted = useMemo(() => {
     return [...variables]
       .map(v => ({ ...v, range: Math.abs(v.high - v.low) }))
@@ -42,7 +43,7 @@ export default function TornadoChart({
       orientation: 'h',
       name: 'Impact négatif',
       base: baseline,
-      marker: { color: '#f87171', line: { color: 'rgba(255,255,255,0.1)', width: 0.5 } },
+      marker: { color: '#f87171', line: { color: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', width: 0.5 } },
       hovertemplate: '<b>%{y}</b><br>' + xLabel + ': %{x:.3f}<extra></extra>',
     } as Data;
 
@@ -53,7 +54,7 @@ export default function TornadoChart({
       orientation: 'h',
       name: 'Impact positif',
       base: baseline,
-      marker: { color: '#34d399', line: { color: 'rgba(255,255,255,0.1)', width: 0.5 } },
+      marker: { color: '#34d399', line: { color: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', width: 0.5 } },
       hovertemplate: '<b>%{y}</b><br>' + xLabel + ': %{x:.3f}<extra></extra>',
     } as Data;
 
@@ -67,13 +68,13 @@ export default function TornadoChart({
       shapes: [{
         type: 'line', xref: 'x', yref: 'paper',
         x0: baseline, x1: baseline, y0: 0, y1: 1,
-        line: { color: 'rgba(255,255,255,0.5)', width: 1.5, dash: 'dot' },
+        line: { color: theme === 'light' ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.5)', width: 1.5, dash: 'dot' },
       }],
       legend: { orientation: 'h', y: 1.05, x: 0.5, xanchor: 'center' },
     };
 
     return { traces: [trLow, trHigh], layout: lay, h: computedH };
-  }, [sorted, baseline, title, xLabel, height]);
+  }, [sorted, baseline, title, xLabel, height, theme]);
 
   return <PlotlyChart data={traces} layout={layout} height={h} />;
 }

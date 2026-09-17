@@ -8,3 +8,6 @@
 @import "./styles/theme-light.css";
 @import "./styles/canvas-theme.css";
 @import "./styles/animations.css";
+
+/* Socle du design system : chargé en dernier pour faire autorité. */
+@import "./styles/tokens.css";
