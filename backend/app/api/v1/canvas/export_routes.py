@@ -12,11 +12,6 @@ from flask import request, jsonify, send_file
 
 from app.api.v1 import api_v1_bp
 from app.api.v1.canvas.graph import _topo_sort
-from app.core.code_generation import (
-    generate_pipeline_python_script,
-    generate_pipeline_r_script,
-    generate_pipeline_notebook,
-)
 from app.services.dataset_service import dataset_manager
 from app.core.professional_report import build_report_payload, generate_pdf
 from app.config import Config
@@ -51,26 +46,44 @@ def export_canvas_code():
             "label": label,
         })
 
-    if language == "r":
-        code_content = generate_pipeline_r_script(steps, dataset_name)
-        filename = "script_analyse.R"
-    elif language == "notebook":
-        nb_json = generate_pipeline_notebook(steps, dataset_name)
+    # Python et Notebook passent par l'assembleur commun : ordre topologique sur
+    # les aretes reelles, imports collectes, identifiants echappes, noeuds non
+    # traduits signales au lieu d'etre remplaces par un no-op silencieux.
+    if language == "notebook":
+        from app.core.code_generation.notebook_script import generate_notebook
+
+        nb_json = generate_notebook(nodes, edges, dataset_name)
         return jsonify({
             "success": True,
             "language": "notebook",
             "filename": "pipeline_analyse.ipynb",
             "notebook_json": nb_json,
+            "unsupported_nodes": nb_json["metadata"]["openstats"]["unsupported_nodes"],
         })
-    else:
-        code_content = generate_pipeline_python_script(steps, dataset_name)
-        filename = "script_analyse.py"
 
+    if language == "r":
+        from app.core.code_generation.r_script import generate_r_script
+
+        result = generate_r_script(nodes, edges, dataset_name)
+        return jsonify({
+            "success": True,
+            "language": "r",
+            "filename": "script_analyse.R",
+            "code": result.code,
+            "unsupported_nodes": sorted(set(result.unsupported)),
+            "notes": result.notes,
+        })
+
+    from app.core.code_generation.python_script import generate_python_script
+
+    result = generate_python_script(nodes, edges, dataset_name)
     return jsonify({
         "success": True,
-        "language": language,
-        "filename": filename,
-        "code": code_content,
+        "language": "python",
+        "filename": "script_analyse.py",
+        "code": result.code,
+        "unsupported_nodes": sorted(set(result.unsupported)),
+        "notes": result.notes,
     })
 
 
