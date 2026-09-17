@@ -1,7 +1,8 @@
 export interface AnalysisDoc {
   id: string;
   title: string;
-  category: 'descriptive' | 'tests' | 'modeling' | 'clustering' | 'timeseries' | 'factorielle' | 'simulation';
+  category: 'descriptive' | 'tests' | 'modeling' | 'clustering' | 'timeseries' | 'factorielle'
+    | 'simulation' | 'methodologie';
   categoryLabel: string;
   summary: string;
   useCase: string;
@@ -32,4 +33,5 @@ export const ANALYSES_CATEGORIES = [
   { id: 'timeseries', label: 'Séries Temporelles' },
   { id: 'factorielle', label: 'Réduction de Dimension (ACP)' },
   { id: 'simulation', label: 'Simulation & Risque' },
+  { id: 'methodologie', label: 'Méthodologie & Fiabilité' },
 ];

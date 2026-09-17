@@ -10,3 +10,5 @@ from . import charts
 from . import transforms
 from . import factorielle
 from . import scenarios
+from . import exploration
+from . import methodology

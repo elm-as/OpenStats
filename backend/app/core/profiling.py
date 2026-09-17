@@ -10,6 +10,13 @@ import numpy as np
 import pandas as pd
 from typing import Any
 
+from app.core.temporal_typing import (DATE_FORMATS, has_temporal_name,
+                                      is_temporal_series, normalize_date_text,
+                                      try_parse_dates)
+
+__all__ = ["DATE_FORMATS", "has_temporal_name", "is_temporal_series",
+           "normalize_date_text", "try_parse_dates"]
+
 
 # ── Expressions régulières pour la détection d'unités ──────────────────────
 
@@ -37,66 +44,6 @@ REGEX_TYPE_PATTERNS = {
 }
 
 
-# ── Formats de dates courants ──────────────────────────────────────────
-
-DATE_FORMATS = [
-    # ISO
-    "%Y-%m-%d",
-    "%Y-%m-%dT%H:%M:%S",
-    "%Y-%m-%d %H:%M:%S",
-    "%Y/%m/%d",
-    # Français
-    "%d/%m/%Y",
-    "%d-%m-%Y",
-    "%d.%m.%Y",
-    "%d/%m/%Y %H:%M",
-    "%d/%m/%Y %H:%M:%S",
-    "%d %B %Y",        # 15 janvier 2024
-    "%d %b %Y",        # 15 jan 2024
-    # US
-    "%m/%d/%Y",
-    "%m-%d-%Y",
-    "%m/%d/%Y %I:%M %p",
-    # Textuels
-    "%B %d, %Y",       # January 15, 2024
-    "%b %d, %Y",       # Jan 15, 2024
-    "%d %b %y",        # 15 Jan 24
-    # Compacts
-    "%Y%m%d",
-    "%d%m%Y",
-]
-
-
-def try_parse_dates(series: pd.Series, sample_size: int = 50) -> tuple[bool, str | None]:
-    """
-    Tente de parser une série en dates avec plusieurs formats.
-    Retourne (success, format_detected).
-    """
-    sample = series.dropna().astype(str).head(sample_size)
-    if sample.empty:
-        return False, None
-
-    # D'abord essayer pandas infer_datetime_format (rapide)
-    try:
-        parsed = pd.to_datetime(sample, format="mixed", dayfirst=True)
-        if parsed.notna().sum() / len(sample) >= 0.8:
-            return True, "mixed"
-    except (ValueError, TypeError):
-        pass
-
-    # Essai format par format
-    for fmt in DATE_FORMATS:
-        try:
-            parsed = pd.to_datetime(sample, format=fmt, errors="coerce")
-            success_rate = parsed.notna().sum() / len(sample)
-            if success_rate >= 0.8:
-                return True, fmt
-        except (ValueError, TypeError):
-            continue
-
-    return False, None
-
-
 def detect_unit_from_column_name(col_name: str) -> dict | None:
     """Détecte l'unité de mesure depuis le nom de la colonne."""
     for pattern, domain in UNIT_PATTERNS:
@@ -116,12 +63,9 @@ def infer_statistical_type(series: pd.Series, col_name: str = "") -> str:
     if clean_s.empty:
         return "inconnu"
 
-    # Tentative datetime (type natif pandas)
-    if pd.api.types.is_datetime64_any_dtype(series):
+    # Une seule autorite sur la question temporelle (cf. temporal_typing).
+    if is_temporal_series(series, col_name):
         return "temporel"
-
-    col_lower = (col_name or "").lower().strip()
-    is_temporal_name = bool(re.search(r'(?:^|[_\s])(date|datetime|time|timestamp|year|annee|année|mois|month|semaine|week|trimestre|quarter|an)(?:$|[_\s\d])', col_lower))
 
     # Binaire
     unique_vals = clean_s.unique()
@@ -131,16 +75,6 @@ def infer_statistical_type(series: pd.Series, col_name: str = "") -> str:
     # Numérique
     if pd.api.types.is_numeric_dtype(series):
         # Détection d'année calendaire (ex: 'annee', 'year' avec entiers dans [1000, 3000])
-        try:
-            clean_num = pd.to_numeric(clean_s, errors="coerce").dropna()
-            if not clean_num.empty and (clean_num == clean_num.round()).all():
-                if is_temporal_name and clean_num.between(1000, 3000).mean() > 0.8:
-                    return "temporel"
-                if clean_num.between(1800, 2100).all() and 2 <= clean_num.nunique() <= 200 and is_temporal_name:
-                    return "temporel"
-        except Exception:
-            pass
-
         n_unique = clean_s.nunique()
         ratio = n_unique / len(clean_s) if len(clean_s) > 0 else 0
         if pd.api.types.is_integer_dtype(series) and n_unique <= 20:
@@ -148,19 +82,6 @@ def infer_statistical_type(series: pd.Series, col_name: str = "") -> str:
         if ratio < 0.05 and n_unique <= 30:
             return "discret"
         return "continu"
-
-    # Chaînes de caractères / objet
-    if series.dtype == object or pd.api.types.is_string_dtype(series):
-        is_date, _ = try_parse_dates(series)
-        if is_date:
-            return "temporel"
-        if is_temporal_name:
-            try:
-                parsed = pd.to_datetime(clean_s.head(50), errors="coerce", dayfirst=True)
-                if parsed.notna().mean() > 0.7:
-                    return "temporel"
-            except Exception:
-                pass
 
     # Catégoriel
     return "catégoriel_nominal"

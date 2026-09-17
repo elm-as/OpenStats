@@ -7,6 +7,7 @@ import { CAUSAL_SURVIVAL_ANALYSES } from './data/causal_survival';
 import { FACTORIELLE_CLUSTERING_ANALYSES } from './data/factorielle_clustering';
 import { SIMULATION_ANALYSES } from './data/simulation';
 import { EXTENSIONS_ANALYSES } from './data/extensions';
+import { METHODOLOGIE_ANALYSES } from './data/methodologie';
 
 export * from './types';
 
@@ -19,4 +20,5 @@ export const ANALYSES_DATA: AnalysisDoc[] = [
   ...FACTORIELLE_CLUSTERING_ANALYSES,
   ...SIMULATION_ANALYSES,
   ...EXTENSIONS_ANALYSES,
+  ...METHODOLOGIE_ANALYSES,
 ];

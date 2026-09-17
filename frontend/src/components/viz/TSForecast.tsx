@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -27,6 +27,7 @@ export default function TSForecast({
   title = 'Prévision de série temporelle',
   yLabel = 'Valeur',
 }: Props) {
+  const theme = useCurrentTheme();
   const { traces, layout } = useMemo(() => {
     const tr: Data[] = [];
 
@@ -92,12 +93,12 @@ export default function TSForecast({
       shapes: separator ? [{
         type: 'line', xref: 'x', yref: 'paper',
         x0: separator, x1: separator, y0: 0, y1: 1,
-        line: { color: 'rgba(255,255,255,0.3)', width: 1, dash: 'dot' },
+        line: { color: theme === 'light' ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.3)', width: 1, dash: 'dot' },
       }] : [],
     };
 
     return { traces: tr, layout: lay };
-  }, [history, forecast, fitted, title, yLabel]);
+  }, [history, forecast, fitted, title, yLabel, theme]);
 
   return <PlotlyChart data={traces} layout={layout} height={height} />;
 }

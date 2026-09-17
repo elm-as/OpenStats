@@ -7,6 +7,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+
+from app.core.analysis_scope import variables_analysables
 from app.core.factor_serialization import _safe_float_val
 
 
@@ -19,10 +21,13 @@ def run_pca(
     Exécute une ACP sur les colonnes numériques sélectionnées.
     Retourne valeurs propres, variance expliquée, coordonnées, contributions, corrélations.
     """
+    # Une selection explicite de l'utilisateur fait autorite ; sinon on retire
+    # les reperes (index temporel, identifiants) qui fabriqueraient un axe vide
+    # de sens. Cf. app.core.analysis_scope.
     if columns:
         data = df[columns].select_dtypes(include=[np.number]).dropna()
     else:
-        data = df.select_dtypes(include=[np.number]).dropna()
+        data = variables_analysables(df).dropna()
 
     if data.shape[1] < 2:
         raise ValueError("L'ACP nécessite au moins 2 variables numériques")

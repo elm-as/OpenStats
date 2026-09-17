@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart, SCI_COLORS } from './PlotlyBase';
+import { PlotlyChart, SCI_COLORS, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 }
 
 export default function FEVDStacked({ fevd, height, title = 'Décomposition de la variance (FEVD)' }: Props) {
+  const theme = useCurrentTheme();
   const { traces, layout, h, n } = useMemo(() => {
     const nrow = fevd.length;
     const tr: Data[] = [];
@@ -55,7 +56,7 @@ export default function FEVDStacked({ fevd, height, title = 'Décomposition de l
     const annotations: any[] = fevd.map((row, idx) => ({
       x: -0.04, y: 1 - (idx + 0.5) / nrow, xref: 'paper', yref: 'paper',
       text: row.variable, showarrow: false, textangle: -90,
-      font: { size: 11, color: '#cbd5e1' },
+      font: { size: 11, color: theme === 'light' ? '#334155' : '#cbd5e1' },
     }));
     (lay as any).annotations = annotations;
 
@@ -68,7 +69,7 @@ export default function FEVDStacked({ fevd, height, title = 'Décomposition de l
     }
 
     return { traces: tr, layout: lay, h: computedH, n: nrow };
-  }, [fevd, height, title]);
+  }, [fevd, height, title, theme]);
 
   if (n === 0) return <div className="empty-state">Aucune donnée FEVD</div>;
   return <PlotlyChart data={traces} layout={layout} height={h} />;

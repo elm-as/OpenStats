@@ -24,8 +24,8 @@ from app.core.timeseries.series_preparation import (
     _detect_seasonal_period,
     _infer_or_guess_freq,
     _build_forecast_dates,
-    _normalize_french_date_text,
 )
+from app.core.profiling import normalize_date_text
 
 
 # Stationnarité
@@ -74,7 +74,7 @@ __all__ = [
     "_infer_or_guess_freq",
     "_build_forecast_dates",
     "_compute_residual_diagnostics",
-    "_normalize_french_date_text",
+    "normalize_date_text",
     # stationarity
     "test_stationarity",
     "_difference_until_stationary",

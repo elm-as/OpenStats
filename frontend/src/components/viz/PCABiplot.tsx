@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { PlotlyChart, SCI_COLORS } from './PlotlyBase';
+import { safeMax } from './chartAnalyticsExport';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -40,12 +41,12 @@ export default function PCABiplot({
     const names = individuals.map((ind, i) => ind.name ?? `obs ${i + 1}`);
     const groups = individuals.map(ind => ind.group ?? null);
 
-    // Calcul du scale automatique pour flèches
-    const indMax = Math.max(...xs.map(Math.abs), ...ys.map(Math.abs), 0.1);
+    // Calcul du scale automatique pour flèches avec safeMax
+    const indMax = Math.max(safeMax(xs.map(Math.abs)), safeMax(ys.map(Math.abs)), 0.1);
     const varCoords = variables ? Object.values(variables) : [];
     const varMax = Math.max(
-      ...varCoords.map(v => Math.abs(extract(v, pcX))),
-      ...varCoords.map(v => Math.abs(extract(v, pcY))),
+      safeMax(varCoords.map(v => Math.abs(extract(v, pcX)))),
+      safeMax(varCoords.map(v => Math.abs(extract(v, pcY)))),
       0.1,
     );
     const autoScale = (indMax / varMax) * 0.7;

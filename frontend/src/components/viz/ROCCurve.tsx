@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart, SCI_COLORS } from './PlotlyBase';
+import { PlotlyChart, SCI_COLORS, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
 }
 
 export default function ROCCurve({ curves, height = 400, title = 'Courbe ROC' }: Props) {
+  const theme = useCurrentTheme();
   const { traces, layout } = useMemo(() => {
     const tr: Data[] = curves.map((c, i) => ({
       x: c.fpr,
@@ -34,7 +35,7 @@ export default function ROCCurve({ curves, height = 400, title = 'Courbe ROC' }:
       type: 'scatter',
       mode: 'lines',
       name: 'Aléatoire (AUC = 0.5)',
-      line: { color: 'rgba(255,255,255,0.3)', width: 1, dash: 'dash' },
+      line: { color: theme === 'light' ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.3)', width: 1.5, dash: 'dash' },
       hoverinfo: 'skip',
     } as Data);
 
@@ -42,11 +43,17 @@ export default function ROCCurve({ curves, height = 400, title = 'Courbe ROC' }:
       title: { text: title, font: { size: 14 } },
       xaxis: { title: { text: 'Taux de faux positifs (FPR)' }, range: [0, 1] },
       yaxis: { title: { text: 'Taux de vrais positifs (TPR)' }, range: [0, 1] },
-      legend: { x: 0.55, y: 0.15, bgcolor: 'rgba(20,24,54,0.6)' },
+      legend: {
+        x: 0.55,
+        y: 0.15,
+        bgcolor: theme === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(20,24,54,0.6)',
+        bordercolor: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+        borderwidth: 1,
+      },
     };
 
     return { traces: tr, layout: lay };
-  }, [curves, title]);
+  }, [curves, title, theme]);
 
   return <PlotlyChart data={traces} layout={layout} height={height} />;
 }

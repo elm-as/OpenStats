@@ -1,38 +1,8 @@
 import re
 import pandas as pd
 
-
-def _normalize_french_date_text(value: str) -> str:
-    """Normalise une date textuelle française pour faciliter le parsing."""
-    s = value.strip().lower()
-
-    s = re.sub(
-        r"^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+",
-        "",
-        s,
-    )
-
-    months = {
-        "janvier": "january",
-        "fevrier": "february",
-        "février": "february",
-        "mars": "march",
-        "avril": "april",
-        "mai": "may",
-        "juin": "june",
-        "juillet": "july",
-        "aout": "august",
-        "août": "august",
-        "septembre": "september",
-        "octobre": "october",
-        "novembre": "november",
-        "decembre": "december",
-        "décembre": "december",
-    }
-    for fr, en in months.items():
-        s = re.sub(rf"\b{re.escape(fr)}\b", en, s)
-
-    return s
+from app.core.profiling import normalize_date_text
+from app.core.temporal_typing import parse_compact_numeric
 
 
 def _parse_datetime_series(raw: pd.Series) -> pd.Series:
@@ -42,13 +12,13 @@ def _parse_datetime_series(raw: pd.Series) -> pd.Series:
     if non_null.empty:
         return parsed
 
-    numeric_vals = pd.to_numeric(non_null, errors="coerce")
-    if numeric_vals.notna().mean() > 0.9:
-        year_like = numeric_vals.dropna().between(1000, 3000)
-        if not year_like.empty and year_like.mean() > 0.9:
-            years = numeric_vals.round().astype("Int64").astype(str)
-            parsed.loc[non_null.index] = pd.to_datetime(years, format="%Y", errors="coerce")
-            return parsed
+    # Annees seules, periodes AAAAMM / AAAAMMJJ, numeros de serie Excel :
+    # meme autorite que la detection, pour qu'une colonne reconnue comme date
+    # soit aussi lisible par le moteur (cf. core.temporal_typing).
+    compact = parse_compact_numeric(non_null)
+    if compact is not None:
+        parsed.loc[compact.index] = compact
+        return parsed
 
     text_vals = non_null.astype(str).str.strip()
     year_mask = text_vals.str.match(r"^\d{4}$")
@@ -62,7 +32,7 @@ def _parse_datetime_series(raw: pd.Series) -> pd.Series:
     m_gt_12 = pd.to_numeric(dm_extract[1], errors="coerce") > 12
     prefer_dayfirst = d_gt_12.sum() >= m_gt_12.sum()
 
-    normalized = text_vals.apply(_normalize_french_date_text)
+    normalized = text_vals.apply(normalize_date_text)
     candidates: list[pd.Series] = []
 
     candidates.append(pd.to_datetime(normalized, errors="coerce", format="mixed", dayfirst=prefer_dayfirst))

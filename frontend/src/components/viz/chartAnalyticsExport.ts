@@ -1,3 +1,23 @@
+export function safeMin(arr: number[]): number {
+  if (!arr || arr.length === 0) return 0;
+  let m = Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    const v = arr[i];
+    if (typeof v === 'number' && !isNaN(v) && v < m) m = v;
+  }
+  return m === Infinity ? 0 : m;
+}
+
+export function safeMax(arr: number[]): number {
+  if (!arr || arr.length === 0) return 0;
+  let m = -Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    const v = arr[i];
+    if (typeof v === 'number' && !isNaN(v) && v > m) m = v;
+  }
+  return m === -Infinity ? 0 : m;
+}
+
 /**
  * Régression Linéaire pour les trendlines automatiques.
  */
@@ -33,8 +53,8 @@ export function getLinearRegression(x: number[], y: number[]) {
   const intercept = (sumY - slope * sumX) / n;
 
   const xValues = points.map(p => p.x);
-  const minX = Math.min(...xValues);
-  const maxX = Math.max(...xValues);
+  const minX = safeMin(xValues);
+  const maxX = safeMax(xValues);
 
   return { minX, maxX, slope, intercept };
 }

@@ -6,6 +6,8 @@ import re
 import numpy as np
 import pandas as pd
 
+from app.core.profiling import normalize_date_text
+
 
 # ── Sérialisation JSON ────────────────────────────────────────────────
 
@@ -50,21 +52,6 @@ def _sanitize_for_json(obj, _depth=0):
 
 # ── Construction de graphiques ────────────────────────────────────────
 
-def _normalize_french_date_text(value: str) -> str:
-    s = value.strip().lower()
-    s = re.sub(r"^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s+", "", s)
-    months = {
-        "janvier": "january", "fevrier": "february", "février": "february",
-        "mars": "march", "avril": "april", "mai": "may", "juin": "june",
-        "juillet": "july", "aout": "august", "août": "august",
-        "septembre": "september", "octobre": "october", "novembre": "november",
-        "decembre": "december", "décembre": "december",
-    }
-    for fr, en in months.items():
-        s = re.sub(rf"\b{re.escape(fr)}\b", en, s)
-    return s
-
-
 def _parse_temporal_series(series: pd.Series) -> pd.Series:
     parsed = pd.Series(pd.NaT, index=series.index, dtype="datetime64[ns]")
     non_null = series.dropna()
@@ -91,28 +78,18 @@ def _parse_temporal_series(series: pd.Series) -> pd.Series:
     m_gt_12 = pd.to_numeric(dm_extract[1], errors="coerce") > 12
     prefer_dayfirst = d_gt_12.sum() >= m_gt_12.sum()
 
-    normalized = text_vals.apply(_normalize_french_date_text)
+    normalized = text_vals.apply(normalize_date_text)
     candidates: list[pd.Series] = [
         pd.to_datetime(normalized, errors="coerce", format="mixed", dayfirst=prefer_dayfirst),
         pd.to_datetime(text_vals, errors="coerce", format="mixed", dayfirst=prefer_dayfirst),
-        pd.to_datetime(normalized, errors="coerce", dayfirst=prefer_dayfirst),
-        pd.to_datetime(text_vals, errors="coerce", dayfirst=prefer_dayfirst),
         pd.to_datetime(normalized, errors="coerce", format="mixed", dayfirst=not prefer_dayfirst),
         pd.to_datetime(text_vals, errors="coerce", format="mixed", dayfirst=not prefer_dayfirst),
-        pd.to_datetime(normalized, errors="coerce", dayfirst=not prefer_dayfirst),
-        pd.to_datetime(text_vals, errors="coerce", dayfirst=not prefer_dayfirst),
     ]
-
-    explicit_formats = [
-        "%d/%m/%Y", "%d-%m-%Y", "%d/%m/%y", "%d-%m-%y",
-        "%m/%d/%Y", "%m-%d-%Y", "%m/%d/%y", "%m-%d-%y",
-        "%Y/%m/%d", "%Y-%m-%d",
-        "%m/%Y", "%m-%Y", "%Y/%m", "%Y-%m",
-        "%d %B %Y", "%B %d %Y", "%d %b %Y", "%b %d %Y",
-    ]
-    for fmt in explicit_formats:
-        candidates.append(pd.to_datetime(normalized, format=fmt, errors="coerce"))
-        candidates.append(pd.to_datetime(text_vals, format=fmt, errors="coerce"))
+    for fmt in ["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%m/%d/%Y", "%m/%Y", "%Y/%m"]:
+        candidates.extend([
+            pd.to_datetime(normalized, format=fmt, errors="coerce"),
+            pd.to_datetime(text_vals, format=fmt, errors="coerce"),
+        ])
 
     best = pd.Series(pd.NaT, index=text_vals.index, dtype="datetime64[ns]")
     for candidate in candidates:
@@ -175,6 +152,33 @@ def build_chart_data(
         "median": "median", "min": "min", "max": "max",
     }
     agg_fn = agg_funcs.get(aggregation, "mean")
+    # « Aucune (donnees brutes) » est propose dans l'interface : sans ce test,
+    # la valeur tombait dans le defaut et les points etaient moyennes en
+    # silence, ce qui est l'inverse de ce que l'option annonce.
+    sans_agregation = str(aggregation).strip().lower() in ("none", "aucune", "raw", "brut")
+
+    aliases = {
+        "boxplot": "box",
+        "density": "histogram",
+        "multi_line": "line",
+        "multiline": "line",
+    }
+    chart_type = aliases.get(chart_type, chart_type)
+
+    # Résolution automatique intelligente selon la nature des variables
+    if chart_type == "auto":
+        if not x_col or x_col not in df.columns:
+            chart_type = "histogram" if len(y_cols) == 1 else "box"
+        else:
+            x_s = df[x_col].dropna()
+            if pd.api.types.is_datetime64_any_dtype(x_s) or _parse_temporal_series(x_s).notna().mean() > 0.6:
+                chart_type = "line"
+            elif not pd.api.types.is_numeric_dtype(x_s) or x_s.nunique() <= 15:
+                chart_type = "stacked_bar" if len(y_cols) > 1 else "bar"
+            elif y_cols and pd.api.types.is_numeric_dtype(x_s):
+                chart_type = "bubble" if color_col else "scatter"
+            else:
+                chart_type = "bar"
 
     base_result = {
         "chart_type": chart_type,
@@ -183,17 +187,18 @@ def build_chart_data(
         "log_y": log_y,
     }
 
-    if chart_type in ["raw_values", "box", "violin", "histogram"] and not x_col:
-        valid_cols = [c for c in y_cols if c in df.columns]
-        if not valid_cols:
-            return {"error": "Au moins une variable numérique valide est requise"}
-        records = []
-        for _, row in df[valid_cols].dropna(how="all").iterrows():
-            rec = {}
-            for c in valid_cols:
-                rec[c] = _safe_val(row[c])
-            records.append(rec)
-        return {**base_result, "data": records, "series": valid_cols}
+    if chart_type in ["raw_values", "box", "violin", "histogram"]:
+        if not x_col or x_col not in df.columns:
+            valid_cols = [c for c in y_cols if c in df.columns]
+            if not valid_cols:
+                return {"error": "Au moins une variable numérique valide est requise"}
+            records = []
+            for _, row in df[valid_cols].dropna(how="all").iterrows():
+                rec = {}
+                for c in valid_cols:
+                    rec[c] = _safe_val(row[c])
+                records.append(rec)
+            return {**base_result, "data": records, "series": valid_cols}
 
     if chart_type == "pie":
         if not x_col:
@@ -275,16 +280,20 @@ def build_chart_data(
             records.append(rec)
         return {**base_result, "data": records, "series": y_cols}
 
-    if not x_col or len(y_cols) < 1:
-        return {"error": "x_col et y_cols requis"}
-
-    x_work_col = x_col
-    df_work = df.copy()
-    if time_granularity in {"auto", "day", "month", "year"}:
-        bucketed = _bucket_temporal(df_work[x_col], time_granularity)
-        if bucketed is not None:
-            df_work["__x_time_bucket__"] = bucketed
-            x_work_col = "__x_time_bucket__"
+    if not x_col or x_col not in df.columns:
+        if len(y_cols) < 1:
+            return {"error": "Au moins une variable Y valide est requise"}
+        df_work = df.copy()
+        df_work["__obs__"] = np.arange(1, len(df_work) + 1)
+        x_work_col = "__obs__"
+    else:
+        x_work_col = x_col
+        df_work = df.copy()
+        if time_granularity in {"auto", "day", "month", "year"}:
+            bucketed = _bucket_temporal(df_work[x_col], time_granularity)
+            if bucketed is not None:
+                df_work["__x_time_bucket__"] = bucketed
+                x_work_col = "__x_time_bucket__"
 
     g_col = group_col or color_col
 
@@ -299,6 +308,15 @@ def build_chart_data(
                     rec[str(c)] = _safe_val(row[c])
                 records.append(rec)
             series_keys = [str(c) for c in pivot.columns]
+        elif sans_agregation:
+            brut = df_work[[x_work_col] + y_cols].dropna().head(top_n)
+            records = []
+            for _, row in brut.iterrows():
+                rec = {"x": str(row[x_work_col])}
+                for c in y_cols:
+                    rec[c] = _safe_val(row[c])
+                records.append(rec)
+            series_keys = y_cols
         else:
             grouped = df_work.groupby(x_work_col, sort=True)[y_cols].agg(agg_fn).head(top_n)
             records = []

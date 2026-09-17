@@ -18,6 +18,13 @@ class DatasetTimeseriesMixin:
         value_col: str,
         models: list[str] | None = None,
         forecast_steps: int = 10,
+        ar_order: int | None = None,
+        diff_order: int | None = None,
+        ma_order: int | None = None,
+        seasonal_period: int | None = None,
+        backtest: bool = True,
+        backtest_horizon: int | None = None,
+        backtest_origins: int | None = None,
     ) -> dict:
         """Lance l'analyse de série temporelle."""
         from app.core.timeseries import run_timeseries_analysis
@@ -38,6 +45,13 @@ class DatasetTimeseriesMixin:
             value_col,
             models=models,
             forecast_steps=forecast_steps,
+            ar_order=ar_order,
+            diff_order=diff_order,
+            ma_order=ma_order,
+            seasonal_period=seasonal_period,
+            backtest=backtest,
+            backtest_horizon=backtest_horizon,
+            backtest_origins=backtest_origins,
         )
         duration = int((time.time() - t0) * 1000)
 
@@ -49,6 +63,10 @@ class DatasetTimeseriesMixin:
             "value_col": value_col,
             "models": models,
             "forecast_steps": forecast_steps,
+            "ar_order": ar_order,
+            "diff_order": diff_order,
+            "ma_order": ma_order,
+            "seasonal_period": seasonal_period,
         }
         self._save_analysis(dataset_id, "timeseries", params, results, duration)
         return results

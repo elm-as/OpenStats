@@ -14,6 +14,7 @@ def train_competitive(
     model_keys: list[str] | None = None,
     cv_folds: int = 5,
     task_type: str | None = None,
+    hyperparams: dict | None = None,
 ) -> dict:
     """
     Entraînement compétitif multi-algorithmes.
@@ -34,7 +35,8 @@ def train_competitive(
     results = []
     for key in model_keys:
         try:
-            result = train_single_model(key, data, cv_folds, is_competitive=True)
+            result = train_single_model(key, data, cv_folds, is_competitive=True,
+                                        hyperparams=hyperparams)
             if "error" not in result:
                 results.append(result)
         except Exception as e:

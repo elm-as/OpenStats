@@ -14,15 +14,27 @@ from sklearn.metrics import (
 )
 
 
-def _safe_cv_folds(y_train, cv_folds: int) -> int:
-    """Réduit le nombre de folds si le dataset est trop petit."""
+def _safe_cv_folds(y_train, cv_folds: int, task_type: str | None = None) -> int:
+    """Réduit le nombre de folds si le dataset est trop petit.
+
+    La contrainte par effectif de classe ne vaut qu'en classification : une
+    cible continue n'a que des valeurs uniques, donc un effectif minimal de 1,
+    ce qui ramenait systematiquement toute regression a 2 folds — y compris
+    quand l'utilisateur en demandait 5 ou 10.
+    """
     n_samples = len(y_train)
-    try:
-        min_class_count = pd.Series(y_train).value_counts().min()
-        max_folds = min(n_samples, min_class_count)
-    except Exception:
-        max_folds = n_samples
-    max_folds = min(max_folds, n_samples // 2)
+    max_folds = n_samples // 2
+
+    if task_type != "regression":
+        try:
+            min_class_count = int(pd.Series(y_train).value_counts().min())
+            # Une cible dont chaque valeur est unique est continue, pas une
+            # classification a n classes d'un individu.
+            if min_class_count > 1:
+                max_folds = min(max_folds, min_class_count)
+        except Exception:
+            pass
+
     return max(2, min(cv_folds, max_folds))
 
 

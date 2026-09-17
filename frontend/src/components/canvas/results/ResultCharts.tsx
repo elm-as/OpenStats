@@ -1,4 +1,5 @@
 import React from 'react';
+import { safeMin, safeMax } from '../../viz/chartAnalyticsExport';
 
 export const SvgScatterPlot = ({
   points,
@@ -23,10 +24,10 @@ export const SvgScatterPlot = ({
   const PAD = 50;
   const xs = points.map(p => p.x);
   const ys = points.map(p => p.y);
-  const xMin = Math.min(...xs);
-  const xMax = Math.max(...xs);
-  const yMin = Math.min(...ys);
-  const yMax = Math.max(...ys);
+  const xMin = safeMin(xs);
+  const xMax = safeMax(xs);
+  const yMin = safeMin(ys);
+  const yMax = safeMax(ys);
   const xRange = xMax - xMin || 1;
   const yRange = yMax - yMin || 1;
   const margin = 0.15;
@@ -104,7 +105,7 @@ export const SvgBarChart = ({
   const W = 500;
   const H = 200;
   const PAD = 50;
-  const maxVal = Math.max(...values, 1);
+  const maxVal = Math.max(safeMax(values), 1);
   const barW = Math.min(40, (W - 2 * PAD) / values.length - 4);
 
   return (

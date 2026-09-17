@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { PlotlyChart } from './PlotlyBase';
+import { safeMin, safeMax } from './chartAnalyticsExport';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -14,10 +15,14 @@ interface Props {
 /** Residuals vs Fitted : détection d'hétéroscédasticité et de non-linéarité */
 export default function ResidualsPlot({ fitted, residuals, height = 380, title = 'Résidus vs Valeurs prédites' }: Props) {
   const { traces, layout } = useMemo(() => {
+    if (!fitted || fitted.length === 0) return { traces: [], layout: {} };
+
     // LOWESS approximation simple : moyenne mobile sur bins de fitted
     const sorted = fitted
       .map((f, i) => ({ f, r: residuals[i] }))
+      .filter(p => typeof p.f === 'number' && typeof p.r === 'number' && !isNaN(p.f) && !isNaN(p.r))
       .sort((a, b) => a.f - b.f);
+
     const window = Math.max(5, Math.floor(sorted.length / 20));
     const smoothX: number[] = [];
     const smoothY: number[] = [];
@@ -28,6 +33,9 @@ export default function ResidualsPlot({ fitted, residuals, height = 380, title =
       smoothX.push(sorted[i].f);
       smoothY.push(slice.reduce((s, p) => s + p.r, 0) / slice.length);
     }
+
+    const minFitted = safeMin(fitted);
+    const maxFitted = safeMax(fitted);
 
     const points: Data = {
       x: fitted,
@@ -50,7 +58,7 @@ export default function ResidualsPlot({ fitted, residuals, height = 380, title =
     };
 
     const zero: Data = {
-      x: [Math.min(...fitted), Math.max(...fitted)],
+      x: [minFitted, maxFitted],
       y: [0, 0],
       mode: 'lines',
       type: 'scatter',

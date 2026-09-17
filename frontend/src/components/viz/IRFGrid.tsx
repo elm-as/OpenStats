@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface IRFCell {
@@ -18,6 +18,7 @@ interface Props {
 
 /** Grille IRF NxN : choc en colonne, réponse en ligne. */
 export default function IRFGrid({ cells, height, title = 'Fonctions de réponse impulsionnelle' }: Props) {
+  const theme = useCurrentTheme();
   const { traces, layout, h, n } = useMemo(() => {
     const shocks = Array.from(new Set(cells.map(c => c.shock)));
     const responses = Array.from(new Set(cells.map(c => c.response)));
@@ -74,20 +75,27 @@ export default function IRFGrid({ cells, height, title = 'Fonctions de réponse 
       annotations.push({
         x: (c + 0.5) / ncol, y: 1.04, xref: 'paper', yref: 'paper',
         text: `Choc: ${shock}`, showarrow: false,
-        font: { size: 11, color: '#22d3ee', family: 'Inter' },
+        font: { size: 11, color: theme === 'light' ? '#0891b2' : '#22d3ee', family: 'Inter' },
       });
     });
     responses.forEach((resp, r) => {
       annotations.push({
         x: -0.04, y: 1 - (r + 0.5) / nrow, xref: 'paper', yref: 'paper',
         text: resp, showarrow: false, textangle: -90,
-        font: { size: 10, color: '#cbd5e1' },
+        font: { size: 10, color: theme === 'light' ? '#334155' : '#cbd5e1' },
       });
     });
     (lay as any).annotations = annotations;
 
-    return { traces: tr, layout: lay, h: computedH, n: nrow * ncol };
-  }, [cells, height, title]);
+    // Ligne zéro sur chaque sous-graphe
+    const nTotal = nrow * ncol;
+    for (let i = 1; i <= nTotal; i++) {
+      const ykey = i === 1 ? 'yaxis' : `yaxis${i}`;
+      (lay as any)[ykey] = { zeroline: true, zerolinecolor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)' };
+    }
+
+    return { traces: tr, layout: lay, h: computedH, n: cells.length };
+  }, [cells, height, title, theme]);
 
   if (n === 0) return <div className="empty-state">Aucune donnée IRF</div>;
   return <PlotlyChart data={traces} layout={layout} height={h} />;

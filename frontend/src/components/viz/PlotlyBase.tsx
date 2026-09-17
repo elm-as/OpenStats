@@ -76,17 +76,62 @@ export function PlotlyChart({
   const theme = useCurrentTheme();
   const activeTemplate = theme === 'light' ? LIGHT_TEMPLATE : DARK_TEMPLATE;
 
-  // États de personnalisation locale
+  // États de personnalisation locale avec chargement depuis localStorage
+  const savedPrefs = useMemo(() => {
+    try {
+      const item = localStorage.getItem('openstats_chart_prefs');
+      return item ? JSON.parse(item) : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
   const [showSettings, setShowSettings] = useState(false);
   const [showInterpretation, setShowInterpretation] = useState(false);
-  const [palette, setPalette] = useState('default');
-  const [showGrid, setShowGrid] = useState(true);
-  const [legendPos, setLegendPos] = useState<'right' | 'bottom' | 'none'>('bottom');
-  const [pointSize, setPointSize] = useState(6);
-  const [lineWidth, setLineWidth] = useState(2);
-  const [opacity, setOpacity] = useState(0.85);
-  const [trendline, setTrendline] = useState(false);
-  const [showLabels, setShowLabels] = useState(false);
+  const [palette, setPalette] = useState<string>(() => savedPrefs.palette || 'default');
+  const [showGrid, setShowGrid] = useState<boolean>(() => savedPrefs.showGrid ?? true);
+  const [legendPos, setLegendPos] = useState<'right' | 'bottom' | 'none'>(() => savedPrefs.legendPos || 'bottom');
+  const [pointSize, setPointSize] = useState<number>(() => savedPrefs.pointSize ?? 6);
+  const [lineWidth, setLineWidth] = useState<number>(() => savedPrefs.lineWidth ?? 2);
+  const [opacity, setOpacity] = useState<number>(() => savedPrefs.opacity ?? 0.85);
+  const [trendline, setTrendline] = useState<boolean>(() => savedPrefs.trendline ?? false);
+  const [showLabels, setShowLabels] = useState<boolean>(() => savedPrefs.showLabels ?? false);
+
+  // Sauvegarde des préférences lors des modifications
+  const handleSetPalette = (p: string) => { setPalette(p); savePref('palette', p); };
+  const handleSetShowGrid = (g: boolean) => { setShowGrid(g); savePref('showGrid', g); };
+  const handleSetLegendPos = (pos: 'right' | 'bottom' | 'none') => { setLegendPos(pos); savePref('legendPos', pos); };
+  const handleSetPointSize = (s: number) => { setPointSize(s); savePref('pointSize', s); };
+  const handleSetLineWidth = (w: number) => { setLineWidth(w); savePref('lineWidth', w); };
+  const handleSetOpacity = (o: number) => { setOpacity(o); savePref('opacity', o); };
+  const handleSetTrendline = (t: boolean) => { setTrendline(t); savePref('trendline', t); };
+  const handleSetShowLabels = (l: boolean) => { setShowLabels(l); savePref('showLabels', l); };
+
+  const savePref = (key: string, val: any) => {
+    try {
+      const curr = JSON.parse(localStorage.getItem('openstats_chart_prefs') || '{}');
+      curr[key] = val;
+      localStorage.setItem('openstats_chart_prefs', JSON.stringify(curr));
+    } catch {
+      // noop
+    }
+  };
+
+  const handleResetDefaults = () => {
+    setPalette('default');
+    setShowGrid(true);
+    setLegendPos('bottom');
+    setPointSize(6);
+    setLineWidth(2);
+    setOpacity(0.85);
+    setTrendline(false);
+    setShowLabels(false);
+    try {
+      localStorage.removeItem('openstats_chart_prefs');
+    } catch {
+      // noop
+    }
+  };
 
   // Type générique du graphique d'après la première trace
   const detectedChartType = data?.[0]?.type || 'scatter';
@@ -216,21 +261,22 @@ export function PlotlyChart({
       {showSettings && (
         <PlotlySettingsPanel
           palette={palette}
-          setPalette={setPalette}
+          setPalette={handleSetPalette}
           showGrid={showGrid}
-          setShowGrid={setShowGrid}
+          setShowGrid={handleSetShowGrid}
           legendPos={legendPos}
-          setLegendPos={setLegendPos}
+          setLegendPos={handleSetLegendPos}
           showLabels={showLabels}
-          setShowLabels={setShowLabels}
+          setShowLabels={handleSetShowLabels}
           pointSize={pointSize}
-          setPointSize={setPointSize}
+          setPointSize={handleSetPointSize}
           lineWidth={lineWidth}
-          setLineWidth={setLineWidth}
+          setLineWidth={handleSetLineWidth}
           opacity={opacity}
-          setOpacity={setOpacity}
+          setOpacity={handleSetOpacity}
           trendline={trendline}
-          setTrendline={setTrendline}
+          setTrendline={handleSetTrendline}
+          onResetDefaults={handleResetDefaults}
           detectedChartType={detectedChartType}
           isScatterNumeric={isScatterNumeric}
         />

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -22,6 +22,7 @@ export default function FeatureImportance({
   title = 'Importance des variables',
   xLabel = 'Importance',
 }: Props) {
+  const theme = useCurrentTheme();
   const sorted = useMemo(() => {
     return [...features]
       .sort((a, b) => Math.abs(b.importance) - Math.abs(a.importance))
@@ -44,10 +45,15 @@ export default function FeatureImportance({
       orientation: 'h',
       marker: {
         color: colors,
-        line: { color: 'rgba(255,255,255,0.1)', width: 0.5 },
+        line: { color: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', width: 0.5 },
       },
       error_x: sorted.some(f => f.std !== undefined)
-        ? { type: 'data', array: sorted.map(f => f.std ?? 0), color: 'rgba(255,255,255,0.3)', thickness: 1 }
+        ? {
+            type: 'data',
+            array: sorted.map(f => f.std ?? 0),
+            color: theme === 'light' ? 'rgba(0,0,0,0.45)' : 'rgba(255,255,255,0.35)',
+            thickness: 1.2,
+          }
         : undefined,
       hovertemplate: '<b>%{y}</b><br>' + xLabel + ': %{x:.4f}<extra></extra>',
     } as Data;
@@ -62,7 +68,7 @@ export default function FeatureImportance({
     };
 
     return { traces: [tr], layout: lay, h: computedH };
-  }, [sorted, showSign, height, title, xLabel]);
+  }, [sorted, showSign, height, title, xLabel, theme]);
 
   return <PlotlyChart data={traces} layout={layout} height={h} />;
 }

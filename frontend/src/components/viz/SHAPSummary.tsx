@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { PlotlyChart } from './PlotlyBase';
+import { safeMin, safeMax } from './chartAnalyticsExport';
 import type { Data, Layout } from 'plotly.js';
 
 interface SHAPRow {
@@ -37,8 +38,8 @@ export default function SHAPSummary({ data, topN = 15, height, title = 'SHAP —
       const fvs = row.feature_values;
       let colors: number[] | string[];
       if (fvs && fvs.length === row.shap_values.length) {
-        const min = Math.min(...fvs);
-        const max = Math.max(...fvs);
+        const min = safeMin(fvs);
+        const max = safeMax(fvs);
         const range = max - min || 1;
         colors = fvs.map(v => (v - min) / range);
       } else {

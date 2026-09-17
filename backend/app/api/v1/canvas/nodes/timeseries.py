@@ -5,7 +5,7 @@ Avec auto-sélection intelligente de la colonne temporelle et des variables num�
 
 import pandas as pd
 from app.services.dataset_service import dataset_manager
-from ._shared import _sanitize
+from ._shared import _sanitize, lire_booleen, lire_decimal, lire_entier, lire_texte
 
 def _find_date_col(df: pd.DataFrame) -> str | None:
     # 1. Datetime dtypes
@@ -46,16 +46,22 @@ def execute_timeseries(data, dataset_id):
     if not date_col or not value_col or date_col not in df.columns or value_col not in df.columns:
         return {"status": "error", "error": "Colonnes date et valeur requises pour l'analyse de séries temporelles"}
 
-    forecast_steps = int(data.get("forecastSteps", 10))
-    model_val = data.get("model", "auto")
-    models = None if model_val == "auto" else [model_val]
+    model_val = lire_texte(data, "model")
+    models = [model_val] if model_val else None
     try:
         result = dataset_manager.run_timeseries(
             dataset_id=dataset_id,
             date_col=date_col,
             value_col=value_col,
             models=models,
-            forecast_steps=forecast_steps,
+            forecast_steps=lire_entier(data, "forecastSteps", 10),
+            ar_order=lire_entier(data, "arOrder"),
+            diff_order=lire_entier(data, "diffOrder"),
+            ma_order=lire_entier(data, "maOrder"),
+            seasonal_period=lire_entier(data, "seasonalPeriod"),
+            backtest=lire_booleen(data, "backtest", True),
+            backtest_horizon=lire_entier(data, "backtestHorizon"),
+            backtest_origins=lire_entier(data, "backtestOrigins"),
         )
     except Exception as e:
         return {"status": "error", "error": f"Erreur série temporelle: {str(e)}"}
@@ -84,19 +90,27 @@ def execute_multivariate_timeseries(data, dataset_id):
     if len(value_cols) < 2:
         return {"status": "error", "error": f"Au moins 2 variables numériques requises pour l'analyse multivariée (trouvé: {len(value_cols)})"}
 
-    forced_model_val = data.get("forcedModel", "auto")
-    forced_model = None if forced_model_val == "auto" else forced_model_val
-    granger_max_lag = int(data.get("grangerMaxLag", 4))
-    target_col = data.get("targetCol", "") or None
+    # Tous ces reglages existent dans l'interface : ils sont transmis au moteur,
+    # qui les accepte deja. Un champ laisse vide retombe sur la valeur du moteur.
+    niveau_confiance = lire_decimal(data, "confidenceLevel")
+    if niveau_confiance is not None and niveau_confiance > 1:
+        niveau_confiance = niveau_confiance / 100.0
+
     try:
         result = dataset_manager.run_multivariate_timeseries(
             dataset_id=dataset_id,
             date_col=date_col,
             value_cols=value_cols,
-            forecast_steps=int(data.get("forecastSteps", 10)),
-            forced_model=forced_model,
-            granger_max_lag=granger_max_lag,
-            target_col=target_col,
+            forecast_steps=lire_entier(data, "forecastSteps", 10),
+            forced_model=lire_texte(data, "forcedModel"),
+            granger_max_lag=lire_entier(data, "grangerMaxLag", 4),
+            target_col=lire_texte(data, "targetCol"),
+            var_data_mode=lire_texte(data, "varDataMode", "auto"),
+            max_lag=lire_entier(data, "maxLag", 12),
+            ic_criterion=lire_texte(data, "icCriterion", "aic"),
+            irf_periods=lire_entier(data, "irfPeriods", 20),
+            confidence_level=niveau_confiance if niveau_confiance is not None else 0.95,
+            bootstrap_irf=lire_booleen(data, "bootstrapIrf"),
         )
     except Exception as e:
         return {"status": "error", "error": f"Erreur séries multivariées: {str(e)}"}

@@ -188,7 +188,11 @@ def execute_outliers(data, dataset_id):
     if df is None or df.empty:
         return {"status": "error", "error": "DataFrame vide ou introuvable"}
 
-    num_cols = df.select_dtypes(include=["number"]).columns.tolist()
+    from app.core.analysis_scope import variables_analysables
+
+    # Un index temporel rendrait « atypiques » le debut et la fin de periode.
+    analysables = variables_analysables(df, minimum=1)
+    num_cols = analysables.columns.tolist()
     if not num_cols:
         return {"status": "error", "error": "Aucune variable numérique disponible pour la détection d'anomalies"}
 

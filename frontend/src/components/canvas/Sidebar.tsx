@@ -1,5 +1,11 @@
 import React from 'react';
 import {
+  Grid3x3,
+  Hash,
+  SlidersHorizontal,
+  Stethoscope,
+  Gauge,
+  Equal,
   Database, LineChart, Brain, FileOutput, Eraser,
   BarChart2, Network, Type, Activity, Layers,
   Wand2, PlayCircle, PieChart, TrendingUp, Link2,
@@ -58,6 +64,8 @@ const categories: SidebarCategory[] = [
       { type: 'testAnova', label: 'ANOVA & Kruskal-Wallis', icon: GitCompare, color: '#ef4444' },
       { type: 'testCorrelation', label: 'Test de corrélation', icon: Link2, color: '#ef4444' },
       { type: 'testIndependence', label: 'Test d\'indépendance', icon: Grid3X3, color: '#ef4444' },
+      { type: 'powerAnalysis', label: 'Puissance & Effet Détectable', icon: Gauge, color: '#f59e0b', badge: 'Puissance' },
+      { type: 'equivalenceTest', label: "Test d'Équivalence (TOST)", icon: Equal, color: '#10b981', badge: 'Équivalence' },
       { type: 'testStationarity', label: 'Test stationnarité', icon: Activity, color: '#ef4444' },
       { type: 'testNormality', label: 'Test de normalité', icon: Activity, color: '#ef4444' },
     ],
@@ -78,11 +86,15 @@ const categories: SidebarCategory[] = [
       { type: 'regression', label: 'Régression', icon: TrendingUp, color: '#8b5cf6' },
       { type: 'classification', label: 'Classification', icon: Target, color: '#8b5cf6' },
       { type: 'explainability', label: 'Explicabilité SHAP', icon: Target, color: '#8b5cf6', badge: 'XAI' },
+      { type: 'regressionDiagnostics', label: 'Diagnostics de Régression', icon: Stethoscope, color: '#ef4444', badge: 'Hypothèses' },
     ],
   },
   {
     title: 'Analyses Avancées & Causalité',
     items: [
+      { type: 'panel', label: 'Économétrie de Panel (FE/RE)', icon: Grid3x3, color: '#f97316', badge: 'Panel' },
+      { type: 'countModel', label: 'Modèle de Comptage (Poisson)', icon: Hash, color: '#14b8a6', badge: 'Comptage' },
+      { type: 'quantileRegression', label: 'Régression Quantile', icon: SlidersHorizontal, color: '#8b5cf6', badge: 'Quantiles' },
       { type: 'survival', label: 'Analyse de Survie (KM & Cox)', icon: Activity, color: '#ec4899', badge: 'Survie' },
       { type: 'causal', label: 'Inférence Causale (PSM / DiD)', icon: GitCompare, color: '#06b6d4', badge: 'Causal' },
       { type: 'manifold', label: 't-SNE & DBSCAN', icon: Layers, color: '#8b5cf6', badge: 'Manifold' },
