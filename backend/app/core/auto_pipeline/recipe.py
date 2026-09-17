@@ -15,11 +15,15 @@ from typing import Any
 from app.core.auto_pipeline.detector import DatasetProfile
 
 
+from app.core.auto_pipeline.feasibility import (ANALYSES_TEMPORELLES, colonnes_integrees,
+                                                etape_comptage,
+                                                etape_diagnostics_regression,
+                                                etape_panel,
+                                                message_sans_colonne_temporelle,
+                                                message_temporel_sur_panel)
 from app.core.auto_pipeline.pipeline_schema import PipelineStep, PipelineRecipe
+from app.core.auto_pipeline.recipe_labels import titre_et_description
 
-
-
-# ── Builder ──────────────────────────────────────────────────────────────
 
 
 # ── Builder ──────────────────────────────────────────────────────────────
@@ -31,6 +35,7 @@ def build_recipe(
     task_type: str | None = None,
     selected_analyses: list[str] | None = None,
     custom_steps: list[dict[str, Any] | PipelineStep] | None = None,
+    df: Any | None = None,
 ) -> PipelineRecipe:
     """Construit un pipeline personnalisé et adapté au profil du dataset et aux choix de l'utilisateur."""
     if custom_steps:
@@ -59,6 +64,7 @@ def build_recipe(
 
     steps: list[PipelineStep] = []
     duration = 0
+    warnings: list[str] = []
 
     effective_target = target or profile.suggested_target
     target_type = profile.column_types.get(effective_target, "numeric") if effective_target else None
@@ -135,7 +141,23 @@ def build_recipe(
         duration += 1
 
     # ── 4. ANALYSES TEMPORELLES & ÉCONOMÉTRIE (Si variable temporelle présente) ──
-    if profile.has_temporal and profile.numeric_cols:
+    temporel_demande = [k for k in ANALYSES_TEMPORELLES if is_selected(k)] if selected_analyses else []
+    if temporel_demande and not profile.has_temporal:
+        warnings.append(message_sans_colonne_temporelle(profile, temporel_demande))
+    elif temporel_demande and not profile.numeric_cols:
+        warnings.append(
+            "Analyses temporelles demandées mais aucune variable numérique à suivre dans le temps."
+        )
+
+    if profile.is_panel and profile.numeric_cols:
+        etape = etape_panel(profile, effective_target) if is_selected("panel") else None
+        if etape:
+            steps.append(etape)
+            duration += 4
+        if temporel_demande:
+            warnings.append(message_temporel_sur_panel(profile))
+
+    elif profile.has_temporal and profile.numeric_cols:
         date_col = profile.temporal_cols[0] if profile.temporal_cols else "date"
 
         # 4a. Stationnarité (ADF / KPSS)
@@ -157,13 +179,18 @@ def build_recipe(
             duration += 3
 
         # 4b. Cointégration de Johansen & Relations Long-Terme (si ≥2 numériques)
-        if is_selected("cointegration") and len(profile.numeric_cols) >= 2:
+        colonnes_cointegration = colonnes_integrees(profile)
+        if (is_selected("cointegration") and len(colonnes_cointegration) >= 2):
             steps.append(PipelineStep(
                 key="timeseries_cointegration",
                 operation="timeseries_cointegration",
                 label="Test de Cointégration de Johansen",
-                rationale=f"Vérifie l'existence d'une relation d'équilibre à long terme entre les {len(profile.numeric_cols[:5])} variables économiques/temporelles.",
-                params={"date_col": date_col, "columns": profile.numeric_cols[:5]},
+                rationale=(
+                    f"Relation d'équilibre de long terme entre {len(colonnes_cointegration)} "
+                    "séries intégrées d'ordre 1. Une série déjà stationnaire n'a pas de "
+                    "tendance stochastique à partager : l'inclure fausse le rang."
+                ),
+                params={"date_col": date_col, "columns": colonnes_cointegration},
             ))
             duration += 4
 
@@ -270,6 +297,19 @@ def build_recipe(
         ))
         duration += 10
 
+        if is_selected("regression_diagnostics") and not is_classif:
+            etape = etape_diagnostics_regression(profile, effective_target)
+            if etape:
+                steps.append(etape)
+                duration += 2
+
+    # ── 8 bis. Modèle de comptage si la cible est un dénombrement ──
+    if is_selected("count_model") and df is not None:
+        etape = etape_comptage(profile, effective_target, df)
+        if etape:
+            steps.append(etape)
+            duration += 4
+
     # ── 9. Explicabilité SHAP ──
     if is_selected("explainability") and effective_target:
         steps.append(PipelineStep(
@@ -305,19 +345,7 @@ def build_recipe(
         ))
         duration += 3
 
-    # Titre et description adaptés
-    if profile.has_temporal and effective_target:
-        title = f"Pipeline Séries Temporelles & Économétrie (`{effective_target}`)"
-        desc = f"Pipeline complet d'analyse temporelle, stationnarité, cointégration et prévision sur **{effective_target}** ({profile.n_rows} observations)."
-    elif problem == "regression" and effective_target:
-        title = f"Pipeline de Régression (`{effective_target}`)"
-        desc = f"Pipeline de modélisation prédictive, VIF, régression et explicabilité sur **{effective_target}**."
-    elif "classification" in problem and effective_target:
-        title = f"Pipeline de Classification (`{effective_target}`)"
-        desc = f"Pipeline d'apprentissage supervisé et discrimination sur **{effective_target}**."
-    else:
-        title = "Pipeline d'Exploration & Profilage"
-        desc = "Pipeline exploratoire : contrôle de qualité, statistiques, corrélations et réduction dimensionnelle."
+    title, desc = titre_et_description(profile, problem, effective_target)
 
     return PipelineRecipe(
         title=title,
@@ -327,4 +355,5 @@ def build_recipe(
         steps=steps,
         estimated_duration_sec=duration,
         confidence="high",
+        warnings=warnings,
     )

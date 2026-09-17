@@ -34,49 +34,10 @@ def _is_binary(series: pd.Series) -> bool:
 
 
 def _is_temporal(series: pd.Series, name: str = "") -> bool:
-    """Détecte une colonne temporelle (datetime natif, format date textuel ou nom évocateur d'année/date)."""
-    if pd.api.types.is_datetime64_any_dtype(series):
-        return True
+    """Delegue a l'autorite unique du projet (cf. core.temporal_typing)."""
+    from app.core.temporal_typing import is_temporal_series
 
-    sample = series.dropna().head(50)
-    if sample.empty:
-        return False
-
-    name_lower = (name or str(getattr(series, "name", ""))).lower().strip()
-    is_temporal_name = bool(re.search(
-        r'(?:^|[_\s])(date|datetime|time|timestamp|year|annee|année|mois|month|semaine|week|trimestre|quarter|an)(?:$|[_\s\d])',
-        name_lower,
-    ))
-
-    if pd.api.types.is_numeric_dtype(series):
-        try:
-            nums = pd.to_numeric(sample, errors="coerce").dropna()
-            if not nums.empty and (nums == nums.round()).all():
-                if is_temporal_name and nums.between(1000, 3000).mean() > 0.8:
-                    return True
-                if nums.between(1800, 2100).all() and 2 <= nums.nunique() <= 200 and is_temporal_name:
-                    return True
-        except Exception:
-            pass
-        return False
-
-    if series.dtype == object or pd.api.types.is_string_dtype(series):
-        try:
-            from app.core.profiling import try_parse_dates
-            is_date, _ = try_parse_dates(series)
-            if is_date:
-                return True
-        except Exception:
-            pass
-        if is_temporal_name:
-            try:
-                parsed = pd.to_datetime(sample, errors="coerce", dayfirst=True)
-                if parsed.notna().mean() > 0.7:
-                    return True
-            except Exception:
-                pass
-
-    return False
+    return is_temporal_series(series, col_name=name or str(getattr(series, "name", "")))
 
 
 def _classify_column(series: pd.Series, name: str = "") -> str:
