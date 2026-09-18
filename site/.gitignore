@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+*.tsbuildinfo
+next-env.d.ts
+
+# Base locale des commandes et licences.
+donnees/
+
+# Journaux du serveur de developpement.
+dev.log
