@@ -40,3 +40,6 @@ instance/
 screenshots-debug/
 scratch/
 scratch_*
+
+# Secret scelle a la construction du binaire : genere, jamais versionne.
+backend/app/core/_secret_licence.py

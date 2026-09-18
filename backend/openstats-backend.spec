@@ -34,6 +34,18 @@ for _optional in _module.MODULES:
         continue
     datas += _ret[0]; binaries += _ret[1]; hiddenimports += _ret[2]
 
+# Le secret de verification des jetons de licence doit etre scelle AVANT la
+# construction (scripts/sceller_secret_licence.py). Sans lui, le binaire se
+# construit sans erreur mais aucune licence ne peut y etre activee : l'echec
+# n'apparaitrait que chez le premier client. On le refuse donc ici.
+if not os.path.exists(os.path.join(os.getcwd(), 'app', 'core', '_secret_licence.py')):
+    raise SystemExit(
+        "Secret de licence absent. Executez d'abord :
+"
+        "  OPENSTATS_SECRET_JETON=<ACTIVATION_SECRET du site> "
+        "python scripts/sceller_secret_licence.py"
+    )
+
 hiddenimports += [
     'sklearn.ensemble', 'sklearn.linear_model', 'sklearn.svm', 'sklearn.neighbors',
     'sklearn.feature_selection', 'sklearn.model_selection', 'sklearn.decomposition',
