@@ -5,6 +5,11 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // Chemins d'assets relatifs. Electron charge l'interface via loadFile(),
+  // donc en file:// : un chemin absolu « /assets/... » y pointe vers la racine
+  // du disque et aucun script ne se charge — la fenetre reste blanche sans
+  // message d'erreur. Sans effet sur le deploiement web, servi depuis la racine.
+  base: './',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

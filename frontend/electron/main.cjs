@@ -124,14 +124,31 @@ function createMainWindow(port) {
   });
 
   const isPackaged = app.isPackaged;
+  const pageLocale = path.join(__dirname, '../dist/index.html');
+
   if (isPackaged) {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(pageLocale);
   } else {
-    const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+    const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:3000';
     mainWindow.loadURL(devUrl).catch(() => {
-      mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+      mainWindow.loadFile(pageLocale);
     });
   }
+
+  // Un echec de chargement laissait jusqu'ici une fenetre blanche muette :
+  // l'utilisateur n'avait aucun moyen de savoir ce qui manquait.
+  mainWindow.webContents.on('did-fail-load', (_event, code, description, url) => {
+    console.error('[OpenStats] Chargement echoue (' + code + ') : ' + description + ' - ' + url);
+    const message =
+      '<div style="font-family:system-ui;padding:2rem;color:#e5e7eb;background:#0b0f19;height:100vh">' +
+      "<h1 style=\"font-size:1.1rem\">OpenStats n'a pas pu charger son interface</h1>" +
+      '<p style="font-size:.85rem;color:#9ca3af">Erreur ' + code + ' : ' + description + '</p>' +
+      '<p style="font-size:.8rem;color:#6b7280">Ressource : ' + url + '</p>' +
+      '</div>';
+    mainWindow.webContents
+      .executeJavaScript('document.body.innerHTML = ' + JSON.stringify(message))
+      .catch(() => {});
+  });
 
   mainWindow.once('ready-to-show', () => {
     if (splashWindow) {
