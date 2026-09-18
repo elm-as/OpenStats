@@ -5,10 +5,11 @@
   "description": "Site commercial d'OpenStats : présentation, documentation, achat et activation de licence.",
   "scripts": {
     "dev": "next dev -p 4000",
-    "build": "next build",
+    "build": "npm run verifier:tarifs && next build",
     "start": "next start -p 4000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json",
+    "verifier:tarifs": "node --experimental-strip-types --no-warnings scripts/verifier-tarifs.ts"
   },
   "dependencies": {
     "next": "^15.1.0",

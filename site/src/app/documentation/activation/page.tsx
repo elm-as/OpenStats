@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import PageDoc from '@/components/PageDoc';
+import { OFFRES } from '@/lib/tarifs';
 
 export const metadata: Metadata = { title: 'Activer sa licence' };
 
@@ -17,10 +18,16 @@ export default function Activation() {
       </ol>
 
       <h2>Combien de machines</h2>
+      <ul>
+        {OFFRES.map((offre) => (
+          <li key={offre.type}>
+            <strong>{offre.nom}</strong> : {offre.postes} machines actives en même temps.
+          </li>
+        ))}
+      </ul>
       <p>
-        La licence Solo autorise deux machines actives en même temps, l&apos;offre Équipe cinq,
-        l&apos;offre Établissement cinquante. Réinstaller le logiciel sur une machine déjà
-        activée ne consomme pas de poste supplémentaire.
+        Réinstaller le logiciel sur une machine déjà activée ne consomme pas de poste
+        supplémentaire.
       </p>
 
       <h2>Changer d&apos;ordinateur</h2>

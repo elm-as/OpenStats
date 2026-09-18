@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { OFFRES, formaterXOF, prixUSD } from '@/lib/tarifs';
+import { OFFRES, TARIF_DE_LANCEMENT, formaterXOF, prixParPoste, prixUSD } from '@/lib/tarifs';
 import FormulaireAchat from '@/components/FormulaireAchat';
 
 export const metadata: Metadata = {
@@ -39,6 +39,14 @@ const QUESTIONS = [
       'donc un repère, pas un prix ferme.',
   },
   {
+    question: 'Les prix vont-ils augmenter ?',
+    reponse:
+      "Probablement, oui. Ce sont des tarifs de lancement : OpenStats n'a pas encore " +
+      "d'historique de versions publiées ni de références clients, et les premiers acheteurs " +
+      'en tiennent compte. Comme la licence est perpétuelle, une hausse ultérieure ne change ' +
+      'rien à ce que vous avez acheté : vous gardez votre version et vos mises à jour.',
+  },
+  {
     question: 'Proposez-vous un tarif académique ?',
     reponse:
       "Oui, pour les universités, laboratoires et étudiants, sur présentation d'un justificatif. " +
@@ -59,6 +67,14 @@ export default function Tarifs() {
             réellement débitée ; le montant en dollars est indicatif pour les paiements par
             carte depuis l&apos;étranger.
           </p>
+          {TARIF_DE_LANCEMENT && (
+            <p className="mt-5 max-w-2xl rounded-xl border border-accent-500/25 bg-accent-500/5 px-4 py-3 text-[13px] leading-relaxed text-surface-200">
+              <strong className="font-semibold text-accent-300">Tarifs de lancement.</strong>{' '}
+              OpenStats est récent : pas encore d&apos;historique de versions publiées, pas encore
+              de références clients. Ces prix en tiennent compte et augmenteront. Votre licence
+              étant perpétuelle, une hausse ne vous retirera rien.
+            </p>
+          )}
         </div>
       </section>
 
@@ -88,6 +104,9 @@ export default function Tarifs() {
                 </p>
                 <p className="mt-1 font-mono text-[12px] text-surface-400">
                   ≈ ${prixUSD(offre.prixXOF)} · paiement unique
+                </p>
+                <p className="mt-1 font-mono text-[11px] text-surface-500">
+                  soit {formaterXOF(prixParPoste(offre))} par poste
                 </p>
               </div>
 
