@@ -65,6 +65,11 @@ Flask-Limiter>=3.5
 # Survie (Kaplan-Meier, Cox) — utilise par app/core/survival*
 lifelines>=0.27
 
+# Volatilite conditionnelle : GARCH estime par maximum de vraisemblance
+# (app/core/volatility.py). Sans elle, le noeud GARCH filtre avec des
+# coefficients figes au lieu de les estimer.
+arch>=6.3
+
 # Advanced Nodes
 duckdb>=0.9.0
 numexpr>=2.8.0
