@@ -157,9 +157,13 @@ def create_app(config_class=Config):
         from app.tasks.executors import register_all_executors
         register_all_executors()
 
-        # Précharger les modules ML/statistiques pour éviter les erreurs d'importation concourantes dans le Canvas
-        from app.core.preload import preload_heavy_modules
-        preload_heavy_modules(app.logger)
+        # Précharger les modules ML/statistiques pour éviter les erreurs d'importation
+        # concourantes dans le ThreadPoolExecutor du Canvas. Inutile sous test :
+        # les nœuds y sont exécutés de manière synchrone, et le préchargement
+        # coûte environ 1,5 Go de mémoire à chaque création d'application.
+        if not app.config.get("TESTING") and os.getenv("OPENSTATS_PRELOAD", "1") != "0":
+            from app.core.preload import preload_heavy_modules
+            preload_heavy_modules(app.logger)
 
     # Register API blueprints
     from app.api.v1 import api_v1_bp
@@ -194,7 +198,21 @@ def create_app(config_class=Config):
 
     @app.route("/health")
     def health():
-        return {"status": "ok"}
+        """Etat du service, version, et dependances manquantes.
+
+        Les bibliotheques chargees paresseusement peuvent manquer dans un
+        binaire mal construit sans que rien ne le signale a l'execution : les
+        exposer ici rend l'installation verifiable avant la premiere analyse.
+        """
+        from app.core.bibliotheques_optionnelles import bibliotheques_absentes
+        from app.version import VERSION
+
+        absentes = bibliotheques_absentes()
+        return {
+            "status": "ok" if not absentes else "degrade",
+            "version": VERSION,
+            "bibliotheques_absentes": absentes,
+        }
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")

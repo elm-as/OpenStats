@@ -1,5 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_submodules
+import importlib.util
+import os
+import sys
+
 from PyInstaller.utils.hooks import collect_all
 
 datas = []
@@ -13,7 +17,17 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 # pour ne pas ralentir le demarrage. PyInstaller analyse les imports statiques :
 # sans cette declaration, elles seraient absentes du binaire et les modeles
 # correspondants echoueraient silencieusement chez l'utilisateur final.
-for _optional in ('xgboost', 'lightgbm', 'lifelines', 'prophet'):
+# La liste derive du registre unique (app/core/bibliotheques_optionnelles.py) :
+# recopier les noms ici les ferait diverger au premier ajout de dependance.
+_registre = os.path.join(os.getcwd(), 'app', 'core', 'bibliotheques_optionnelles.py')
+_spec = importlib.util.spec_from_file_location('bibliotheques_optionnelles', _registre)
+_module = importlib.util.module_from_spec(_spec)
+# L'enregistrement prealable est indispensable : le decorateur @dataclass
+# resout son module via sys.modules pendant l'execution du fichier.
+sys.modules['bibliotheques_optionnelles'] = _module
+_spec.loader.exec_module(_module)
+
+for _optional in _module.MODULES:
     try:
         _ret = collect_all(_optional)
     except Exception:
@@ -26,6 +40,12 @@ hiddenimports += [
     'statsmodels.tsa.arima.model', 'statsmodels.tsa.holtwinters',
     'statsmodels.tsa.stattools', 'statsmodels.stats.diagnostic',
     'statsmodels.stats.multitest', 'statsmodels.stats.outliers_influence',
+    # Modules d'inference ajoutes en 1.3.0 : puissance, post-hoc, diagnostics,
+    # regression quantile, modeles de comptage.
+    'statsmodels.stats.power', 'statsmodels.stats.multicomp',
+    'statsmodels.stats.stattools', 'statsmodels.regression.quantile_regression',
+    'statsmodels.genmod.families', 'statsmodels.discrete.discrete_model',
+    'statsmodels.tsa.seasonal', 'arch.univariate',
 ]
 
 
