@@ -6,6 +6,7 @@ import { store } from './store';
 import App from './App';
 import { ToastProvider } from './components/ui/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import PorteActivation from './licence/PorteActivation';
 import './index.css';
 
 /**
@@ -24,7 +25,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routeur future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ToastProvider>
           <ErrorBoundary>
-            <App />
+            <PorteActivation>
+              <App />
+            </PorteActivation>
           </ErrorBoundary>
         </ToastProvider>
       </Routeur>

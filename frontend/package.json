@@ -13,7 +13,7 @@
     "test:e2e": "playwright test",
     "electron:start": "electron .",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && electron .\"",
-    "build:desktop": "tsc -b && vite build && electron-builder --win"
+    "build:desktop": "tsc -b && vite build --mode desktop && electron-builder --win"
   },
   "build": {
     "appId": "com.elmaslabs.openstats",

@@ -66,6 +66,24 @@ Une bibliothèque manquante apparaît dans le motif d'exclusion des modèles.
 
 Pour produire un fichier d'installation tout-en-un que vous pouvez partager :
 
+### Étape 0 : Sceller le secret de licence
+
+La version installée exige une clé d'activation. Sa vérification hors ligne repose sur un
+secret partagé avec le site de vente, qu'il faut sceller **avant** la compilation :
+
+```bash
+cd backend
+OPENSTATS_SECRET_JETON=<ACTIVATION_SECRET du site> python scripts/sceller_secret_licence.py
+```
+
+Ce doit être exactement la valeur `ACTIVATION_SECRET` du fichier d'environnement du site :
+si les deux diffèrent, le binaire se construit sans erreur mais **aucune licence ne peut y
+être activée** — la panne n'apparaîtrait que chez le premier client. Le `.spec` refuse
+désormais de construire si ce secret est absent, mais il ne peut pas vérifier qu'il est le bon.
+
+Le module généré (`backend/app/core/_secret_licence.py`) n'est pas versionné. Un secret
+commité est un secret public.
+
 ### Étape 1 : Compiler le backend Python avec PyInstaller
 Dans le terminal :
 ```bash
