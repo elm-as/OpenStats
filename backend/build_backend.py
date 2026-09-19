@@ -16,34 +16,15 @@ def build_backend():
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--noconfirm",
-        "--onedir",
-        "--console",
-        "--name", "openstats-backend",
-        "--collect-all", "duckdb",
-        "--collect-submodules", "app",
-        # Exclure les énormes bibliothèques globales inutiles détectées dans Python 3.10
-        "--exclude-module", "torch",
-        "--exclude-module", "tensorflow",
-        "--exclude-module", "PySide6",
-        "--exclude-module", "PyQt5",
-        "--exclude-module", "django",
-        "--exclude-module", "skimage",
-        "--exclude-module", "pygame",
-        "--exclude-module", "nltk",
-        "--exclude-module", "jupyter",
-        "--exclude-module", "notebook",
-        "--exclude-module", "sympy",
-        "--exclude-module", "PIL.SpiderImagePlugin",
-        "--hidden-import", "engineio.async_drivers.threading",
-        "run_desktop.py"
+        "openstats-backend.spec",
     ]
 
-    print("Exécution de la commande d'analyse rapide...")
+    print("Exécution de la compilation PyInstaller avec openstats-backend.spec...")
     res = subprocess.run(cmd)
     if res.returncode == 0:
-        print("\n✅ Compilation backend réussie ! Exécutable généré dans dist/openstats-backend/")
+        print("\n[SUCCES] Compilation backend reussie ! Executable genere dans dist/openstats-backend/")
     else:
-        print(f"\n❌ Erreur lors de la compilation (code retour: {res.returncode})")
+        print(f"\n[ERREUR] Erreur lors de la compilation (code retour: {res.returncode})")
         sys.exit(res.returncode)
 
 if __name__ == "__main__":
