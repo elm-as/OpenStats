@@ -1,0 +1,30 @@
+==============================================================================
+               PROTOCOLE DE BONNE CONDUITE DATA SCIENTIST
+==============================================================================
+
+Avant d'installer OpenStats Desktop, vous devez accepter solennellement les
+clauses fondamentales de la rigueur statistique ElmasCore :
+
+1. L'ENGAGEMENT SANS CAMEMBERT
+   Vous jurez sur l'honneur de ne plus jamais tracer de graphiques en
+   camembert 3D, ni de diagrammes à barres dont l'axe vertical ne commence
+   pas à zéro pour dramatiser une hausse de 0.2%.
+
+2. LA CLAUSE DE CAUSALITÉ
+   Vous reconnaissez que corrélation n'implique pas causalité, même si
+   le coefficient de Pearson est de 0.99 entre les ventes de glaces et les
+   attaques de requins.
+
+3. LE SERMENT ANTI-DATA LEAKAGE
+   Si votre modèle de classification atteint 100.0% de précision dès le premier
+   essai, vous accepterez avec humilité qu'il s'agit d'une fuite de votre
+   colonne cible dans les prédicteurs (data leakage), et non de votre génie pur.
+
+4. LA LIBÉRATION D'EXCEL
+   Vous promettez de ne plus utiliser un tableur bureautique pour stocker
+   des dates qui se transforment spontanément en nombres flottants ou des codes
+   qui perdent leurs zéros initiaux.
+
+En cliquant sur « J'accepte », vous obtenez votre accréditation officielle
+pour faire de la vraie Data Science, rapide, dense et rigoureuse.
+==============================================================================
