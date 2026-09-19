@@ -25,7 +25,8 @@ def run_pca(
     # les reperes (index temporel, identifiants) qui fabriqueraient un axe vide
     # de sens. Cf. app.core.analysis_scope.
     if columns:
-        data = df[columns].select_dtypes(include=[np.number]).dropna()
+        valid_cols = [c for c in columns if c in df.columns]
+        data = df[valid_cols].select_dtypes(include=[np.number]).dropna() if valid_cols else variables_analysables(df).dropna()
     else:
         data = variables_analysables(df).dropna()
 

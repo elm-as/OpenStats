@@ -33,7 +33,7 @@ def _get_step_output(ctx: dict[str, Any], step_key: str) -> Any:
     step_info = ctx.get("steps", {}).get(step_key)
     if not step_info or not isinstance(step_info, dict):
         return None
-    return step_info.get("output")
+    return step_info.get("result") or step_info.get("output")
 
 
 def _collect_pipeline_insights(ctx: dict[str, Any]) -> list[dict[str, Any]]:
