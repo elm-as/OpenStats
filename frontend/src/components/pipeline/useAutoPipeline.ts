@@ -51,7 +51,8 @@ export function useAutoPipeline(datasetId: string, onComplete?: (execution?: any
           label: s.label,
           rationale: s.rationale,
           params: s.params,
-          optional: s.optional,
+          // Les étapes conservées et activées par l'utilisateur ne doivent pas être ignorées
+          optional: false,
         })),
       };
 
@@ -59,6 +60,7 @@ export function useAutoPipeline(datasetId: string, onComplete?: (execution?: any
         id: datasetId,
         target: selection.selectedTarget ?? undefined,
         recipe: customRecipePayload,
+        execute_optional: true,
         exclude_columns: selection.excludedColumns,
       }).unwrap();
 
