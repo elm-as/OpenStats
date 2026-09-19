@@ -40,8 +40,7 @@ for _optional in _module.MODULES:
 # n'apparaitrait que chez le premier client. On le refuse donc ici.
 if not os.path.exists(os.path.join(os.getcwd(), 'app', 'core', '_secret_licence.py')):
     raise SystemExit(
-        "Secret de licence absent. Executez d'abord :
-"
+        "Secret de licence absent. Executez d'abord :\n"
         "  OPENSTATS_SECRET_JETON=<ACTIVATION_SECRET du site> "
         "python scripts/sceller_secret_licence.py"
     )
