@@ -177,3 +177,26 @@ def test_declared_type_appears_in_the_data_dictionary(annual_frame):
     assert "Type déclaré" in table["columns"]
     row = next(r for r in table["rows"] if r[0] == "annee")
     assert row[2] == "temporel"
+
+
+def test_qualitative_aliases_are_recognized():
+    assert normalize_declared({"x": "qualitative"}, None) == {"x": "categorical"}
+    assert normalize_declared({"x": "qualitatif"}, None) == {"x": "categorical"}
+
+
+def test_categorical_target_pipeline_with_collinearity():
+    """Une cible textuelle binaire ne doit pas faire échouer _least_useful ni la modélisation."""
+    rng = np.random.default_rng(42)
+    n = 100
+    x1 = rng.normal(0, 1, n)
+    x2 = x1 + rng.normal(0, 0.01, n)  # Forte colinéarité avec x1 (|r| > 0.95)
+    target = np.where(x1 > 0, "satisfied", "neutral or dissatisfied")
+    df = pd.DataFrame({"x1": x1, "x2": x2, "satisfaction": target})
+
+    events = list(run_pipeline(df, target="satisfaction", max_iterations=1))
+    final = _final(events)
+
+    assert final["problem_type"] == "classification_binaire"
+    modeling = _stage(final, "modeling")
+    assert modeling["status"] == "success"
+    assert modeling["data"]["best"] is not None

@@ -117,7 +117,7 @@ def diagnose(df: pd.DataFrame, target: str | None = None,
     issues += _multicollinearity(df, numeric, target)
     if is_timeseries:
         issues += _non_stationarity(df, numeric)
-    if target and target in df.columns:
+    if target and target in df.columns and target in numeric:
         issues += _heteroskedasticity(df, numeric, target, notes)
 
     return sorted(issues, key=lambda i: -i.severity)
@@ -361,13 +361,23 @@ def _multicollinearity(df: pd.DataFrame, numeric: list[str],
 def _least_useful(frame: pd.DataFrame, a: str, b: str, target: str | None) -> str:
     """Des deux colonnes redondantes, celle dont la perte coute le moins cher."""
     if target and target in frame.columns and target not in (a, b):
-        link_a = abs(float(frame[a].corr(frame[target])))
-        link_b = abs(float(frame[b].corr(frame[target])))
-        if np.isfinite(link_a) and np.isfinite(link_b) and abs(link_a - link_b) > 1e-9:
-            return b if link_a >= link_b else a
+        target_series = frame[target]
+        if not pd.api.types.is_numeric_dtype(target_series):
+            # Pour une cible qualitative, l'association s'evalue sur les codes categoriels
+            target_series = pd.Series(pd.Categorical(target_series).codes, index=frame.index, dtype=float)
+            target_series = target_series.replace(-1, np.nan)
 
-    corr = frame.corr().abs()
-    return b if corr[a].mean() >= corr[b].mean() else a
+        link_a = attempt(lambda: abs(float(frame[a].corr(target_series))))
+        link_b = attempt(lambda: abs(float(frame[b].corr(target_series))))
+        val_a = link_a.value if link_a and np.isfinite(link_a.value) else None
+        val_b = link_b.value if link_b and np.isfinite(link_b.value) else None
+        if val_a is not None and val_b is not None and abs(val_a - val_b) > 1e-9:
+            return b if val_a >= val_b else a
+
+    corr = frame.select_dtypes(include=[np.number]).corr().abs()
+    mean_a = corr[a].mean() if a in corr else 0.0
+    mean_b = corr[b].mean() if b in corr else 0.0
+    return b if mean_a >= mean_b else a
 
 
 def _non_stationarity(df: pd.DataFrame, numeric: list[str]) -> list[Issue]:
@@ -421,6 +431,10 @@ def _heteroskedasticity(df: pd.DataFrame, numeric: list[str], target: str,
 
     predictors = [c for c in numeric if c != target][:10]
     if not predictors or target not in df.columns:
+        return []
+
+    # L'heteroscedasticite des residus concerne exclusivement les regressions a cible continue
+    if not pd.api.types.is_numeric_dtype(df[target]):
         return []
 
     frame = df[predictors + [target]].apply(pd.to_numeric, errors="coerce")
