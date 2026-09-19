@@ -14,6 +14,34 @@ from sklearn.pipeline import Pipeline
 logger = logging.getLogger(__name__)
 
 
+def _extract_val(container: Any, idx: int, default: float = 0.0) -> float:
+    """Extrait une valeur scalaire de manière sûre depuis une Series pandas ou un ndarray numpy."""
+    if container is None:
+        return default
+    try:
+        if hasattr(container, "iloc"):
+            return float(container.iloc[idx])
+        elif hasattr(container, "__getitem__"):
+            return float(container[idx])
+    except Exception:
+        pass
+    return default
+
+
+def _extract_ci(conf_int_obj: Any, row: int, col: int, default: float = 0.0) -> float:
+    """Extrait une borne d'intervalle de confiance (2D) de manière sûre."""
+    if conf_int_obj is None:
+        return default
+    try:
+        if hasattr(conf_int_obj, "iloc"):
+            return float(conf_int_obj.iloc[row, col])
+        elif hasattr(conf_int_obj, "__getitem__"):
+            return float(conf_int_obj[row][col])
+    except Exception:
+        pass
+    return default
+
+
 def extract_regression_ols_summary(model, X_train: pd.DataFrame, y_train: pd.Series) -> tuple[dict[str, Any] | None, list[str]]:
     """Extrait l'équation et le tableau de coefficients OLS via statsmodels."""
     warnings: list[str] = []
@@ -48,36 +76,42 @@ def extract_regression_ols_summary(model, X_train: pd.DataFrame, y_train: pd.Ser
             ols_robust = ols_model
 
         feature_names_ols = list(X_sm.columns)
+        conf_int = ols_model.conf_int()
+        p_val_0 = _extract_val(ols_model.pvalues, 0)
+        p_val_rob_0 = _extract_val(ols_robust.pvalues, 0)
+
         coefs = [{
             "variable": "Constante (β₀)",
-            "coefficient": round(float(ols_model.params.iloc[0]), 6),
-            "std_error": round(float(ols_model.bse.iloc[0]), 6),
-            "robust_std_error": round(float(ols_robust.bse.iloc[0]), 6),
-            "t_statistic": round(float(ols_model.tvalues.iloc[0]), 4),
-            "robust_t_statistic": round(float(ols_robust.tvalues.iloc[0]), 4),
-            "p_value": round(float(ols_model.pvalues.iloc[0]), 6),
-            "robust_p_value": round(float(ols_robust.pvalues.iloc[0]), 6),
-            "ci_lower": round(float(ols_model.conf_int().iloc[0, 0]), 6),
-            "ci_upper": round(float(ols_model.conf_int().iloc[0, 1]), 6),
-            "significant": bool(ols_model.pvalues.iloc[0] < 0.05),
-            "robust_significant": bool(ols_robust.pvalues.iloc[0] < 0.05),
+            "coefficient": round(_extract_val(ols_model.params, 0), 6),
+            "std_error": round(_extract_val(ols_model.bse, 0), 6),
+            "robust_std_error": round(_extract_val(ols_robust.bse, 0), 6),
+            "t_statistic": round(_extract_val(ols_model.tvalues, 0), 4),
+            "robust_t_statistic": round(_extract_val(ols_robust.tvalues, 0), 4),
+            "p_value": round(p_val_0, 6),
+            "robust_p_value": round(p_val_rob_0, 6),
+            "ci_lower": round(_extract_ci(conf_int, 0, 0), 6),
+            "ci_upper": round(_extract_ci(conf_int, 0, 1), 6),
+            "significant": bool(p_val_0 < 0.05),
+            "robust_significant": bool(p_val_rob_0 < 0.05),
         }]
 
         for i, fname in enumerate(feature_names_ols):
             idx = i + 1
+            p_val_i = _extract_val(ols_model.pvalues, idx)
+            p_val_rob_i = _extract_val(ols_robust.pvalues, idx)
             coefs.append({
                 "variable": fname,
-                "coefficient": round(float(ols_model.params.iloc[idx]), 6),
-                "std_error": round(float(ols_model.bse.iloc[idx]), 6),
-                "robust_std_error": round(float(ols_robust.bse.iloc[idx]), 6),
-                "t_statistic": round(float(ols_model.tvalues.iloc[idx]), 4),
-                "robust_t_statistic": round(float(ols_robust.tvalues.iloc[idx]), 4),
-                "p_value": round(float(ols_model.pvalues.iloc[idx]), 6),
-                "robust_p_value": round(float(ols_robust.pvalues.iloc[idx]), 6),
-                "ci_lower": round(float(ols_model.conf_int().iloc[idx, 0]), 6),
-                "ci_upper": round(float(ols_model.conf_int().iloc[idx, 1]), 6),
-                "significant": bool(ols_model.pvalues.iloc[idx] < 0.05),
-                "robust_significant": bool(ols_robust.pvalues.iloc[idx] < 0.05),
+                "coefficient": round(_extract_val(ols_model.params, idx), 6),
+                "std_error": round(_extract_val(ols_model.bse, idx), 6),
+                "robust_std_error": round(_extract_val(ols_robust.bse, idx), 6),
+                "t_statistic": round(_extract_val(ols_model.tvalues, idx), 4),
+                "robust_t_statistic": round(_extract_val(ols_robust.tvalues, idx), 4),
+                "p_value": round(p_val_i, 6),
+                "robust_p_value": round(p_val_rob_i, 6),
+                "ci_lower": round(_extract_ci(conf_int, idx, 0), 6),
+                "ci_upper": round(_extract_ci(conf_int, idx, 1), 6),
+                "significant": bool(p_val_i < 0.05),
+                "robust_significant": bool(p_val_rob_i < 0.05),
             })
 
         equation_parts = [f"{coefs[0]['coefficient']:.4f}"]
@@ -132,7 +166,18 @@ def extract_logistic_summary(
         X_sm_const = sm.add_constant(X_sm, has_constant="add")
         y_train_binary = y_train
         if label_encoder is not None and hasattr(label_encoder, "transform"):
-            y_train_binary = label_encoder.transform(y_train)
+            try:
+                y_train_binary = label_encoder.transform(y_train)
+            except Exception:
+                pass
+
+        # statsmodels Logit est exclusivement binaire
+        unique_vals = np.unique(y_train_binary)
+        if len(unique_vals) != 2:
+            raise ValueError(f"Logit statsmodels nécessite exactement 2 classes (reçu: {len(unique_vals)})")
+
+        if not set(unique_vals).issubset({0, 1}):
+            y_train_binary = (pd.Series(y_train_binary) == unique_vals[1]).astype(int).to_numpy()
 
         logit_res = sm.Logit(y_train_binary, X_sm_const).fit(disp=0)
         conf_int = logit_res.conf_int()
@@ -142,11 +187,12 @@ def extract_logistic_summary(
 
         odds_ratios = []
         for i, col_name in enumerate(X_sm_const.columns):
-            beta = float(params_val.iloc[i])
+            beta = _extract_val(params_val, i)
             or_val = float(np.exp(beta))
-            p_v = float(pvals.iloc[i])
-            ci_low = float(np.exp(conf_int.iloc[i, 0]))
-            ci_high = float(np.exp(conf_int.iloc[i, 1]))
+            p_v = _extract_val(pvals, i)
+            ci_low = float(np.exp(_extract_ci(conf_int, i, 0)))
+            ci_high = float(np.exp(_extract_ci(conf_int, i, 1)))
+            bse_i = _extract_val(bse_val, i)
 
             if col_name == "const":
                 var_label = "Constante (β₀)"
@@ -166,7 +212,7 @@ def extract_logistic_summary(
                 "variable": var_label,
                 "coefficient": round(beta, 4),
                 "odds_ratio": round(or_val, 4),
-                "std_error": round(float(bse_val.iloc[i]), 4),
+                "std_error": round(bse_i, 4),
                 "p_value": round(p_v, 6),
                 "ci_lower_or": round(ci_low, 4),
                 "ci_upper_or": round(ci_high, 4),
@@ -185,7 +231,7 @@ def extract_logistic_summary(
             "aic": round(float(logit_res.aic), 2),
         }
     except Exception as e:
-        logger.warning("statsmodels Logit échoué, fallback sur sklearn: %s", e)
+        logger.info("statsmodels Logit non utilisé (ex: multiclasse ou singularité), fallback sklearn: %s", e)
         try:
             inner_clf = model.named_steps.get("model", model[-1]) if isinstance(model, Pipeline) else model
             if hasattr(inner_clf, "coef_"):

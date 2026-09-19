@@ -4,6 +4,7 @@ Préparation et prétraitement des données pour la modélisation.
 
 from __future__ import annotations
 
+import warnings
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -193,11 +194,13 @@ def prepare_data(
                 pass
         elif X[col].dtype == object:
             try:
-                parsed = pd.to_datetime(X[col], errors="coerce")
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", UserWarning)
+                    parsed = pd.to_datetime(X[col], errors="coerce")
                 if parsed.notna().mean() >= 0.8:
                     year_s = parsed.dt.year.astype(float)
                     if parsed.dt.month.nunique(dropna=True) > 1:
-                        X[col] = year_s + (dt_s.dt.dayofyear - 1) / 365.25
+                        X[col] = year_s + (parsed.dt.dayofyear - 1) / 365.25
                     else:
                         X[col] = year_s
             except Exception:

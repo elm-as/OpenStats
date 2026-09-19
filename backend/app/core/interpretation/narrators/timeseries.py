@@ -100,10 +100,21 @@ def narrate_timeseries(results: dict[str, Any]) -> list[Insight]:
     # Meilleur modèle de prévision
     best_model = results.get("best_model") or {}
     if best_model:
-        name = best_model.get("name") or best_model.get("type") or "modèle"
-        aic = best_model.get("aic")
-        rmse = best_model.get("rmse") or _safe(best_model, "metrics", "rmse")
-        mape = best_model.get("mape") or _safe(best_model, "metrics", "mape")
+        if isinstance(best_model, str):
+            name = best_model
+            aic = None
+            rmse = None
+            mape = None
+        elif isinstance(best_model, dict):
+            name = best_model.get("name") or best_model.get("type") or "modèle"
+            aic = best_model.get("aic")
+            rmse = best_model.get("rmse") or _safe(best_model, "metrics", "rmse")
+            mape = best_model.get("mape") or _safe(best_model, "metrics", "mape")
+        else:
+            name = str(best_model)
+            aic = None
+            rmse = None
+            mape = None
 
         msg = f"Le meilleur modèle est **{name}**"
         details = []

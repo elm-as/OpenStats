@@ -36,10 +36,22 @@ def trouver_iscc() -> Path | None:
 
 
 def main() -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description="Assemble l'installateur Windows Inno Setup pour OpenStats Desktop.")
+    parser.add_argument("--rebuild-backend", action="store_true", help="Recompile d'abord le backend Python avec PyInstaller")
+    args, _ = parser.parse_known_args()
+
+    if args.rebuild_backend:
+        print("\n[0/3] Recompilation du backend Python via PyInstaller...")
+        res_backend = subprocess.run([sys.executable, "backend/build_backend.py"], cwd=str(RACINE))
+        if res_backend.returncode != 0:
+            print(f"[ERREUR] Échec de la compilation du backend (code {res_backend.returncode})", file=sys.stderr)
+            return res_backend.returncode
+
     backend_exe = RACINE / "backend" / "dist" / "openstats-backend" / "openstats-backend.exe"
     if not backend_exe.exists():
         print(f"[ERREUR] Le binaire backend est introuvable : {backend_exe}", file=sys.stderr)
-        print("Veuillez d'abord exécuter : python backend/build_backend.py", file=sys.stderr)
+        print("Veuillez d'abord exécuter : python backend/build_backend.py (ou ajouter --rebuild-backend)", file=sys.stderr)
         return 1
 
     iscc_path = trouver_iscc()
