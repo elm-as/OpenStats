@@ -92,20 +92,20 @@ python build_backend.py
 ```
 *Cela génère le dossier autonome `backend/dist/openstats-backend/` contenant Python et toutes ses dépendances (Pandas, DuckDB, Scikit-Learn, ReportLab, etc.).*
 
-### Étape 2 : Générer l'installateur Windows NSIS
+### Étape 2 : Assembler l'installateur Windows Inno Setup
 Dans le terminal :
 ```bash
-cd frontend
-npm run build:desktop
+python scripts/build_installer.py
+# ou depuis frontend : npm run build:desktop
 ```
-*Cela compile le frontend React/Vite et empaquète le binaire Python avec Electron-Builder.*
+*Cela compile le frontend React/Vite, assemble le paquet Electron autonome (`electron-builder --dir`), puis génère l'installateur Windows final avec Inno Setup.*
 
 ---
 
 ## 🎯 Résultat de la compilation
 
 Le fichier d'installation généré se trouve dans :
-`frontend/release/OpenStats Desktop Setup 1.0.0.exe`
+`frontend/release/OpenStats_Setup_v1.0.0.exe` (~315 Mo avec compression ultra LZMA2)
 
 Lorsque l'utilisateur exécute cet installateur :
 1. L'application s'installe proprement sans demander Python ou Node.

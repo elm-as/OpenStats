@@ -69,7 +69,12 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['torch', 'tensorflow', 'PySide6', 'PyQt5', 'django', 'skimage', 'pygame', 'nltk', 'jupyter', 'notebook', 'sympy', 'PIL.SpiderImagePlugin'],
+    excludes=[
+        'torch', 'tensorflow', 'PySide6', 'PyQt5', 'django', 'skimage', 'pygame', 'nltk',
+        'jupyter', 'notebook', 'nbconvert', 'sympy', 'PIL.SpiderImagePlugin',
+        'transformers', 'spacy', 'thinc', 'bitsandbytes', 'yt_dlp', 'cv2',
+        'IPython', 'pytest',
+    ],
     noarchive=False,
     optimize=0,
 )

@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "electron:start": "electron .",
     "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:3000 && electron .\"",
-    "build:desktop": "tsc -b && vite build --mode desktop && electron-builder --win"
+    "build:pack": "tsc -b && vite build --mode desktop && electron-builder --dir",
+    "build:desktop": "python ../scripts/build_installer.py"
   },
   "build": {
     "appId": "com.elmaslabs.openstats",
@@ -21,6 +22,11 @@
     "directories": {
       "output": "release"
     },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
     "extraResources": [
       {
         "from": "../backend/dist/openstats-backend",

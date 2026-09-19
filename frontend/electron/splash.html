@@ -83,23 +83,29 @@
     }
     .progress-bar-bg {
       width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
       overflow: hidden;
       position: relative;
     }
     .progress-bar-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
       height: 100%;
-      width: 30%;
-      background: linear-gradient(90deg, #3b82f6, #818cf8);
-      border-radius: 10px;
-      animation: pulse-progress 2s infinite ease-in-out;
+      width: 45%;
+      background: linear-gradient(90deg, transparent 0%, #3b82f6 40%, #818cf8 60%, transparent 100%);
+      border-radius: 6px;
+      animation: sweep-progress 1.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
     }
-    @keyframes pulse-progress {
-      0% { width: 15%; }
-      50% { width: 75%; }
-      100% { width: 15%; }
+    @keyframes sweep-progress {
+      0% {
+        transform: translateX(-120%);
+      }
+      100% {
+        transform: translateX(250%);
+      }
     }
     .footer {
       display: flex;
