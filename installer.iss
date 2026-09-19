@@ -22,8 +22,9 @@ DefaultGroupName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 OutputDir=frontend\release
 OutputBaseFilename=OpenStats_Setup_v{#MyAppVersion}
-SetupIconFile=frontend\build\icon.ico
-Compression=lzma2/ultra64
+SetupIconFile=frontend\electron\icon.ico
+LicenseFile=frontend\electron\charte_troll.txt
+Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -38,8 +39,15 @@ RestartApplications=no
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
+[Messages]
+french.WelcomeLabel2=Cet assistant va installer [name] sur votre ordinateur.%n%nPréparez-vous à analyser vos données avec rigueur, sans souffrir : DuckDB, Scikit-Learn, XGBoost, LightGBM et des graphiques Plotly impeccables.
+french.FinishedHeadingLabel=Fini de bricoler, place aux maths !
+french.FinishedLabel=L'installation de [name] est terminée avec succès.%n%nVos jeux de données n'ont qu'à bien se tenir. Aucun stagiaire n'a été maltraité durant ce build.
+french.ClickFinish=Cliquez sur Terminer pour lancer la bête.
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "anti_overfit"; Description: "Jurer solennellement de ne pas tenter d'ajuster du bruit blanc avec un modèle à 50 couches"; GroupDescription: "Engagements déontologiques :"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
