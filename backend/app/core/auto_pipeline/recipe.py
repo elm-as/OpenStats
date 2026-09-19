@@ -1,30 +1,19 @@
-"""
-Recipe builder : génère un pipeline d'analyse adapté au profil du dataset.
+"""Recipe builder : génère un pipeline d'analyse adapté au profil du dataset.
 
-Chaque étape (`PipelineStep`) décrit :
- - une opération à réaliser (clean, transform, analyze, model, forecast, factor…)
- - les paramètres
- - le rationale (pourquoi cette étape)
+Chaque étape décrit l'opération à réaliser, ses paramètres et son rationale métier.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
 from typing import Any
-
 from app.core.auto_pipeline.detector import DatasetProfile
-
-
-from app.core.auto_pipeline.feasibility import (ANALYSES_TEMPORELLES, colonnes_integrees,
-                                                etape_comptage,
-                                                etape_diagnostics_regression,
-                                                etape_panel,
-                                                message_sans_colonne_temporelle,
-                                                message_temporel_sur_panel)
+from app.core.auto_pipeline.feasibility import (
+    ANALYSES_TEMPORELLES, colonnes_integrees, etape_comptage,
+    etape_diagnostics_regression, etape_panel,
+    message_sans_colonne_temporelle, message_temporel_sur_panel
+)
 from app.core.auto_pipeline.pipeline_schema import PipelineStep, PipelineRecipe
 from app.core.auto_pipeline.recipe_labels import titre_et_description
-
-
 
 # ── Builder ──────────────────────────────────────────────────────────────
 
@@ -39,26 +28,19 @@ def build_recipe(
 ) -> PipelineRecipe:
     """Construit un pipeline personnalisé et adapté au profil du dataset et aux choix de l'utilisateur."""
     if custom_steps:
-        parsed_steps: list[PipelineStep] = []
-        for s in custom_steps:
-            if isinstance(s, PipelineStep):
-                parsed_steps.append(s)
-            elif isinstance(s, dict):
-                parsed_steps.append(PipelineStep(
-                    key=s.get("key", "step"),
-                    operation=s.get("operation", "generic"),
-                    label=s.get("label", "Étape"),
-                    rationale=s.get("rationale", ""),
-                    params=s.get("params", {}),
-                    optional=bool(s.get("optional", False)),
-                ))
+        parsed_steps = [
+            s if isinstance(s, PipelineStep) else PipelineStep(
+                key=s.get("key", "step"), operation=s.get("operation", "generic"),
+                label=s.get("label", "Étape"), rationale=s.get("rationale", ""),
+                params=s.get("params", {}), optional=bool(s.get("optional", False)),
+            ) for s in custom_steps
+        ]
         return PipelineRecipe(
             title=f"Pipeline Personnalisé ({len(parsed_steps)} étapes)",
             description="Pipeline personnalisé configuré par l'utilisateur.",
             problem_type=task_type or profile.problem_type,
             target=target or profile.suggested_target,
-            steps=parsed_steps,
-            estimated_duration_sec=len(parsed_steps) * 3,
+            steps=parsed_steps, estimated_duration_sec=len(parsed_steps) * 3,
             confidence="high",
         )
 
@@ -71,7 +53,10 @@ def build_recipe(
 
     # Détermination du type de problème
     if task_type and task_type != "auto":
-        problem = task_type
+        if "classif" in str(task_type).lower():
+            problem = "binary_classification" if target_type == "binary" else "multiclass_classification"
+        else:
+            problem = task_type
     elif profile.has_temporal and effective_target and target_type in ("numeric", "discrete", "continu"):
         problem = "forecast"
     elif effective_target and target_type in ("categorical", "binary"):
@@ -89,15 +74,14 @@ def build_recipe(
 
     # ── 1. Nettoyage & Intégrité ──
     if is_selected("clean"):
-        cleaning_actions = []
-        if profile.duplicate_ratio > 0.01:
-            cleaning_actions.append("remove_duplicates")
-        if profile.high_missing_cols:
-            cleaning_actions.append("drop_high_missing_cols")
-        if profile.near_constant_cols:
-            cleaning_actions.append("drop_constant_cols")
-        if profile.overall_null_rate > 0.05:
-            cleaning_actions.append("impute_missing")
+        cleaning_actions = [
+            action for cond, action in [
+                (profile.duplicate_ratio > 0.01, "remove_duplicates"),
+                (bool(profile.high_missing_cols), "drop_high_missing_cols"),
+                (bool(profile.near_constant_cols), "drop_constant_cols"),
+                (profile.overall_null_rate > 0.05, "impute_missing"),
+            ] if cond
+        ]
 
         steps.append(PipelineStep(
             key="clean",
@@ -226,7 +210,10 @@ def build_recipe(
             duration += 12
 
     # ── 5. Multicolinéarité (VIF) ──
-    if is_selected("vif") and len(profile.numeric_cols) >= 3 and problem in ("regression", "binary_classification", "multiclass_classification", "forecast", "timeseries_regression"):
+    if is_selected("vif") and len(profile.numeric_cols) >= 3 and (
+        problem in ("regression", "binary_classification", "multiclass_classification", "forecast", "timeseries_regression")
+        or "classification" in str(problem)
+    ):
         steps.append(PipelineStep(
             key="vif",
             operation="vif",
@@ -266,7 +253,10 @@ def build_recipe(
 
     # ── 8. Modélisation Machine Learning ──
     if is_selected("model") and effective_target:
-        is_classif = problem in ("binary_classification", "multiclass_classification")
+        is_classif = (
+            problem in ("binary_classification", "multiclass_classification", "classification")
+            or "classification" in str(problem)
+        )
         if is_classif:
             model_keys = ["logistic_regression", "random_forest", "gradient_boosting"]
             model_label = f"Classification Supervisée sur `{effective_target}`"
