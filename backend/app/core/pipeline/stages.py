@@ -479,6 +479,8 @@ def stage_modeling(df: pd.DataFrame, target: str | None, problem: str,
     for col in features:
         if not pd.api.types.is_numeric_dtype(frame[col]):
             frame[col] = pd.Categorical(frame[col]).codes
+    if problem != "regression" and not pd.api.types.is_numeric_dtype(frame[target]):
+        frame[target] = pd.Categorical(frame[target]).codes
     frame = frame.apply(pd.to_numeric, errors="coerce")
     frame = frame.replace([np.inf, -np.inf], np.nan).dropna()
 

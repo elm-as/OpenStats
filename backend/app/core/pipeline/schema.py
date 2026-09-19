@@ -30,6 +30,7 @@ TYPE_ALIASES: dict[str, str] = {
     "catégoriel_nominal": "categorical", "categoriel_nominal": "categorical",
     "catégoriel_ordinal": "categorical", "categoriel_ordinal": "categorical",
     "catégoriel": "categorical", "categoriel": "categorical",
+    "qualitative": "categorical", "qualitatif": "categorical",
     "categorical": "categorical", "texte": "categorical", "text": "categorical",
     "string": "categorical", "nominal": "categorical", "ordinal": "categorical",
     "temporel": "temporal", "temporal": "temporal", "date": "temporal",

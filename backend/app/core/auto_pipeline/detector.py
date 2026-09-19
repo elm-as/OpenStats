@@ -40,6 +40,7 @@ def detect_dataset_profile(
         "discret": "discrete", "integer": "discrete", "int": "discrete",
         "binaire": "binary", "binary": "binary", "bool": "binary",
         "catégoriel_nominal": "categorical", "catégoriel": "categorical", "categoriel": "categorical",
+        "qualitative": "categorical", "qualitatif": "categorical",
         "catégoriel_ordinal": "categorical", "categorical": "categorical", "texte": "categorical",
         "text": "categorical", "string": "categorical",
         "temporel": "temporal", "temporal": "temporal", "date": "temporal", "datetime": "temporal",
