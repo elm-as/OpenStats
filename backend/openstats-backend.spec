@@ -1,10 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_submodules, collect_all, collect_dynamic_libs, collect_data_files
 import importlib.util
 import os
 import sys
-
-from PyInstaller.utils.hooks import collect_all
 
 datas = []
 binaries = []
@@ -29,10 +27,15 @@ _spec.loader.exec_module(_module)
 
 for _optional in _module.MODULES:
     try:
-        _ret = collect_all(_optional)
-    except Exception:
-        continue
-    datas += _ret[0]; binaries += _ret[1]; hiddenimports += _ret[2]
+        # Exclure les suites de test (ex: xgboost.testing echoue sans hypothesis)
+        _submods = collect_submodules(_optional, on_error='ignore', filter=lambda name: 'testing' not in name and 'tests' not in name)
+        _datas = collect_data_files(_optional)
+        _binaries = collect_dynamic_libs(_optional)
+        datas += _datas
+        binaries += _binaries
+        hiddenimports += _submods
+    except Exception as _err:
+        print(f"[Avertissement] Echec collecte {_optional}: {_err}", file=sys.stderr)
 
 # Le secret de verification des jetons de licence doit etre scelle AVANT la
 # construction (scripts/sceller_secret_licence.py). Sans lui, le binaire se
