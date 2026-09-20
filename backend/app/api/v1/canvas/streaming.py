@@ -131,7 +131,16 @@ def stream_canvas_pipeline():
                 "time": time.strftime("%H:%M:%S"),
             })
 
-            result = execute_node(node_type, clean_data, dataset_id)
+            def node_log_cb(message: str, level: str = "info"):
+                event_queue.put({
+                    "type": "node_log",
+                    "node_id": node_id,
+                    "message": message,
+                    "level": level,
+                    "time": time.strftime("%H:%M:%S"),
+                })
+
+            result = execute_node(node_type, clean_data, dataset_id, log_callback=node_log_cb)
 
             if isinstance(result, dict) and result.get("status") == "error":
                 event_queue.put({

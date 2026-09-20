@@ -144,8 +144,9 @@ class DatasetComputationMixin:
         task_type: str | None = None,
         cv_folds: int = 5,
         hyperparams: dict | None = None,
+        log_callback: Any = None,
     ) -> dict:
-        """Lance l'entraînement compétitif multi-algorithmes."""
+        """Lance l'entraînement compétitif multi-algorithmes avec streaming."""
         from app.core.modeling import prepare_data, train_competitive
 
         df = self.get_df(dataset_id)
@@ -166,8 +167,14 @@ class DatasetComputationMixin:
             task_type=task_type,
             user_override=target_override,
         )
-        results = train_competitive(data, model_keys=model_keys, task_type=task_type,
-                                    cv_folds=cv_folds, hyperparams=hyperparams)
+        results = train_competitive(
+            data,
+            model_keys=model_keys,
+            task_type=task_type,
+            cv_folds=cv_folds,
+            hyperparams=hyperparams,
+            progress_callback=log_callback,
+        )
 
         shap_data = None
         if results.get("best_model") is not None:

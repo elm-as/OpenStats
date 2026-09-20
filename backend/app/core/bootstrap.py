@@ -72,6 +72,8 @@ def bootstrap_correlation(
         dict avec matrix (point estimates), ci_lower, ci_upper (matrices)
     """
     numeric = df.select_dtypes(include="number").dropna()
+    if len(numeric) > 5000:
+        numeric = numeric.sample(5000, random_state=seed)
     cols = numeric.columns.tolist()
     n = len(numeric)
     rng = np.random.RandomState(seed)
@@ -138,6 +140,11 @@ def bootstrap_regression_coefs(
     """
     rng = np.random.RandomState(seed)
     n = X.shape[0]
+    if n > 5000:
+        sample_idx = rng.choice(n, 5000, replace=False)
+        X = X[sample_idx]
+        y = y[sample_idx]
+        n = 5000
     n_features = X.shape[1]
     names = feature_names or [f"x{i}" for i in range(n_features)]
 
