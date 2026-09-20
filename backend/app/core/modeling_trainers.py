@@ -58,10 +58,31 @@ def train_single_model(
         return _train_polynomial(data, cv_folds)
 
     X_train_fit, y_train_fit = X_train, y_train
-    max_fit_samples = 5000 if model_key in ("svr", "svc") else 50000
+    # Plafonds de complexité adaptatifs pour garantir la scalabilité
+    if model_key in ("svr", "svc", "svm"):
+        max_fit_samples = 2500  # O(N^2) à O(N^3) : 2500 observations pour préserver le temps réel
+    elif model_key in ("knn", "kneighbors"):
+        max_fit_samples = 5000  # O(N^2) en recherche exhaustive de voisins
+    elif is_competitive and model_key in ("random_forest", "gradient_boosting", "adaboost", "xgboost", "lightgbm"):
+        max_fit_samples = 20000  # 20k lignes suffisent largement pour le benchmark comparatif
+    else:
+        max_fit_samples = 50000
 
     if len(X_train) > max_fit_samples:
-        idx = np.random.choice(len(X_train), max_fit_samples, replace=False)
+        rng = np.random.RandomState(42)
+        if task_type == "classification" and y_train.nunique() > 1:
+            try:
+                from sklearn.model_selection import train_test_split
+                idx, _ = train_test_split(
+                    np.arange(len(X_train)),
+                    train_size=max_fit_samples,
+                    stratify=y_train,
+                    random_state=42,
+                )
+            except Exception:
+                idx = rng.choice(len(X_train), max_fit_samples, replace=False)
+        else:
+            idx = rng.choice(len(X_train), max_fit_samples, replace=False)
         X_train_fit = X_train.iloc[idx]
         y_train_fit = y_train.iloc[idx]
 
@@ -82,27 +103,44 @@ def train_single_model(
     base_model = model_cls()
     pipe = Pipeline([("preprocessor", preprocessor), ("model", base_model)])
 
-    pipe_params = {f"model__{k}": v for k, v in param_grid.items() if isinstance(v, list)}
-    fixed_params = {f"model__{k}": v for k, v in param_grid.items() if not isinstance(v, list)}
-
-    if fixed_params:
-        pipe.set_params(**fixed_params)
-
     scoring = "r2" if task_type == "regression" else "f1_weighted"
     is_time_split = data.get("split_info", {}).get("strategy") == "time"
-    cv_scheme = TimeSeriesSplit(n_splits=cv_folds) if is_time_split else cv_folds
+    effective_folds = min(cv_folds, 3) if is_competitive and len(X_train_fit) > 2000 else cv_folds
+    cv_scheme = TimeSeriesSplit(n_splits=effective_folds) if is_time_split else effective_folds
 
-    if pipe_params or any(isinstance(v, list) for v in param_grid.values()):
-        grid = GridSearchCV(
-            pipe, pipe_params, cv=cv_scheme, scoring=scoring, n_jobs=1, error_score="raise"
-        )
-        grid.fit(X_train_fit, y_train_fit)
-        model = grid.best_estimator_
-        best_params = {k.replace("model__", ""): v for k, v in grid.best_params_.items()}
-    else:
+    # En mode compétition, évaluation rapide sur les hyperparamètres de référence optimisés
+    # (évite l'explosion combinatoire de 200+ fits dans le tournoi)
+    if is_competitive:
+        fast_params = {f"model__{k}": (v[0] if isinstance(v, list) and v else v) for k, v in param_grid.items()}
+        # En compétition, désactiver le Platt Scaling de SVM (O(N^2) x 5 folds internes non requis pour le ranking)
+        if model_key in ("svm", "svc"):
+            fast_params["model__probability"] = False
+        # Plafonner les arbres à 40 estimateurs pour accélérer le tournoi comparatif
+        if "model__n_estimators" in fast_params and fast_params["model__n_estimators"] > 40:
+            fast_params["model__n_estimators"] = 40
+
+        pipe.set_params(**fast_params)
         pipe.fit(X_train_fit, y_train_fit)
         model = pipe
-        best_params = {k: v[0] if isinstance(v, list) else v for k, v in param_grid.items()}
+        best_params = {k: (v[0] if isinstance(v, list) and v else v) for k, v in param_grid.items()}
+    else:
+        pipe_params = {f"model__{k}": v for k, v in param_grid.items() if isinstance(v, list)}
+        fixed_params = {f"model__{k}": v for k, v in param_grid.items() if not isinstance(v, list)}
+
+        if fixed_params:
+            pipe.set_params(**fixed_params)
+
+        if pipe_params or any(isinstance(v, list) for v in param_grid.values()):
+            grid = GridSearchCV(
+                pipe, pipe_params, cv=cv_scheme, scoring=scoring, n_jobs=1, error_score="raise"
+            )
+            grid.fit(X_train_fit, y_train_fit)
+            model = grid.best_estimator_
+            best_params = {k.replace("model__", ""): v for k, v in grid.best_params_.items()}
+        else:
+            pipe.fit(X_train_fit, y_train_fit)
+            model = pipe
+            best_params = {k: v[0] if isinstance(v, list) else v for k, v in param_grid.items()}
 
     if label_encoder is not None:
         y_pred = label_encoder.inverse_transform(model.predict(X_test))

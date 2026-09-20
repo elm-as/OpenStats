@@ -25,6 +25,17 @@ def execute_clustering(data, dataset_id):
     if len(clean_df) < 3:
         return {"status": "error", "error": "Au moins 3 observations valides requises pour le clustering"}
 
+    # Plafonnement adaptatif de sécurité pour préserver la mémoire (O(N^2) distances)
+    max_samples_clustering = {
+        "hierarchical": 3000,
+        "dbscan": 10000,
+        "gmm": 10000,
+        "kmeans": 20000,
+    }
+    cap = max_samples_clustering.get(method, 20000)
+    if len(clean_df) > cap:
+        clean_df = clean_df.sample(n=cap, random_state=42)
+
     X = StandardScaler().fit_transform(clean_df)
     
     # Pour la visualisation 2D
@@ -172,7 +183,7 @@ def _reglages_modelisation(data: dict) -> dict:
     }
 
 
-def execute_regression(data, dataset_id):
+def execute_regression(data, dataset_id, log_callback=None):
     cleaned = data.get("_cleaned", True)
     df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
@@ -190,6 +201,7 @@ def execute_regression(data, dataset_id):
     try:
         result = dataset_manager.train_models(dataset_id, target, model_keys=models,
                                               task_type="regression",
+                                              log_callback=log_callback,
                                               **_reglages_modelisation(data))
     except Exception as e:
         return {"status": "error", "error": f"Erreur d'entraînement régression: {str(e)}"}
@@ -200,7 +212,7 @@ def execute_regression(data, dataset_id):
     }
 
 
-def execute_classification(data, dataset_id):
+def execute_classification(data, dataset_id, log_callback=None):
     cleaned = data.get("_cleaned", True)
     df = dataset_manager.get_df(dataset_id, cleaned=cleaned)
     if df is None or df.empty:
@@ -219,6 +231,7 @@ def execute_classification(data, dataset_id):
     try:
         result = dataset_manager.train_models(dataset_id, target, model_keys=models,
                                               task_type="classification",
+                                              log_callback=log_callback,
                                               **_reglages_modelisation(data))
     except Exception as e:
         return {"status": "error", "error": f"Erreur d'entraînement classification: {str(e)}"}
