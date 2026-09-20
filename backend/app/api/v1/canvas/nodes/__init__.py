@@ -120,10 +120,11 @@ def get_redis_client():
                 return None
         return _redis_client
 
-def execute_node(node_type, data, dataset_id):
+def execute_node(node_type, data, dataset_id, log_callback=None):
     """
     Exécute un nœud Canvas et renvoie { status, result?, error?, message? }.
     `dataset_id` est l'ID du dataset résolu depuis le nœud source.
+    `log_callback` permet de streamer des logs au fil de l'eau.
     """
     if not dataset_id and node_type != "dataset":
         from app.models.dataset import Dataset
@@ -157,7 +158,12 @@ def execute_node(node_type, data, dataset_id):
     try:
         current_app.logger.info("Executing node '%s' (dataset_id=%s)", node_type, dataset_id)
         executor = NODE_EXECUTORS[node_type]
-        result = executor(data, dataset_id)
+        import inspect
+        sig = inspect.signature(executor)
+        if "log_callback" in sig.parameters:
+            result = executor(data, dataset_id, log_callback=log_callback)
+        else:
+            result = executor(data, dataset_id)
         current_app.logger.info("Finished node '%s': %s", node_type, result.get("message") or result.get("status"))
         
         # Mise en cache (TTL de 24h)

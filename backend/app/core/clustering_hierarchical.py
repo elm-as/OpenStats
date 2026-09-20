@@ -56,6 +56,13 @@ def run_hierarchical_clustering(
             "message": f"Échantillon trop faible ({n_samples} lignes après suppression des valeurs manquantes).",
         }
 
+    # Sécurisation mémoire : la CAH calcule une matrice N*(N-1)/2 en RAM (100k lignes = 40 Go de RAM)
+    max_cah_samples = 3000
+    if n_samples > max_cah_samples:
+        clean_data = clean_data.sample(n=max_cah_samples, random_state=42)
+        n_samples = len(clean_data)
+        logger.info("Échantillonnage de sécurité CAH à %d observations pour éviter l'épuisement mémoire", max_cah_samples)
+
     # Ward requiert impérativement la métrique euclidean
     if method == "ward":
         metric = "euclidean"
