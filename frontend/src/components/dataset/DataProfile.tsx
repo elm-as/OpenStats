@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { DatasetProfile, ColumnProfile } from '../types';
+import type { DatasetProfile, ColumnProfile } from '../../types';
 import { Database, Hash, Calendar, Tag, ToggleLeft, Pencil, Check, X, Info, Layers, BarChart, FileSpreadsheet, Loader2 } from 'lucide-react';
-import { useUpdateColumnTypeMutation, useSwitchDatasetSheetMutation } from '../store/api';
+import { useUpdateColumnTypeMutation, useSwitchDatasetSheetMutation } from '../../store/api';
 
 interface Props {
   profile: DatasetProfile;

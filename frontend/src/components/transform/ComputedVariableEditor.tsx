@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useComputeVariableMutation } from '../store/api';
+import { useComputeVariableMutation } from '../../store/api';
 import { Calculator, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface Props {

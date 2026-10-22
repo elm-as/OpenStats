@@ -155,7 +155,7 @@ Stats/
 
 ### Exportation & Intégration IA
 - **ReportLab**, **python-docx**, **python-pptx**, **openpyxl** — Générateurs de rapports PDF, Word, PowerPoint et Excel
-- **Anthropic (Claude)** & **OpenAI** API — Génération d'interprétations analytiques automatisées
+- **Groq** (gratuit, par défaut), **DeepSeek** ou **OpenAI** via API compatible OpenAI — Génération de scripts d'extension (`GROQ_API_KEY` dans `backend/.env`)
 
 ---
 

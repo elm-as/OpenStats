@@ -41,10 +41,6 @@ class Config:
     CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND") or _redis_default
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
 
-    # Anthropic LLM
-    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-    LLM_MODEL = os.getenv("LLM_MODEL", "claude-sonnet-4-20250514")
-
     # Datasets storage
     DATA_DIR = os.path.abspath(os.getenv("DATA_DIR", os.path.join(_BASE_DIR, "data")))
 

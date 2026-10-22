@@ -1,6 +1,7 @@
 from flask import request, jsonify, g
 from app.api.v1 import api_v1_bp
 from app.services.extension_service import extension_service
+from app.services.llm_provider import LlmRequestError
 from app.core.auth import login_required
 from app.extensions import limiter
 
@@ -12,19 +13,22 @@ def generate_extension():
     data = request.get_json()
     prompt = data.get("prompt")
     dataset_id = data.get("dataset_id")
-    
-    # Extraction des clés (BYOK)
-    custom_api_key = request.headers.get("X-AI-API-Key")
-    provider = request.headers.get("X-AI-Provider", "openai")
-    
+
+    byok = {
+        "api_key": request.headers.get("X-AI-API-Key"),
+        "provider": request.headers.get("X-AI-Provider"),
+    }
+
     if not prompt or not dataset_id:
         return jsonify({"error": "prompt et dataset_id requis"}), 400
-        
+
     try:
-        result = extension_service.generate_script_from_prompt(prompt, dataset_id, custom_api_key=custom_api_key, provider=provider)
+        result = extension_service.generate_script_from_prompt(prompt, dataset_id, byok=byok)
         return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except LlmRequestError as e:
+        return jsonify({"error": str(e)}), 502
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
 @api_v1_bp.route("/extensions/templates", methods=["GET"])
 @login_required

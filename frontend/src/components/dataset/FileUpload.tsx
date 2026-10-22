@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileSpreadsheet, FileJson, Info, CheckCircle2, AlertCircle, ShieldCheck, Activity } from 'lucide-react';
-import { useUploadDatasetMutation } from '../store/api';
-import { useAppDispatch } from '../hooks';
-import { setCurrentDataset } from '../store/slices/datasetSlice';
+import { useUploadDatasetMutation } from '../../store/api';
+import { useAppDispatch } from '../../hooks';
+import { setCurrentDataset } from '../../store/slices/datasetSlice';
 
 interface Props {
   onUploaded: (datasetId: string) => void;

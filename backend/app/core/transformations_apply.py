@@ -202,6 +202,7 @@ def apply_transforms_to_df(
                 "max": _safe_float(df_out[col].max()),
             }
 
+            transformed, meta = apply_transform(df_out[col], key, params)
             is_replace = bool(t.get("replace", False) or params.get("replace", False))
             new_col_name = t.get("new_column", col if is_replace else f"{col}_{key}")
             df_out[new_col_name] = transformed

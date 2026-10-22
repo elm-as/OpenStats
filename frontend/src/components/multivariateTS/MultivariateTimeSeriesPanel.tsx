@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DataCapabilities } from '../types';
+import type { DataCapabilities } from '../../types';
 import {
   TrendingUp,
   Activity,
@@ -11,17 +11,17 @@ import {
   BarChart3,
   CheckCircle2,
 } from 'lucide-react';
-import { PerModelExploration } from './multivariateTS/PerModelExploration';
-import { usePerModelExploration } from './multivariateTS/usePerModelExploration';
-import { MultivariateConfigForm } from './multivariateTS/MultivariateConfigForm';
-import { MultivariateOverviewTab } from './multivariateTS/MultivariateOverviewTab';
+import { PerModelExploration } from './PerModelExploration';
+import { usePerModelExploration } from './usePerModelExploration';
+import { MultivariateConfigForm } from './MultivariateConfigForm';
+import { MultivariateOverviewTab } from './MultivariateOverviewTab';
 import {
   MultivariateGrangerTab,
   MultivariateJohansenTab,
-} from './multivariateTS/MultivariateGrangerJohansenTabs';
-import { MultivariateModelsTab } from './multivariateTS/MultivariateModelsTab';
-import { MultivariateDiagnosticsTab } from './multivariateTS/MultivariateDiagnosticsTab';
-import { useMultivariateRun } from './multivariateTS/useMultivariateRun';
+} from './MultivariateGrangerJohansenTabs';
+import { MultivariateModelsTab } from './MultivariateModelsTab';
+import { MultivariateDiagnosticsTab } from './MultivariateDiagnosticsTab';
+import { useMultivariateRun } from './useMultivariateRun';
 
 interface Props {
   datasetId: string;

@@ -5,7 +5,7 @@ import { BrowserRouter, HashRouter } from 'react-router-dom';
 import { store } from './store';
 import App from './App';
 import { ToastProvider } from './components/ui/Toast';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import PorteActivation from './licence/PorteActivation';
 import './index.css';
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useGetFeatureRangesQuery, usePredictMutation } from '../store/api';
-import type { PredictionResult } from '../types';
+import { useGetFeatureRangesQuery, usePredictMutation } from '../../store/api';
+import type { PredictionResult } from '../../types';
 import { ArrowLeft, Play, Target, Info, SlidersHorizontal } from 'lucide-react';
 
 interface Props {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCopyDatasetMutation, useCleanDatasetMutation, useGetDatasetQuery } from '../store/api';
+import { useCopyDatasetMutation, useCleanDatasetMutation, useGetDatasetQuery } from '../../store/api';
 import { Loader2, Copy, Trash2, Plus, Settings2, Check, AlertCircle, Wand2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

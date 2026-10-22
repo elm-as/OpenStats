@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useListJobsQuery, useGetJobStatusQuery, useCancelJobMutation } from '../store/api';
-import type { JobStatus } from '../types';
+import { useListJobsQuery, useGetJobStatusQuery, useCancelJobMutation } from '../../store/api';
+import type { JobStatus } from '../../types';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',

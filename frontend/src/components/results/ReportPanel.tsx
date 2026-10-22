@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useGenerateReportMutation } from '../store/api';
-import { useAppSelector } from '../hooks';
+import { useGenerateReportMutation } from '../../store/api';
+import { useAppSelector } from '../../hooks';
 import { FileText, Download, Building2, FileSpreadsheet, Code, Globe, Sparkles, Presentation as PresentationIcon, FileType, Wand2, BookOpen, AlertCircle } from 'lucide-react';
-import { API_V1_BASE, getAnonymousClientId } from '../lib/apiBase';
+import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
 
 interface Props {
   datasetId: string;

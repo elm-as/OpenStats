@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useAutoCleanMutation, useCleanDatasetMutation } from '../store/api';
-import type { CleaningResult, CleaningStepConfig } from '../types';
+import { useAutoCleanMutation, useCleanDatasetMutation } from '../../store/api';
+import type { CleaningResult, CleaningStepConfig } from '../../types';
 import { Sparkles, Settings, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface Props {

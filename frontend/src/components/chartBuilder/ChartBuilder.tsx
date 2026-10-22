@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useGetChartDataMutation } from '../store/api';
-import type { ChartDataResponse, DataCapabilities } from '../types';
+import { useGetChartDataMutation } from '../../store/api';
+import type { ChartDataResponse, DataCapabilities } from '../../types';
 import {
   BarChart3, TrendingUp, PieChart as PieIcon, Maximize2,
   Play, ArrowLeft, Box as BoxIcon, Activity, AreaChart as AreaIcon, GitBranch,
 } from 'lucide-react';
-import { Card, Button, Badge } from './ui';
-import { CHART_TYPES, AGGREGATIONS, type ChartType } from './chartBuilder/chartBuilderConstants';
-import { ChartRenderer } from './chartBuilder/ChartRenderers';
+import { Card, Button, Badge } from '../ui';
+import { CHART_TYPES, AGGREGATIONS, type ChartType } from './chartBuilderConstants';
+import { ChartRenderer } from './ChartRenderers';
 
 const CHART_ICONS: Record<string, any> = {
   line: TrendingUp, bar: BarChart3, stacked_bar: BarChart3, pie: PieIcon,
@@ -321,4 +321,4 @@ export default function ChartBuilder({ datasetId, capabilities, onBack }: Props)
 }
 
 // Re-exports pour rétrocompatibilité
-export { ChartRenderer, PlotlyChartFromBackend } from './chartBuilder/ChartRenderers';
+export { ChartRenderer, PlotlyChartFromBackend } from './ChartRenderers';

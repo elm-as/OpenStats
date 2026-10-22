@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import ResultsWizard from '../components/ResultsWizard';
+import ResultsWizard from '../components/wizard/ResultsWizard';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 
 export default function AnalyzerResultsPage() {

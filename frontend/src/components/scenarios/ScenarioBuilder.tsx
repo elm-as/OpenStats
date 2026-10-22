@@ -6,7 +6,7 @@ import {
   useRunMonteCarloMutation,
   useRunStressTestMutation,
   useGetSensitivityMutation,
-} from '../store/api';
+} from '../../store/api';
 import {
   ArrowLeft,
   Play,
@@ -16,14 +16,14 @@ import {
   TrendingUp,
   AlertOctagon,
 } from 'lucide-react';
-import { TornadoChart } from './viz';
-import { Card, Badge, Button } from './ui';
+import { TornadoChart } from '../viz';
+import { Card, Badge, Button } from '../ui';
 import {
   SensitivityCurve,
   PresetScenariosResults,
   StressTestResultsTable,
   MonteCarloResultsView,
-} from './scenarios/ScenarioTabViews';
+} from './ScenarioTabViews';
 
 interface Props {
   datasetId: string;

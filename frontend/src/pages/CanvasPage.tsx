@@ -19,7 +19,7 @@ function CanvasFallback() {
 
 export default function CanvasPage() {
   return (
-    <div className="flex flex-col h-full overflow-hidden w-full m-[-20px] pb-[40px] md:m-[-20px] md:pb-[40px]">
+    <div className="flex-1 h-full w-full overflow-hidden flex flex-col">
       <Suspense fallback={<CanvasFallback />}>
         <CanvasFlow />
       </Suspense>

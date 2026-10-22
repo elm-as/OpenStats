@@ -82,34 +82,35 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Hero */}
-      <section className="relative rounded-2xl bg-surface-900 border border-white/5 shadow-sm">
-        <div className="relative z-10 px-6 py-6 md:px-8 md:py-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="max-w-xl">
-            <p className="text-[10px] font-semibold text-muted uppercase tracking-widest mb-3">Templates & Extensions</p>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-[1.1] mb-2">
-              Marketplace
-            </h1>
-            <p className="text-surface-400 text-[13px] leading-relaxed max-w-lg">
-              Installez des templates et extensions pour accelerer vos analyses.
-            </p>
+    <div className="space-y-4 animate-fade-in">
+      {/* En-tête Recettes & Blocs */}
+      <header className="ui-panel p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="ui-tag ui-tag-accent">Écosystème Ouvert</span>
+            <span className="ui-tag ui-tag-neutral">JSON Templates</span>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <button onClick={handleImport} disabled={isImporting} className="btn-primary">
-              {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              Importer
-            </button>
-            <button
-              onClick={() => navigate('/canvas')}
-              className="btn-secondary text-xs"
-            >
-              <Network className="w-4 h-4" />
-              Canvas
-            </button>
-          </div>
+          <h1 className="text-lg md:text-xl font-black text-white tracking-tight">
+            Catalogue de Recettes & Extensions
+          </h1>
+          <p className="text-xs text-muted mt-0.5">
+            Installez ou partagez des modèles de pipelines d'analyse statistique et de Machine Learning prêts à l'emploi.
+          </p>
         </div>
-      </section>
+        <div className="flex items-center gap-2 shrink-0">
+          <button onClick={handleImport} disabled={isImporting} className="ui-btn ui-btn-primary ui-focusable">
+            {isImporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+            Importer une recette (.json)
+          </button>
+          <button
+            onClick={() => navigate('/canvas')}
+            className="ui-btn ui-focusable"
+          >
+            <Network className="w-3.5 h-3.5" />
+            Canvas
+          </button>
+        </div>
+      </header>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">

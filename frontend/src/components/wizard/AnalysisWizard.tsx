@@ -3,15 +3,15 @@ import {
   useGetCapabilitiesQuery,
   useSetExcludedColumnsMutation,
   useDetectPipelineQuery,
-} from '../store/api';
-import type { AnalysisCapability } from '../types';
-import { WizardBreadcrumb } from './wizard/WizardBreadcrumb';
-import { WizardOverviewStep } from './wizard/WizardOverviewStep';
-import { WizardSelectStep } from './wizard/WizardSelectStep';
-import { WizardConfigureStep } from './wizard/WizardConfigureStep';
-import { WizardResultsStep } from './wizard/WizardResultsStep';
-import { useAnalysisExecutor } from './wizard/useAnalysisExecutor';
-import type { WizardStep } from './wizard/WizardTypes';
+} from '../../store/api';
+import type { AnalysisCapability } from '../../types';
+import { WizardBreadcrumb } from './WizardBreadcrumb';
+import { WizardOverviewStep } from './WizardOverviewStep';
+import { WizardSelectStep } from './WizardSelectStep';
+import { WizardConfigureStep } from './WizardConfigureStep';
+import { WizardResultsStep } from './WizardResultsStep';
+import { useAnalysisExecutor } from './useAnalysisExecutor';
+import type { WizardStep } from './WizardTypes';
 
 interface Props {
   datasetId: string;

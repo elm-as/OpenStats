@@ -1,60 +1,53 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TOKENS — socle du design system
-   ───────────────────────────────────────────────────────────────────
-   Une seule source de vérité pour les couleurs, la densité et la
-   typographie. Le thème clair ne fait que redéfinir des variables :
-   aucune règle `!important` par classe utilitaire n'est nécessaire ici.
-
-   Convention : tout composant du châssis et tout nouvel écran consomme
-   ces variables (ou les classes `.ui-*` plus bas), jamais des couleurs
-   Tailwind brutes du type `bg-white/[0.03]`.
+   TOKENS — socle du design system (Charte ELMAS.md)
+   Une seule source de vérité pour couleurs, densité et typographie.
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Fonds, du plus profond au plus élevé ── */
-  --ui-bg-app: #0b0f1a;        /* fond de l'application */
-  --ui-bg-sunken: #080c15;     /* zones en creux (rails, gouttières) */
-  --ui-bg-panel: #111725;      /* panneaux, cartes */
-  --ui-bg-raised: #172032;     /* survol, éléments élevés */
-  --ui-bg-overlay: #1c2739;    /* popovers, menus, modales */
-  --ui-bg-input: #0d131f;      /* champs de saisie */
+  /* Fonds minéraux d'ingénierie */
+  --ui-bg-app: #08090c;
+  --ui-bg-sunken: #050608;
+  --ui-bg-panel: #0e1117;
+  --ui-bg-raised: #151922;
+  --ui-bg-overlay: #1c2230;
+  --ui-bg-input: #090c12;
 
-  /* ── Bordures ── */
-  --ui-border: rgba(148, 163, 184, 0.14);
-  --ui-border-strong: rgba(148, 163, 184, 0.24);
-  --ui-border-focus: rgba(6, 182, 212, 0.55);
+  /* Bordures techniques */
+  --ui-border: rgba(148, 163, 184, 0.12);
+  --ui-border-strong: rgba(148, 163, 184, 0.22);
+  --ui-border-focus: rgba(34, 184, 207, 0.55);
 
-  /* ── Texte ── */
+  /* Texte */
   --ui-text: #e8eef7;
   --ui-text-secondary: #b3c0d1;
   --ui-text-muted: #7d8da3;
-  --ui-text-faint: #5b6a7f;
-  --ui-text-inverse: #0b0f1a;
+  --ui-text-faint: #526074;
+  --ui-text-inverse: #050608;
 
-  /* ── Accent et statuts ── */
+  /* Accents scientifiques */
   --ui-accent: #22b8cf;
   --ui-accent-hover: #3dcbe0;
   --ui-accent-soft: rgba(34, 184, 207, 0.14);
   --ui-accent-text: #67e8f9;
 
-  --ui-success: #34d399;
-  --ui-success-soft: rgba(52, 211, 153, 0.13);
-  --ui-warning: #fbbf24;
-  --ui-warning-soft: rgba(251, 191, 36, 0.13);
-  --ui-danger: #f87171;
-  --ui-danger-soft: rgba(248, 113, 113, 0.13);
-  --ui-info: #60a5fa;
-  --ui-info-soft: rgba(96, 165, 250, 0.13);
+  --ui-success: #10b981;
+  --ui-success-soft: rgba(16, 185, 129, 0.14);
+  --ui-warning: #f59e0b;
+  --ui-warning-soft: rgba(245, 158, 11, 0.14);
+  --ui-danger: #ef4444;
+  --ui-danger-soft: rgba(239, 68, 68, 0.14);
+  --ui-info: #38bdf8;
+  --ui-info-soft: rgba(56, 189, 248, 0.14);
 
-  /* ── Ombres ── */
-  --ui-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --ui-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --ui-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  /* Ombres et profondeur */
+  --ui-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --ui-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
 
-  /* ── Densité : un outil est compact par défaut ── */
-  --ui-row-h: 30px;            /* hauteur de ligne de tableau/liste */
-  --ui-control-h: 30px;        /* hauteur des contrôles */
-  --ui-rail-w: 52px;           /* rail de navigation replié */
+  /* Densité studio */
+  --ui-row-h: 30px;
+  --ui-control-h: 30px;
+  --ui-rail-w: 52px;
   --ui-rail-w-open: 208px;
   --ui-topbar-h: 44px;
   --ui-statusbar-h: 26px;
@@ -68,14 +61,14 @@
   --ui-pad-x: 12px;
   --ui-pad-y: 8px;
 
-  /* ── Rayons : discrets, pas de pilules ── */
+  /* Rayons précis */
   --ui-radius-sm: 4px;
   --ui-radius: 6px;
-  --ui-radius-lg: 10px;
+  --ui-radius-lg: 8px;
 
-  /* ── Typographie ── */
-  --ui-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --ui-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* Typographie */
+  --ui-font: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --ui-font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
   --ui-fs-xs: 10.5px;
   --ui-fs-sm: 11.5px;
   --ui-fs-base: 12.5px;
@@ -86,12 +79,11 @@
   color-scheme: dark;
 }
 
-/* ── Thème clair : redéfinition de variables, rien d'autre ── */
 :root[data-theme='light'] {
-  --ui-bg-app: #f5f7fa;
-  --ui-bg-sunken: #eceff4;
+  --ui-bg-app: #f4f6f9;
+  --ui-bg-sunken: #eaedf2;
   --ui-bg-panel: #ffffff;
-  --ui-bg-raised: #f2f5f9;
+  --ui-bg-raised: #f0f3f8;
   --ui-bg-overlay: #ffffff;
   --ui-bg-input: #ffffff;
 
@@ -126,7 +118,6 @@
   color-scheme: light;
 }
 
-/* ── Variante confortable, pour les grands écrans ou par préférence ── */
 :root[data-density='comfortable'] {
   --ui-row-h: 36px;
   --ui-control-h: 34px;
@@ -257,7 +248,7 @@
   color: var(--ui-text-faint);
 }
 
-/* ── Étiquettes de statut ── */
+/* ── Étiquettes de statut & badges ── */
 .ui-tag {
   display: inline-flex;
   align-items: center;
@@ -270,7 +261,6 @@
   line-height: 16px;
   white-space: nowrap;
 }
-
 .ui-tag-neutral { background: var(--ui-bg-raised); color: var(--ui-text-muted); border-color: var(--ui-border); }
 .ui-tag-accent  { background: var(--ui-accent-soft); color: var(--ui-accent-text); border-color: var(--ui-accent-soft); }
 .ui-tag-success { background: var(--ui-success-soft); color: var(--ui-success); border-color: var(--ui-success-soft); }
@@ -278,37 +268,15 @@
 .ui-tag-danger  { background: var(--ui-danger-soft); color: var(--ui-danger); border-color: var(--ui-danger-soft); }
 .ui-tag-info    { background: var(--ui-info-soft); color: var(--ui-info); border-color: var(--ui-info-soft); }
 
-/* ── Tableaux : un outil affiche des tableaux, pas des cartes ── */
-.ui-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: var(--ui-fs-sm);
-}
-
+/* ── Tableaux de données ── */
+.ui-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--ui-fs-sm); }
 .ui-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  height: var(--ui-row-h);
-  padding: 0 10px;
-  text-align: left;
-  font-size: var(--ui-fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ui-text-muted);
-  background: var(--ui-bg-panel);
-  border-bottom: 1px solid var(--ui-border-strong);
-  white-space: nowrap;
+  position: sticky; top: 0; z-index: 1; height: var(--ui-row-h); padding: 0 10px;
+  text-align: left; font-size: var(--ui-fs-xs); font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--ui-text-muted); background: var(--ui-bg-panel);
+  border-bottom: 1px solid var(--ui-border-strong); white-space: nowrap;
 }
-
-.ui-table td {
-  height: var(--ui-row-h);
-  padding: 0 10px;
-  border-bottom: 1px solid var(--ui-border);
-  color: var(--ui-text-secondary);
-}
+.ui-table td { height: var(--ui-row-h); padding: 0 10px; border-bottom: 1px solid var(--ui-border); color: var(--ui-text-secondary); }
 
 .ui-table tbody tr:hover td {
   background: var(--ui-bg-raised);

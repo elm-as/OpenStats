@@ -8,8 +8,8 @@ import {
   useGetAnalysisHistoryQuery,
   useGetAuditTrailQuery,
   useRestoreVersionMutation,
-} from '../store/api';
-import type { DatasetVersion, AnalysisHistoryEntry, AuditLogEntry } from '../types';
+} from '../../store/api';
+import type { DatasetVersion, AnalysisHistoryEntry, AuditLogEntry } from '../../types';
 
 interface Props {
   datasetId: string;

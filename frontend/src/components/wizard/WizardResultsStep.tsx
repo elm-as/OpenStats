@@ -18,14 +18,14 @@ import {
   StationarityResults,
 } from './HypothesisResultsView';
 import { ModelingResults } from './ModelingResultsView';
-import ChartBuilder from '../ChartBuilder';
-import TimeSeriesPanel from '../TimeSeriesPanel';
-import MultivariateTimeSeriesPanel from '../MultivariateTimeSeriesPanel';
-import TransformPanel from '../TransformPanel';
-import FactorAnalysisPanel from '../FactorAnalysisPanel';
-import SimulationPanel from '../SimulationPanel';
-import ScenarioBuilder from '../ScenarioBuilder';
-import ExtensionPanel from '../ExtensionPanel';
+import ChartBuilder from '../chartBuilder/ChartBuilder';
+import TimeSeriesPanel from '../multivariateTS/TimeSeriesPanel';
+import MultivariateTimeSeriesPanel from '../multivariateTS/MultivariateTimeSeriesPanel';
+import TransformPanel from '../transform/TransformPanel';
+import FactorAnalysisPanel from '../factorAnalysis/FactorAnalysisPanel';
+import SimulationPanel from '../scenarios/SimulationPanel';
+import ScenarioBuilder from '../scenarios/ScenarioBuilder';
+import ExtensionPanel from '../extension/ExtensionPanel';
 
 interface WizardResultsStepProps {
   datasetId: string;

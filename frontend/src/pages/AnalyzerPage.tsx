@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, Sparkles, Settings2, Database, Upload, Workflow } from 'lucide-react';
-import AutoPipelinePanel from '../components/AutoPipelinePanel';
-import InsightsPanel from '../components/InsightsPanel';
-import DataPrepPanel from '../components/DataPrepPanel';
+import AutoPipelinePanel from '../components/pipeline/AutoPipelinePanel';
+import InsightsPanel from '../components/results/InsightsPanel';
+import DataPrepPanel from '../components/transform/DataPrepPanel';
 import MethodologyPanel from '../components/methodology/MethodologyPanel';
 import { useWorkspace } from '../components/shell/useWorkspace';
 import { useNavigate } from 'react-router-dom';

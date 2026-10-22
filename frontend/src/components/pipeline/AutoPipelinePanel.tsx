@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Loader2, CheckCircle2, ArrowLeft, Layers } from 'lucide-react';
-import ResultsWizard from './ResultsWizard';
-import CodeViewerModal from './canvas/CodeViewerModal';
-import { PipelineStepper } from './pipeline/PipelineStepper';
-import { AutoPipelineConfigStage } from './pipeline/AutoPipelineConfigStage';
-import { AutoPipelineRecipeStage } from './pipeline/AutoPipelineRecipeStage';
-import { useAutoPipeline } from './pipeline/useAutoPipeline';
+import ResultsWizard from '../wizard/ResultsWizard';
+import CodeViewerModal from '../canvas/CodeViewerModal';
+import { PipelineStepper } from './PipelineStepper';
+import { AutoPipelineConfigStage } from './AutoPipelineConfigStage';
+import { AutoPipelineRecipeStage } from './AutoPipelineRecipeStage';
+import { useAutoPipeline } from './useAutoPipeline';
 
 interface Props {
   datasetId: string;

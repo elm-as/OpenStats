@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import {
-  Home, Play, Network, Sparkles, Compass, Store, FileText, Settings,
+  Home, Play, Network, Workflow, Compass, Store, FileText, Settings,
   PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 
@@ -14,12 +14,12 @@ export interface NavEntry {
 }
 
 export const NAV_ENTRIES: NavEntry[] = [
-  { label: 'Accueil', hint: 'Vue d’ensemble et bibliothèque', icon: Home, path: '/', match: p => p === '/', shortcut: '1' },
-  { label: 'Import & Préparation', hint: 'Charger, profiler, nettoyer', icon: Play, path: '/workflow', match: p => p.startsWith('/workflow'), shortcut: '2' },
-  { label: 'Explorateur', hint: 'Recherche adaptative de résultats', icon: Compass, path: '/explorer', match: p => p.startsWith('/explorer'), shortcut: '3' },
-  { label: 'Analyse auto', hint: 'Pipeline automatique', icon: Sparkles, path: '/analyzer', match: p => p.startsWith('/analyzer'), shortcut: '4' },
-  { label: 'Canvas', hint: 'Pipeline nodal', icon: Network, path: '/canvas', match: p => p.startsWith('/canvas'), shortcut: '5' },
-  { label: 'Marketplace', hint: 'Modèles de pipelines', icon: Store, path: '/marketplace', match: p => p.startsWith('/marketplace'), shortcut: '6' },
+  { label: 'Accueil', hint: 'Console de données & bibliothèque', icon: Home, path: '/', match: p => p === '/', shortcut: '1' },
+  { label: 'Ingestion', hint: 'Charger et profiler des fichiers', icon: Play, path: '/workflow', match: p => p.startsWith('/workflow'), shortcut: '2' },
+  { label: 'Explorateur', hint: 'Recherche adaptative & contrôle FDR', icon: Compass, path: '/explorer', match: p => p.startsWith('/explorer'), shortcut: '3' },
+  { label: 'Méthodologie', hint: 'Processus méthodique en 11 étapes', icon: Workflow, path: '/analyzer', match: p => p.startsWith('/analyzer'), shortcut: '4' },
+  { label: 'Canvas', hint: 'Studio nodal & export de code', icon: Network, path: '/canvas', match: p => p.startsWith('/canvas'), shortcut: '5' },
+  { label: 'Recettes', hint: 'Modèles de pipelines & extensions', icon: Store, path: '/marketplace', match: p => p.startsWith('/marketplace'), shortcut: '6' },
 ];
 
 const FOOTER_ENTRIES: NavEntry[] = [

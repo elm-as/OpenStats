@@ -55,7 +55,7 @@ export function ExtensionSidebar({
         <div className="p-4 border-b border-accent-500/10 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-accent-400" />
           <h3 className="font-black text-white text-sm uppercase tracking-widest">
-            Générateur DeepSeek
+            Générateur IA
           </h3>
         </div>
         <div className="p-4 space-y-4">

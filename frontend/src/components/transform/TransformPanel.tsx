@@ -5,8 +5,8 @@ import {
   usePreviewTransformMutation,
   useApplyTransformsMutation,
   useGetDatasetQuery,
-} from '../store/api';
-import type { TransformRecommendation, TransformPreview } from '../types';
+} from '../../store/api';
+import type { TransformRecommendation, TransformPreview } from '../../types';
 import {
   Wrench,
   AlertTriangle,
@@ -24,7 +24,7 @@ import {
   PreviewCard,
   SelectedTransformsBar,
   AppliedLogsView,
-} from './transform/TransformSubComponents';
+} from './TransformSubComponents';
 
 interface Props {
   datasetId: string;

@@ -9,13 +9,13 @@ import {
   Target,
   FileText,
 } from 'lucide-react';
-import { useGenerateProfessionalReportMutation } from '../store/api';
-import { StatCard } from './results/ResultAtoms';
-import { OverviewTab } from './results/OverviewTab';
-import { CleaningTab, DescriptiveTab, TransformsTab } from './results/DataPrepTabs';
-import { CorrelationsTab } from './results/CorrelationsTab';
-import { ModelingTab } from './results/ModelingTab';
-import { ShapTab, InsightsTab, ReportTab } from './results/InsightsAndReportTabs';
+import { useGenerateProfessionalReportMutation } from '../../store/api';
+import { StatCard } from '../results/ResultAtoms';
+import { OverviewTab } from '../results/OverviewTab';
+import { CleaningTab, DescriptiveTab, TransformsTab } from '../results/DataPrepTabs';
+import { CorrelationsTab } from '../results/CorrelationsTab';
+import { ModelingTab } from '../results/ModelingTab';
+import { ShapTab, InsightsTab, ReportTab } from '../results/InsightsAndReportTabs';
 import {
   type ResultTab,
   TAB_META,
@@ -27,7 +27,7 @@ import {
   type InsightsResult,
   type TransformRecommendation,
   type TransformAppliedResult,
-} from './results/ResultsWizardTypes';
+} from '../results/ResultsWizardTypes';
 
 interface Props {
   datasetId: string;

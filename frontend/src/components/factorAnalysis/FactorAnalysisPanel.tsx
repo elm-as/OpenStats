@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useRunPCAMutation, useRunCAMutation, useRunMCAMutation } from '../store/api';
-import type { DataCapabilities, PCAResult, CAResult, MCAResult } from '../types';
+import { useRunPCAMutation, useRunCAMutation, useRunMCAMutation } from '../../store/api';
+import type { DataCapabilities, PCAResult, CAResult, MCAResult } from '../../types';
 import { ArrowLeft, Play, Layers, Grid3X3 } from 'lucide-react';
-import { PCAResultView, CAResultView } from './factorAnalysis/PcaCaResultViews';
-import { MCAResultView } from './factorAnalysis/McaResultView';
+import { PCAResultView, CAResultView } from './PcaCaResultViews';
+import { MCAResultView } from './McaResultView';
 
 const METHODS = [
   { key: 'pca', label: 'ACP — Analyse en Composantes Principales', desc: 'Réduction de dimensions pour variables numériques', icon: Layers },

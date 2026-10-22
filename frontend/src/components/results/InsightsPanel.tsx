@@ -3,7 +3,7 @@ import {
   Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2, Lightbulb,
   ChevronDown, RefreshCw, Filter,
 } from 'lucide-react';
-import { useGetInsightsQuery } from '../store/api';
+import { useGetInsightsQuery } from '../../store/api';
 
 type Severity = 'critical' | 'warning' | 'info' | 'success' | 'methodological';
 type Confidence = 'high' | 'medium' | 'low';

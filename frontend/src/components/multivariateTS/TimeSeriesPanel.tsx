@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useRunTimeSeriesMutation } from '../store/api';
-import type { TimeSeriesResults, DataCapabilities } from '../types';
+import { useRunTimeSeriesMutation } from '../../store/api';
+import type { TimeSeriesResults, DataCapabilities } from '../../types';
 import {
   TrendingUp, Activity, ArrowLeft, Play, CheckCircle2,
   AlertTriangle, BarChart3, Trophy,
 } from 'lucide-react';
-import { TSForecast, TSDecomposition, ACFPlot, QQPlot } from './viz';
-import { Card, Badge, Button, Section, Stat, StatGrid } from './ui';
+import { TSForecast, TSDecomposition, ACFPlot, QQPlot } from '../viz';
+import { Card, Badge, Button, Section, Stat, StatGrid } from '../ui';
 
 interface Props {
   datasetId: string;

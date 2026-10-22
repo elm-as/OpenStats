@@ -6,7 +6,7 @@ import {
   useListExtensionTemplatesQuery,
   useRunExtensionMutation,
   useRunExtensionCodeMutation,
-} from '../store/api';
+} from '../../store/api';
 import {
   Play,
   Save,
@@ -15,10 +15,10 @@ import {
   Terminal,
   Loader2,
 } from 'lucide-react';
-import { useToast } from './ui/Toast';
-import { extractErrorMessage } from './ui/errorMessage';
-import { ExtensionSidebar } from './extension/ExtensionSidebar';
-import { ExtensionChartRenderer } from './extension/ExtensionChartRenderer';
+import { useToast } from '../ui/Toast';
+import { extractErrorMessage } from '../ui/errorMessage';
+import { ExtensionSidebar } from './ExtensionSidebar';
+import { ExtensionChartRenderer } from './ExtensionChartRenderer';
 
 interface Props {
   datasetId: string;

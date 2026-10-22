@@ -5,7 +5,7 @@ import NavRail, { NAV_ENTRIES } from './NavRail';
 import CommandPalette from './CommandPalette';
 import StatusBar, { StatusProvider } from './StatusBar';
 import { useWorkspace } from './useWorkspace';
-import { PinnedDrawer } from '../common/PinnedDrawer';
+import { PinnedDrawer } from './PinnedDrawer';
 
 type Theme = 'dark' | 'light';
 type Density = 'compact' | 'comfortable';
@@ -131,14 +131,23 @@ export default function AppShell() {
             buildHref={buildHref}
           />
 
-          <main
-            className="flex-1 min-w-0 overflow-y-auto ui-scroll"
-            style={{ background: 'var(--ui-bg-app)' }}
-          >
-            <div style={{ padding: 'var(--ui-gap-4)', maxWidth: 1680, margin: '0 auto' }}>
+          {workspace.pathname.startsWith('/canvas') ? (
+            <main
+              className="flex-1 min-w-0 flex flex-col overflow-hidden relative"
+              style={{ background: 'var(--ui-bg-app)' }}
+            >
               <Outlet />
-            </div>
-          </main>
+            </main>
+          ) : (
+            <main
+              className="flex-1 min-w-0 overflow-y-auto ui-scroll"
+              style={{ background: 'var(--ui-bg-app)' }}
+            >
+              <div style={{ padding: 'var(--ui-gap-4)', maxWidth: 1680, margin: '0 auto' }}>
+                <Outlet />
+              </div>
+            </main>
+          )}
         </div>
 
         <StatusBar
