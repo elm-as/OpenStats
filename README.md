@@ -10,8 +10,8 @@
 Importez vos données, construisez vos pipelines visuellement, exécutez des requêtes SQL ultra-rapides via DuckDB, entraînez des modèles ML explicables, réalisez des simulations avancées et générez des rapports professionnels ou du code source exportable.
 
 [![Status](https://img.shields.io/badge/Status-Operational-10b981?style=for-the-badge&logo=statuspage&logoColor=white)](#)
-[![Version](https://img.shields.io/badge/Version-v1.2.0-blue?style=for-the-badge&logo=github&logoColor=white)](#)
-[![Desktop](https://img.shields.io/badge/Desktop-Windows_.exe-0078D4?style=for-the-badge&logo=windows&logoColor=white)](#)
+[![Version](https://img.shields.io/badge/Version-v1.0.0-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/elm-as/OpenStats/releases/tag/v1.0.0)
+[![Desktop](https://img.shields.io/badge/Desktop-Windows_.exe-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/elm-as/OpenStats/releases/latest)
 [![Tests](https://img.shields.io/badge/Tests-Pytest_%7C_Vitest-10b981?style=for-the-badge&logo=pytest&logoColor=white)](#)
 [![Code Quality](https://img.shields.io/badge/Max_Lines-350L_Strict-purple?style=for-the-badge)](#)
 
@@ -37,7 +37,7 @@ Importez vos données, construisez vos pipelines visuellement, exécutez des req
 - **📜 Génération de Code Source Exportable** — Exportez votre canvas nodal visuel en un clic sous forme de script Python autonome (`.py`), script R (`.R`) ou Notebook Jupyter (`.ipynb`).
 - **📊 Rapports Professionnels Multi-Formats & IA** — Génération automatique de rapports aux formats **PDF**, **DOCX (Word)** ou **PPTX (PowerPoint)** enrichis par une interprétation analytique automatisée par IA.
 - **🖥️ Application Desktop Windows Autonome** — Binaire Windows `.exe` prêt à l'emploi (Electron + PyInstaller), fonctionnant sans prérequis Node/Python sur la machine utilisateur.
-- **🔬 Analyse Méthodique & Atelier Libre** — Analyse méthodique en 11 étapes (avec boucle correction / re-diagnostic réversible) complétée par l'**Atelier statistique libre** (`/analyzer?tab=studio`) pour lancer pas-à-pas tests d'hypothèses, régressions, séries multivariées et analyses factorielles.
+- **🔬 Analyse Méthodique & Atelier Libre** — Analyse méthodique en 11 étapes (avec boucle correction / re-diagnostic réversible) complétée par l'**Atelier statistique libre** (`/analyzer?tab=studio`) intégrant désormais tests d'hypothèses, régressions (avec diagrammes en forêt `coefplot` β ± IC 95 %), séries temporelles uni/multivariées, analyses factorielles, **analyse de survie (Kaplan-Meier, Log-Rank, Cox), inférence causale (PSM + Love Plot, DiD), panel (FE/RE + Hausman), régression quantile, puissance statistique et TOST**, avec thèmes **Sombre/Clair** (palette Okabe-Ito) et exports **HD PNG (`3×`) / SVG (`1×`) / CSV / JSON**.
 - **🧭 Explorateur Adaptatif** — Recherche de résultats pilotée par ce qu'elle trouve : chaque analyse en débloque d'autres. Contrôle du taux de fausses découvertes (Benjamini-Hochberg) sur l'ensemble de la session, avec affichage du nombre réel d'hypothèses testées.
 - **🏆 Comparaison de Modèles** — 15 modèles supervisés et 6 prévisionnistes évalués par validation croisée contre une **référence naïve**, sans laquelle un score n'est pas interprétable.
 - **🧩 Marketplace Local & Auto-Pipeline Intelligent** — Catalogue de templates de pipelines réutilisables (import/export JSON) et assistant de création automatique de recettes adaptées au jeu de données.
@@ -182,8 +182,8 @@ Openstats/
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/elm-as/Stats.git
-cd Stats
+git clone https://github.com/elm-as/OpenStats.git
+cd OpenStats
 
 # 2. Configurer les variables d'environnement (optionnel)
 cp backend/.env.example backend/.env
@@ -206,6 +206,8 @@ npm run dev
 Accédez ensuite à `http://localhost:3000`.
 
 ### 🖥️ Mode Desktop (Electron + PyInstaller)
+
+Téléchargez directement l'installateur Windows prêt à l'emploi depuis [GitHub Releases (`OpenStats_Setup_v1.0.0.exe`)](https://github.com/elm-as/OpenStats/releases/latest), ou compilez localement :
 
 ```bash
 # Lancement de développement Desktop :
@@ -242,6 +244,10 @@ npx tsc -b
 # 4. Packaging de Production Vite
 cd frontend
 npm run build
+
+# 5. Charte ELMAS (<= 350 lignes) & Suite d'acceptation E2E
+python scripts/check_line_counts.py
+python scripts/run_e2e_tests.py --fast
 ```
 
 ---
