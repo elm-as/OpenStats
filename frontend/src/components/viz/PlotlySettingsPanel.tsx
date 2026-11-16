@@ -45,16 +45,19 @@ export function PlotlySettingsPanel({
   isScatterNumeric,
 }: PlotlySettingsPanelProps) {
   return (
-    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 grid grid-cols-2 md:grid-cols-4 gap-4 animate-fadeIn">
+    <div
+      className="rounded-[var(--ui-radius)] p-3.5 grid grid-cols-2 md:grid-cols-4 gap-4 animate-fadeIn"
+      style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}
+    >
       {/* Palette */}
       <div className="flex flex-col gap-1">
-        <label className="text-[10px] text-surface-400 uppercase font-semibold">
+        <label className="text-[10px] ui-t-muted uppercase font-semibold">
           Palette de couleurs
         </label>
         <select
           value={palette}
           onChange={e => setPalette(e.target.value)}
-          className="bg-surface-950 border border-white/10 rounded px-2 py-1 text-xs text-surface-200 outline-none focus:border-accent-500"
+          className="ui-select text-xs"
         >
           {Object.entries(PALETTES).map(([k, p]) => (
             <option key={k} value={k}>
@@ -66,10 +69,10 @@ export function PlotlySettingsPanel({
 
       {/* Grille */}
       <div className="flex flex-col gap-1 justify-center">
-        <label className="text-[10px] text-surface-400 uppercase font-semibold">
+        <label className="text-[10px] ui-t-muted uppercase font-semibold">
           Grille d'arrière-plan
         </label>
-        <label className="flex items-center gap-2 cursor-pointer mt-1 text-xs text-surface-300">
+        <label className="flex items-center gap-2 cursor-pointer mt-1 text-xs" style={{ color: 'var(--ui-text-secondary)' }}>
           <input
             type="checkbox"
             checked={showGrid}
@@ -82,13 +85,13 @@ export function PlotlySettingsPanel({
 
       {/* Légende */}
       <div className="flex flex-col gap-1">
-        <label className="text-[10px] text-surface-400 uppercase font-semibold">
+        <label className="text-[10px] ui-t-muted uppercase font-semibold">
           Légende
         </label>
         <select
           value={legendPos}
           onChange={e => setLegendPos(e.target.value as any)}
-          className="bg-surface-950 border border-white/10 rounded px-2 py-1 text-xs text-surface-200 outline-none focus:border-accent-500"
+          className="ui-select text-xs"
         >
           <option value="bottom">En bas</option>
           <option value="right">À droite</option>
@@ -98,10 +101,10 @@ export function PlotlySettingsPanel({
 
       {/* Data Labels */}
       <div className="flex flex-col gap-1 justify-center">
-        <label className="text-[10px] text-surface-400 uppercase font-semibold">
+        <label className="text-[10px] ui-t-muted uppercase font-semibold">
           Valeurs des points
         </label>
-        <label className="flex items-center gap-2 cursor-pointer mt-1 text-xs text-surface-300">
+        <label className="flex items-center gap-2 cursor-pointer mt-1 text-xs" style={{ color: 'var(--ui-text-secondary)' }}>
           <input
             type="checkbox"
             checked={showLabels}
@@ -163,10 +166,10 @@ export function PlotlySettingsPanel({
           {/* Droite de tendance */}
           {isScatterNumeric && (
             <div className="flex flex-col gap-1 justify-center">
-              <label className="text-[10px] text-surface-400 uppercase font-semibold">
+              <label className="text-[10px] ui-t-muted uppercase font-semibold">
                 Statistiques
               </label>
-              <label className="flex items-center gap-2 cursor-pointer mt-1 text-xs text-surface-300">
+              <label className="flex items-center gap-2 cursor-pointer mt-1 text-xs" style={{ color: 'var(--ui-text-secondary)' }}>
                 <input
                   type="checkbox"
                   checked={trendline}
@@ -181,11 +184,11 @@ export function PlotlySettingsPanel({
       )}
 
       {onResetDefaults && (
-        <div className="col-span-2 md:col-span-4 flex justify-end pt-2 border-t border-white/5">
+        <div className="col-span-2 md:col-span-4 flex justify-end pt-2" style={{ borderTop: '1px solid var(--ui-border)' }}>
           <button
             type="button"
             onClick={onResetDefaults}
-            className="text-[11px] text-surface-400 hover:text-surface-200 transition-colors underline cursor-pointer"
+            className="text-[11px] ui-t-muted hover:underline cursor-pointer"
           >
             Rétablir les paramètres par défaut
           </button>

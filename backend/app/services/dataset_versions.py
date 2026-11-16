@@ -5,6 +5,7 @@ Mixin de gestion des versions, de l'audit et des bundles d'export pour DatasetMa
 from __future__ import annotations
 
 import copy
+import math
 import os
 import pandas as pd
 from datetime import datetime, timezone
@@ -16,6 +17,29 @@ from app.models.dataset import Dataset, DatasetVersion
 from app.models.analysis import AnalysisResult
 from app.models.audit import AuditLog
 from app.services.storage_service import storage
+
+
+def _normalize_preview_value(value: Any) -> Any:
+    """Convertit une cellule DataFrame en scalaire JSON valide (NaN/Inf -> None)."""
+    try:
+        if bool(pd.isna(value)):
+            return None
+    except (TypeError, ValueError):
+        pass
+
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, pd.Timestamp):
+        return value.isoformat()
+    if hasattr(value, "item"):
+        try:
+            scalar = value.item()
+        except (TypeError, ValueError):
+            return value
+        if isinstance(scalar, float) and not math.isfinite(scalar):
+            return None
+        return scalar
+    return value
 
 
 class DatasetVersionsMixin:
@@ -264,32 +288,18 @@ class DatasetVersionsMixin:
         return results
 
     def _make_preview_records(self, df: pd.DataFrame | None, limit: int = 25) -> list[dict]:
-        """Construit un aperçu JSON-safe du dataset courant."""
+        """Alias interne conservé pour compatibilité ; délègue à `build_preview_records`."""
+        return self.build_preview_records(df, limit=limit)
+
+    def build_preview_records(self, df: pd.DataFrame | None, limit: int = 25) -> list[dict]:
+        """Construit un aperçu JSON-safe (NaN/Inf -> None, Timestamp -> ISO) du dataset."""
         if df is None or df.empty:
             return []
 
-        records: list[dict] = []
-        for row in df.head(limit).to_dict(orient="records"):
-            normalized = {}
-            for key, value in row.items():
-                try:
-                    is_missing = bool(pd.isna(value))
-                except Exception:
-                    is_missing = False
-
-                if is_missing:
-                    normalized[key] = None
-                elif isinstance(value, pd.Timestamp):
-                    normalized[key] = value.isoformat()
-                elif hasattr(value, "item"):
-                    try:
-                        normalized[key] = value.item()
-                    except Exception:
-                        normalized[key] = value
-                else:
-                    normalized[key] = value
-            records.append(normalized)
-        return records
+        return [
+            {key: _normalize_preview_value(value) for key, value in row.items()}
+            for row in df.head(limit).to_dict(orient="records")
+        ]
 
     def _get_transform_log(self, ds: Dataset) -> list:
         """Récupère le log de la dernière transformation persistée."""

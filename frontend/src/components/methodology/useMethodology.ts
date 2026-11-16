@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
+import { apiFetch } from '../../lib/apiBase';
 import type { MethodologyEvent, Remedy, Stage } from './methodologyTypes';
 
 export interface RunOptions {
@@ -25,11 +25,6 @@ export function useMethodology(datasetId: string | undefined) {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  const headers = useCallback(
-    () => ({ 'Content-Type': 'application/json', 'X-Client-Id': getAnonymousClientId() }),
-    [],
-  );
-
   const reset = useCallback(() => {
     setStages([]);
     setError(null);
@@ -53,9 +48,9 @@ export function useMethodology(datasetId: string | undefined) {
       abortRef.current = controller;
 
       try {
-        const response = await fetch(`${API_V1_BASE}/datasets/${datasetId}/methodology/stream`, {
+        const response = await apiFetch(`/datasets/${datasetId}/methodology/stream`, {
           method: 'POST',
-          headers: headers(),
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             target: options.target,
             max_iterations: options.maxIterations,
@@ -104,7 +99,7 @@ export function useMethodology(datasetId: string | undefined) {
         abortRef.current = null;
       }
     },
-    [datasetId, running, headers, reset],
+    [datasetId, running, reset],
   );
 
   /** Applique les corrections retenues et enregistre une nouvelle version. */
@@ -114,9 +109,9 @@ export function useMethodology(datasetId: string | undefined) {
       setApplying(true);
       setApplyResult(null);
       try {
-        const response = await fetch(`${API_V1_BASE}/datasets/${datasetId}/methodology/apply`, {
+        const response = await apiFetch(`/datasets/${datasetId}/methodology/apply`, {
           method: 'POST',
-          headers: headers(),
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ remedies, target, label, save_as_version: true }),
         });
         const payload = await response.json();
@@ -136,7 +131,7 @@ export function useMethodology(datasetId: string | undefined) {
         setApplying(false);
       }
     },
-    [datasetId, headers],
+    [datasetId],
   );
 
   // Colonnes du dataset : le resume de la liste ne porte qu'un decompte,
@@ -147,7 +142,7 @@ export function useMethodology(datasetId: string | undefined) {
 
     (async () => {
       try {
-        const response = await fetch(`${API_V1_BASE}/datasets/${datasetId}`, { headers: headers() });
+        const response = await apiFetch(`/datasets/${datasetId}`);
         if (!response.ok) return;
         const payload = await response.json();
         // `active_columns` est un décompte, pas une liste : les noms de colonnes
@@ -169,7 +164,7 @@ export function useMethodology(datasetId: string | undefined) {
     })();
 
     return () => { cancelled = true; };
-  }, [datasetId, headers]);
+  }, [datasetId]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 

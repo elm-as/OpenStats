@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -30,6 +30,11 @@ export default function MonteCarloDistribution({
   title = 'Distribution Monte Carlo',
   xLabel = 'Valeur simulée',
 }: Props) {
+  const theme = useCurrentTheme();
+  const isLight = theme === 'light';
+  const qColor = isLight ? '#b45309' : '#fcd34d';
+  const meanColor = isLight ? '#047857' : '#34d399';
+  const baseColor = isLight ? '#dc2626' : '#f87171';
   const { traces, layout } = useMemo(() => {
     const sorted = [...values].sort((a, b) => a - b);
     const qVals = quantiles.map(q => ({ q, v: quantile(sorted, q) }));
@@ -54,13 +59,13 @@ export default function MonteCarloDistribution({
       shapes.push({
         type: 'line', xref: 'x', yref: 'paper',
         x0: v, x1: v, y0: 0, y1: 1,
-        line: { color: '#fcd34d', width: 1.5, dash: 'dash' },
+        line: { color: qColor, width: 1.5, dash: 'dash' },
       });
       annotations.push({
         x: v, y: 1.02, xref: 'x', yref: 'paper',
         text: `Q${(q * 100).toFixed(0)}: ${v.toFixed(2)}`,
         showarrow: false,
-        font: { size: 10, color: '#fcd34d' },
+        font: { size: 10, color: qColor },
       });
     });
 
@@ -68,13 +73,13 @@ export default function MonteCarloDistribution({
       shapes.push({
         type: 'line', xref: 'x', yref: 'paper',
         x0: baseline, x1: baseline, y0: 0, y1: 1,
-        line: { color: '#f87171', width: 2 },
+        line: { color: baseColor, width: 2 },
       });
       annotations.push({
-        x: baseline, y: -0.05, xref: 'x', yref: 'paper',
+        x: baseline, y: -0.06, xref: 'x', yref: 'paper',
         text: `Baseline: ${baseline.toFixed(2)}`,
         showarrow: false,
-        font: { size: 10, color: '#f87171' },
+        font: { size: 10, color: baseColor },
       });
     }
 
@@ -82,26 +87,27 @@ export default function MonteCarloDistribution({
     shapes.push({
       type: 'line', xref: 'x', yref: 'paper',
       x0: mean, x1: mean, y0: 0, y1: 1,
-      line: { color: '#34d399', width: 1.5 },
+      line: { color: meanColor, width: 1.5 },
     });
     annotations.push({
       x: mean, y: 1.08, xref: 'x', yref: 'paper',
       text: `Moy: ${mean.toFixed(2)}`,
       showarrow: false,
-      font: { size: 10, color: '#34d399' },
+      font: { size: 10, color: meanColor },
     });
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
       xaxis: { title: { text: xLabel } },
       yaxis: { title: { text: 'Fréquence' } },
+      margin: { l: 58, r: 24, t: 54, b: 56 },
       shapes,
       annotations,
       showlegend: false,
     };
 
     return { traces: [histo], layout: lay };
-  }, [values, quantiles, baseline, title, xLabel]);
+  }, [values, quantiles, baseline, title, xLabel, qColor, meanColor, baseColor]);
 
   return <PlotlyChart data={traces} layout={layout} height={height} />;
 }

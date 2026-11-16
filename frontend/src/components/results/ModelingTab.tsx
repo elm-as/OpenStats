@@ -30,41 +30,41 @@ export function ModelingTab({
   return (
     <div className="space-y-4">
       {/* Modélisation — Présentation Générale */}
-      <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-        <h3 className="text-lg font-semibold text-surface-50 mb-4 flex items-center gap-2">
-          <Brain className="w-5 h-5 text-purple-400" />
+      <div className="ui-panel p-4">
+        <h3 className="text-lg font-semibold text-surface-100 mb-4 flex items-center gap-2">
+          <Brain className="w-5 h-5 text-accent-400" />
           Modélisation — {problemType?.replace(/_/g, ' ')}
           {target && (
             <span className="text-sm text-surface-300">
-              sur <code className="text-cyan-300 bg-cyan-500/20 px-1 rounded">{target}</code>
+              sur <code className="text-accent-400 bg-accent-500/15 px-1.5 py-0.5 rounded">{target}</code>
             </span>
           )}
         </h3>
 
         {result.best_model_key && (
-          <div className="mb-4 p-3 bg-gradient-to-r from-purple-500/20 to-transparent border border-purple-500/30 rounded-lg flex items-center justify-between">
+          <div className="mb-4 p-3 bg-accent-500/10 border border-accent-500/30 rounded-lg flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-purple-400" />
-              <span className="text-sm text-purple-300">Meilleur modèle:</span>
-              <code className="text-white font-bold bg-purple-600/40 border border-purple-400/30 px-2.5 py-1 rounded-md shadow-sm">
+              <Trophy className="w-4 h-4 text-accent-400" />
+              <span className="text-sm text-surface-300">Meilleur modèle :</span>
+              <code className="text-surface-100 font-bold bg-accent-500/20 border border-accent-500/35 px-2.5 py-1 rounded-md">
                 {bestModel.model_name || result.best_model_key}
               </code>
             </div>
             {bestModel.metrics?.r2 !== undefined && (
               <div className="flex flex-col items-end">
                 <span
-                  className={`text-sm font-mono font-bold px-2.5 py-1 rounded ${
+                  className={`text-sm font-mono ui-num font-bold px-2.5 py-1 rounded ${
                     bestModel.metrics.r2 < 0
-                      ? 'text-rose-300 bg-rose-500/20 border border-rose-500/30'
+                      ? 'text-rose-400 bg-rose-500/15 border border-rose-500/30'
                       : bestModel.metrics.r2 > 0.5
-                      ? 'text-emerald-300 bg-emerald-500/20 border border-emerald-500/30'
-                      : 'text-amber-300 bg-amber-500/20 border border-amber-500/30'
+                      ? 'text-emerald-400 bg-emerald-500/15 border border-emerald-500/30'
+                      : 'text-amber-400 bg-amber-500/15 border border-amber-500/30'
                   }`}
                 >
                   R² = {bestModel.metrics.r2.toFixed(3)}
                 </span>
                 {bestModel.metrics.r2 < 0 && (
-                  <span className="text-[10px] text-rose-300/80 mt-1 italic max-w-xs text-right">
+                  <span className="text-[10px] text-rose-400 mt-1 italic max-w-xs text-right">
                     Modèle moins performant que la moyenne (extrapolation temporelle défavorable)
                   </span>
                 )}
@@ -72,7 +72,7 @@ export function ModelingTab({
             )}
 
             {bestModel.metrics?.f1_weighted !== undefined && (
-              <span className="text-sm font-mono text-purple-300 font-bold bg-purple-500/20 px-2.5 py-1 rounded">
+              <span className="text-sm font-mono ui-num text-accent-300 font-bold bg-accent-500/15 border border-accent-500/30 px-2.5 py-1 rounded">
                 F1 Score = {(bestModel.metrics.f1_weighted * 100).toFixed(1)}%
               </span>
             )}

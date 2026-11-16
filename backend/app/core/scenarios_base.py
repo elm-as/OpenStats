@@ -84,6 +84,22 @@ def create_preset_scenarios(
     return scenarios
 
 
+def prepare_prediction_frame(df: pd.DataFrame, feature_names: list[str]) -> pd.DataFrame:
+    """Copie et impute les features sans muter `df`, en gérant numérique et catégoriel."""
+    frame = df[feature_names].copy()
+    for col in frame.columns:
+        if not frame[col].isna().any():
+            continue
+        if pd.api.types.is_numeric_dtype(frame[col]):
+            median_val = frame[col].median()
+            frame[col] = frame[col].fillna(0.0 if pd.isna(median_val) else median_val)
+            continue
+        mode_vals = frame[col].dropna().mode()
+        fill_val = mode_vals.iloc[0] if not mode_vals.empty else ""
+        frame[col] = frame[col].fillna(fill_val)
+    return frame
+
+
 def run_scenario(
     scenario_df: pd.DataFrame,
     model: Any,
@@ -91,11 +107,7 @@ def run_scenario(
     task_type: str = "regression",
 ) -> dict:
     """Exécute un modèle sur un scénario et retourne les résultats."""
-    X = scenario_df[feature_names].copy()
-
-    for col in X.columns:
-        if X[col].isna().any():
-            X[col] = X[col].fillna(X[col].median())
+    X = prepare_prediction_frame(scenario_df, feature_names)
 
     predictions = model.predict(X)
     result = {

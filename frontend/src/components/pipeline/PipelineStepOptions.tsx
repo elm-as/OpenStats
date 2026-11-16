@@ -44,8 +44,8 @@ export function PipelineStepOptions({
                     }}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border ${
                       isIncluded
-                        ? 'bg-blue-500/20 border-blue-500/40 text-blue-300'
-                        : 'bg-white/5 border-white/10 text-surface-400 hover:text-white'
+                        ? 'bg-blue-500/15 border-blue-500/40 text-blue-400'
+                        : 'bg-white/5 border-white/10 text-surface-400 hover:text-surface-100'
                     }`}
                   >
                     {m.label}
@@ -64,9 +64,9 @@ export function PipelineStepOptions({
                 <button
                   type="button"
                   onClick={() => onUpdateStepParam(stepIdx, 'cv_strategy', 'timeseries')}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
                     (step.params.cv_strategy || 'timeseries') === 'timeseries'
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
+                      ? 'bg-sky-500/15 border-sky-500/40 text-sky-400'
                       : 'bg-white/5 border-white/10 text-surface-400'
                   }`}
                 >
@@ -123,10 +123,10 @@ export function PipelineStepOptions({
                   key={h}
                   type="button"
                   onClick={() => onUpdateStepParam(stepIdx, 'forecast_steps', h)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold ui-num transition-colors border ${
                     (step.params.forecast_steps || 10) === h
-                      ? 'bg-purple-500/20 border-purple-500 text-purple-300'
-                      : 'bg-white/5 border-white/10 text-surface-400'
+                      ? 'bg-sky-500/15 border-sky-500/40 text-sky-400'
+                      : 'bg-white/5 border-white/10 text-surface-400 hover:text-surface-100'
                   }`}
                 >
                   {h} pas
@@ -156,10 +156,10 @@ export function PipelineStepOptions({
                   onClick={() =>
                     onUpdateStepParam(stepIdx, 'forced_model', m.key === 'auto' ? undefined : m.key)
                   }
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
                     (step.params.forced_model || 'auto') === m.key
-                      ? 'bg-purple-500/20 border-purple-500 text-purple-300'
-                      : 'bg-white/5 border-white/10 text-surface-400 hover:text-white'
+                      ? 'bg-sky-500/15 border-sky-500 text-sky-400'
+                      : 'bg-white/5 border-white/10 text-surface-400 hover:text-surface-100'
                   }`}
                 >
                   {m.label}

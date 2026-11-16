@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGenerateReportMutation } from '../../store/api';
 import { useAppSelector } from '../../hooks';
 import { FileText, Download, Building2, FileSpreadsheet, Code, Globe, Sparkles, Presentation as PresentationIcon, FileType, Wand2, BookOpen, AlertCircle } from 'lucide-react';
-import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
+import { apiFetch } from '../../lib/apiBase';
 
 interface Props {
   datasetId: string;
@@ -24,11 +24,9 @@ export default function ReportPanel({ datasetId }: Props) {
     setError(null);
     setProLoading(fmt);
     try {
-      const headers: HeadersInit = {};
-      // Mode anonyme (isolation par navigateur)
-      try { headers['X-Client-Id'] = getAnonymousClientId(); } catch {}
+      const headers: Record<string, string> = {};
       if (authEnabled && accessToken) headers.Authorization = `Bearer ${accessToken}`;
-      const response = await fetch(`${API_V1_BASE}/datasets/${datasetId}/report/professional/${fmt}`, {
+      const response = await apiFetch(`/datasets/${datasetId}/report/professional/${fmt}`, {
         method: 'POST',
         headers,
       });
@@ -101,14 +99,12 @@ export default function ReportPanel({ datasetId }: Props) {
     setError(null);
     setExporting(fmt);
     try {
-      const headers: HeadersInit = { 'Content-Type': 'application/json' };
-      // Mode anonyme (isolation par navigateur)
-      try { headers['X-Client-Id'] = getAnonymousClientId(); } catch {}
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (authEnabled && accessToken) {
         headers.Authorization = `Bearer ${accessToken}`;
       }
 
-      const response = await fetch(`${API_V1_BASE}/datasets/${datasetId}/export/${fmt}`, {
+      const response = await apiFetch(`/datasets/${datasetId}/export/${fmt}`, {
         method: 'POST',
         headers,
         body: JSON.stringify({

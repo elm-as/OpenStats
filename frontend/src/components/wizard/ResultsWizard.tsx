@@ -155,7 +155,7 @@ export default function ResultsWizard({
         <div className="flex items-center gap-2">
           <button
             onClick={onReset}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-surface-600 bg-surface-800 text-surface-200 hover:text-white hover:bg-surface-700 text-sm font-medium transition-colors"
+            className="ui-btn text-sm"
           >
             <RotateCcw className="w-4 h-4" />
             Nouvelle analyse
@@ -163,7 +163,7 @@ export default function ResultsWizard({
           {onLowCode && (
             <button
               onClick={onLowCode}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-accent-500/30 bg-accent-500/10 text-accent-400 hover:bg-accent-500/20 text-sm font-medium transition-colors"
+              className="ui-btn text-sm bg-accent-500/10 text-accent-400 border-accent-500/30 hover:bg-accent-500/20"
             >
               <LayoutGrid className="w-4 h-4" />
               Mode Canevas
@@ -173,7 +173,7 @@ export default function ResultsWizard({
       </div>
 
       {/* Stats summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 ui-num">
         <StatCard
           icon={CheckCircle2}
           label="Étapes réussies"
@@ -206,13 +206,13 @@ export default function ResultsWizard({
           icon={FileText}
           label="Type de problème"
           value={execution.problem_type?.replace(/_/g, ' ') ?? '—'}
-          color="text-purple-400"
-          bg="bg-purple-500/10"
+          color="text-teal-400"
+          bg="bg-teal-500/10"
         />
       </div>
 
       {/* Tab navigation */}
-      <div className="flex flex-wrap gap-1 bg-surface-800/50 p-1 rounded-lg border border-white/10">
+      <div className="ui-panel flex flex-wrap gap-1 p-1">
         {(Object.keys(TAB_META) as ResultTab[]).map(tab => {
           const meta = TAB_META[tab];
           const Icon = meta.icon;
@@ -223,11 +223,11 @@ export default function ResultsWizard({
               key={tab}
               onClick={() => hasContent && setActiveTab(tab)}
               disabled={!hasContent}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                 activeTab === tab
-                  ? `${meta.bg} ${meta.color} border border-white/10 shadow-sm`
+                  ? `${meta.bg} ${meta.color} border border-white/10`
                   : hasContent
-                  ? 'text-surface-300 hover:text-white hover:bg-white/10'
+                  ? 'text-surface-300 hover:text-surface-100 hover:bg-white/[0.04]'
                   : 'text-surface-600 cursor-not-allowed opacity-50'
               }`}
             >

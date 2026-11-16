@@ -33,47 +33,47 @@ const SEVERITY_META: Record<Severity, {
   critical: {
     icon: AlertCircle,
     iconColor: 'text-red-400',
-    ring: 'border-red-500/40',
+    ring: 'border-red-500/35',
     accent: 'bg-red-500',
     label: 'Critique',
-    pillBg: 'bg-red-100/60 border-red-500/30',
-    pillText: 'text-red-300',
+    pillBg: 'bg-red-500/15 border-red-500/30',
+    pillText: 'text-red-400',
   },
   warning: {
     icon: AlertTriangle,
     iconColor: 'text-amber-400',
-    ring: 'border-amber-500/40',
+    ring: 'border-amber-500/35',
     accent: 'bg-amber-500',
     label: 'Attention',
-    pillBg: 'bg-amber-100/50 border-amber-500/30',
-    pillText: 'text-amber-300',
+    pillBg: 'bg-amber-500/15 border-amber-500/30',
+    pillText: 'text-amber-400',
   },
   methodological: {
     icon: Lightbulb,
-    iconColor: 'text-purple-400',
-    ring: 'border-purple-500/30',
-    accent: 'bg-purple-500',
+    iconColor: 'text-teal-400',
+    ring: 'border-teal-500/35',
+    accent: 'bg-teal-500',
     label: 'Méthodo',
-    pillBg: 'bg-purple-100/50 border-purple-500/30',
-    pillText: 'text-purple-300',
+    pillBg: 'bg-teal-500/15 border-teal-500/30',
+    pillText: 'text-teal-400',
   },
   success: {
     icon: CheckCircle2,
     iconColor: 'text-emerald-400',
-    ring: 'border-emerald-500/30',
+    ring: 'border-emerald-500/35',
     accent: 'bg-emerald-500',
     label: 'Positif',
-    pillBg: 'bg-emerald-100/50 border-emerald-500/30',
-    pillText: 'text-emerald-300',
+    pillBg: 'bg-emerald-500/15 border-emerald-500/30',
+    pillText: 'text-emerald-400',
   },
   info: {
     icon: Info,
-    iconColor: 'text-blue-400',
-    ring: 'border-blue-500/30',
-    accent: 'bg-blue-500',
+    iconColor: 'text-sky-400',
+    ring: 'border-sky-500/35',
+    accent: 'bg-sky-500',
     label: 'Info',
-    pillBg: 'bg-blue-100/50 border-blue-500/30',
-    pillText: 'text-blue-300',
+    pillBg: 'bg-sky-500/15 border-sky-500/30',
+    pillText: 'text-sky-400',
   },
 };
 
@@ -97,8 +97,8 @@ function renderRichText(text: string) {
   }
   if (last < text.length) parts.push({ type: 'text', value: text.slice(last) });
   return parts.map((p, i) => {
-    if (p.type === 'bold') return <strong key={i} className="font-semibold text-gray-800">{p.value}</strong>;
-    if (p.type === 'code') return <code key={i} className="font-mono text-xs px-1.5 py-0.5 rounded bg-black/30 text-accent-300 border border-white/5">{p.value}</code>;
+    if (p.type === 'bold') return <strong key={i} className="font-semibold text-surface-100">{p.value}</strong>;
+    if (p.type === 'code') return <code key={i} className="font-mono text-xs px-1.5 py-0.5 rounded bg-surface-900/70 text-accent-400 border border-white/10">{p.value}</code>;
     return <span key={i}>{p.value}</span>;
   });
 }
@@ -111,51 +111,51 @@ function InsightCard({ insight }: { insight: Insight }) {
   const hasDetails = !!insight.suggestion || (insight.evidence && Object.keys(insight.evidence).length > 0);
 
   return (
-    <div className={`relative overflow-hidden rounded-xl border bg-surface-800/40 hover:bg-surface-800/60 transition-all ${meta.ring}`}>
+    <div className={`relative overflow-hidden rounded-lg border bg-surface-800/40 hover:bg-surface-800/60 transition-colors ${meta.ring}`}>
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${meta.accent}`} />
       <button
         onClick={() => hasDetails && setExpanded(!expanded)}
         className="w-full px-4 py-3 flex items-start gap-3 text-left"
         disabled={!hasDetails}
       >
-        <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${meta.iconColor}`} />
+        <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${meta.iconColor}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="text-sm font-semibold text-gray-800">{insight.title}</h4>
+            <h4 className="text-sm font-semibold text-surface-100">{insight.title}</h4>
             <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${meta.pillBg} ${meta.pillText}`}>
               {meta.label}
             </span>
             {insight.confidence === 'high' && (
-              <span className="text-[10px] text-gray-500" title={CONFIDENCE_LABEL[insight.confidence]}>
+              <span className="text-[10px] text-surface-400" title={CONFIDENCE_LABEL[insight.confidence]}>
                 ● Fiable
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+          <p className="text-sm text-surface-300 mt-1 leading-relaxed">
             {renderRichText(insight.message)}
           </p>
         </div>
         {hasDetails && (
-          <ChevronDown className={`w-4 h-4 mt-1 flex-shrink-0 text-gray-500 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 mt-1 flex-shrink-0 text-surface-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
         )}
       </button>
 
       {expanded && hasDetails && (
-        <div className="px-4 pb-4 pl-12 space-y-2 border-t border-white/5 pt-3 animate-fade-in">
+        <div className="px-4 pb-4 pl-11 space-y-2 border-t border-white/10 pt-3">
           {insight.suggestion && (
             <div className="flex items-start gap-2">
               <Sparkles className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-accent-400" />
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-sm text-surface-300 italic">
                 <span className="text-accent-400 font-medium not-italic">Recommandation : </span>
                 {renderRichText(insight.suggestion)}
               </p>
             </div>
           )}
           {insight.evidence && Object.keys(insight.evidence).length > 0 && (
-            <div className="text-xs text-gray-500 font-mono space-y-0.5">
+            <div className="text-xs text-surface-400 font-mono ui-num space-y-0.5">
               {Object.entries(insight.evidence).slice(0, 6).map(([k, v]) => (
                 <div key={k}>
-                  <span className="text-gray-600">{k}</span> = <span className="text-gray-400">{formatValue(v)}</span>
+                  <span className="text-surface-400">{k}</span> = <span className="text-surface-200">{formatValue(v)}</span>
                 </div>
               ))}
             </div>
@@ -202,36 +202,33 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
 
   if (isLoading) {
     return (
-      <div className="bg-surface-800/60 backdrop-blur border border-white/10 rounded-xl p-4 flex items-center gap-3">
+      <div className="ui-panel p-4 flex items-center gap-3">
         <Sparkles className="w-4 h-4 text-accent-400 animate-pulse" />
-        <span className="text-sm text-gray-400">Génération des insights…</span>
+        <span className="text-sm text-surface-400">Génération des insights…</span>
       </div>
     );
   }
 
   if (!data || insights.length === 0) {
     return (
-      <div className="bg-surface-800/40 backdrop-blur border border-white/10 rounded-xl p-4 text-sm text-gray-500 flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-gray-500" />
+      <div className="ui-panel p-4 text-sm text-surface-400 flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-surface-400" />
         Aucun insight disponible. Lancez une analyse pour générer des interprétations automatiques.
       </div>
     );
   }
 
   return (
-    <div className="bg-surface-800/60 backdrop-blur border border-white/10 rounded-xl overflow-hidden">
+    <div className="ui-panel overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 flex items-center justify-between border-b border-white/5">
+      <div className="px-4 py-3 flex items-center justify-between border-b border-white/10">
         <button onClick={() => setOpen(!open)} className="flex items-center gap-3 group">
-          <div className="relative">
-            <Sparkles className="w-5 h-5 text-accent-400" />
-            <div className="absolute inset-0 bg-accent-400 blur-md opacity-30 -z-10" />
-          </div>
+          <Sparkles className="w-4 h-4 text-accent-400" />
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-gray-800 group-hover:text-accent-300 transition-colors">
+            <h3 className="text-sm font-semibold text-surface-100 group-hover:text-accent-400 transition-colors">
               Interprétation automatique
             </h3>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-surface-400 ui-num">
               {insights.length} insight{insights.length > 1 ? 's' : ''} généré{insights.length > 1 ? 's' : ''} par l'analyseur
             </p>
           </div>
@@ -240,7 +237,7 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
         <div className="flex items-center gap-2">
           {/* Badges résumé */}
           {summary && (
-            <div className="hidden md:flex gap-1.5 text-xs">
+            <div className="hidden md:flex gap-1.5 text-xs ui-num">
               {summary.critical > 0 && (
                 <FilterBadge severity="critical" count={summary.critical} active={filter === 'critical'} onClick={() => setFilter(filter === 'critical' ? 'all' : 'critical')} />
               )}
@@ -261,13 +258,13 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
 
           <button
             onClick={() => refetch()}
-            className="p-1.5 rounded hover:bg-white/5 text-gray-500 hover:text-gray-300 transition-colors"
+            className="ui-btn ui-btn-ghost p-1.5"
             title="Régénérer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
           </button>
 
-          <button onClick={() => setOpen(!open)} className="p-1 text-gray-500 hover:text-gray-300">
+          <button onClick={() => setOpen(!open)} className="p-1 text-surface-400 hover:text-surface-200">
             <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
           </button>
         </div>
@@ -275,7 +272,7 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
 
       {/* Contenu */}
       {open && (
-        <div className="p-4 space-y-2 animate-fade-in">
+        <div className="p-4 space-y-2">
           {filter !== 'all' && (
             <button
               onClick={() => setFilter('all')}
@@ -286,7 +283,7 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
           )}
 
           {displayed.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">Aucun insight pour ce filtre.</p>
+            <p className="text-sm text-surface-400 text-center py-4">Aucun insight pour ce filtre.</p>
           )}
 
           {displayed.map((ins, i) => (
@@ -296,7 +293,7 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
           {filtered.length > initialLimit && !showAll && (
             <button
               onClick={() => setShowAll(true)}
-              className="w-full text-sm text-accent-400 hover:text-accent-300 py-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="w-full text-sm text-accent-400 hover:text-accent-300 py-2 rounded-lg hover:bg-white/[0.04] transition-colors ui-num"
             >
               Voir les {filtered.length - initialLimit} insights restants
             </button>
@@ -304,7 +301,7 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
           {showAll && filtered.length > initialLimit && (
             <button
               onClick={() => setShowAll(false)}
-              className="w-full text-sm text-gray-500 hover:text-gray-300 py-2 rounded-lg hover:bg-white/5 transition-colors"
+              className="w-full text-sm text-surface-400 hover:text-surface-200 py-2 rounded-lg hover:bg-white/[0.04] transition-colors"
             >
               Réduire
             </button>
@@ -322,7 +319,7 @@ function FilterBadge({ severity, count, active, onClick }: {
   return (
     <button
       onClick={onClick}
-      className={`px-2 py-0.5 rounded-full border transition-all ${meta.pillBg} ${meta.pillText} ${active ? 'ring-2 ring-white/20 scale-105' : 'hover:scale-105'}`}
+      className={`px-2 py-0.5 rounded border transition-colors ${meta.pillBg} ${meta.pillText} ${active ? 'ring-1 ring-current font-semibold' : 'opacity-85 hover:opacity-100'}`}
       title={`Filtrer : ${meta.label}`}
     >
       {count} {meta.label.toLowerCase()}

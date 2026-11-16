@@ -1,6 +1,5 @@
 import type { TransformRecommendation, TransformPreview } from '../../types';
-import Plot from 'react-plotly.js';
-import { DARK_TEMPLATE, DEFAULT_CONFIG } from '../viz/PlotlyBase';
+import { PlotlyChart, DEFAULT_CONFIG, useCurrentTheme } from '../viz/PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 import { Check, Eye, ArrowRight, Play } from 'lucide-react';
 
@@ -148,6 +147,10 @@ function PreviewChart({
   original: number[];
   transformed: number[];
 }) {
+  const theme = useCurrentTheme();
+  const isLight = theme === 'light';
+  const origColor = isLight ? '#64748b' : '#94a3b8';
+  const transColor = isLight ? '#0e7490' : '#22d3ee';
   const xs = original.map((_, i) => i);
   const traces: Data[] = [
     {
@@ -156,7 +159,7 @@ function PreviewChart({
       type: 'scatter',
       mode: 'lines',
       name: 'Original',
-      line: { color: '#94a3b8', width: 1.4 },
+      line: { color: origColor, width: 1.4 },
       hovertemplate: '#%{x}<br>orig: %{y:.4f}<extra></extra>',
     } as Data,
     {
@@ -165,42 +168,31 @@ function PreviewChart({
       type: 'scatter',
       mode: 'lines',
       name: 'Transformé',
-      line: { color: '#22d3ee', width: 1.6 },
+      line: { color: transColor, width: 1.6 },
       yaxis: 'y2',
       hovertemplate: '#%{x}<br>trans: %{y:.4f}<extra></extra>',
     } as Data,
   ];
   const layout: Partial<Layout> = {
-    ...DARK_TEMPLATE,
     autosize: true,
     margin: { l: 50, r: 50, t: 10, b: 35 },
     xaxis: {
-      ...DARK_TEMPLATE.xaxis,
-      title: { text: 'Index', font: { color: '#dfe3ee', size: 10 } },
+      title: { text: 'Index', font: { size: 10 } },
     },
     yaxis: {
-      ...DARK_TEMPLATE.yaxis,
-      title: { text: 'Original', font: { color: '#94a3b8', size: 10 } },
+      title: { text: 'Original', font: { color: origColor, size: 10 } },
     },
     yaxis2: {
-      title: { text: 'Transformé', font: { color: '#22d3ee', size: 10 } },
+      title: { text: 'Transformé', font: { color: transColor, size: 10 } },
       overlaying: 'y',
       side: 'right',
-      gridcolor: 'transparent',
+      showgrid: false,
       zeroline: false,
-      tickfont: { color: '#22d3ee', size: 9 },
+      tickfont: { color: transColor, size: 9 },
     },
-    legend: { orientation: 'h', y: -0.2, font: { color: '#dfe3ee' } },
+    legend: { orientation: 'h', y: -0.2 },
   };
-  return (
-    <Plot
-      data={traces}
-      layout={layout}
-      config={DEFAULT_CONFIG}
-      style={{ width: '100%', height: 220 }}
-      useResizeHandler
-    />
-  );
+  return <PlotlyChart data={traces} layout={layout} config={DEFAULT_CONFIG} height={220} />;
 }
 
 function StatsRow({

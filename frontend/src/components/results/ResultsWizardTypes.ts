@@ -28,10 +28,10 @@ export const TAB_META: Record<
   overview: { label: "Vue d'ensemble", icon: LayoutGrid, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
   cleaning: { label: 'Nettoyage', icon: Filter, color: 'text-blue-400', bg: 'bg-blue-500/10' },
   descriptive: { label: 'Statistiques', icon: BarChart3, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  correlations: { label: 'Corrélations', icon: TrendingUp, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+  correlations: { label: 'Corrélations', icon: TrendingUp, color: 'text-sky-400', bg: 'bg-sky-500/10' },
   transforms: { label: 'Transformations', icon: Zap, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  modeling: { label: 'Modélisation', icon: Brain, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  shap: { label: 'Explicabilité', icon: Sparkles, color: 'text-pink-400', bg: 'bg-pink-500/10' },
+  modeling: { label: 'Modélisation', icon: Brain, color: 'text-teal-400', bg: 'bg-teal-500/10' },
+  shap: { label: 'Explicabilité', icon: Sparkles, color: 'text-accent-400', bg: 'bg-accent-500/10' },
   insights: { label: 'Insights IA', icon: Activity, color: 'text-rose-400', bg: 'bg-rose-500/10' },
   report: { label: 'Rapport', icon: FileText, color: 'text-orange-400', bg: 'bg-orange-500/10' },
 };

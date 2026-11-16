@@ -35,31 +35,31 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="absolute top-4 left-[calc(16rem+1rem)] z-30 px-4 py-2.5 rounded-xl font-bold text-xs border border-white/[0.08] bg-surface-900/80 backdrop-blur-md hover:bg-surface-800 text-surface-200 hover:text-white transition-all flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+        className="ui-btn ui-panel absolute top-4 left-[calc(16rem+1rem)] z-30 px-3.5 py-2 font-semibold text-xs shadow-md flex items-center gap-2"
       >
-        <LayoutTemplate size={15} />
+        <LayoutTemplate size={15} className="text-accent-400" />
         <span>Nouveau depuis un Template</span>
       </button>
 
       {/* Modal Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+            className="absolute inset-0 bg-black/70"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Modal */}
-          <div className="relative z-10 w-[680px] max-h-[85vh] bg-surface-900 border border-white/[0.1] rounded-3xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden animate-scale-in">
+          <div className="ui-panel relative z-10 w-[680px] max-h-[85vh] rounded-xl shadow-2xl overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-7 py-5 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent-500/20 to-purple-500/20 flex items-center justify-center">
-                  <Sparkles size={20} className="text-accent-400" />
+                <div className="w-9 h-9 rounded-lg bg-accent-500/15 border border-accent-500/25 flex items-center justify-center">
+                  <Sparkles size={18} className="text-accent-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-surface-50 tracking-tight">
+                  <h2 className="text-base font-bold text-surface-100 tracking-tight">
                     Nouveau depuis un Template
                   </h2>
                   <p className="text-xs text-surface-400 mt-0.5">
@@ -69,14 +69,14 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-surface-400 hover:text-white p-2 rounded-xl hover:bg-white/[0.06] transition-colors"
+                className="text-surface-400 hover:text-surface-100 p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             {/* Template List */}
-            <div className="p-5 space-y-3 overflow-y-auto max-h-[calc(85vh-100px)] custom-scrollbar">
+            <div className="p-5 space-y-2.5 overflow-y-auto max-h-[calc(85vh-92px)] ui-scroll">
               {allTemplates.map((template) => (
                 <div
                   key={template.id}
@@ -86,36 +86,29 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
                   onKeyDown={(e) => e.key === 'Enter' && handleSelect(template)}
                   onMouseEnter={() => setHoveredId(template.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 group relative overflow-hidden cursor-pointer ${
+                  className={`w-full text-left p-4 rounded-xl border transition-colors group relative cursor-pointer ${
                     hoveredId === template.id
-                      ? 'border-accent-500/40 bg-accent-500/[0.04] shadow-[0_0_30px_rgba(56,189,248,0.08)]'
-                      : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]'
+                      ? 'border-accent-500/45 bg-accent-500/[0.06]'
+                      : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14]'
                   }`}
                 >
-                  {/* Subtle gradient on hover */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-r from-accent-500/[0.03] to-purple-500/[0.03] transition-opacity duration-300 ${
-                      hoveredId === template.id ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  />
-
                   <div className="relative flex items-start gap-4">
                     {/* Icon */}
-                    <div className="text-3xl shrink-0 mt-0.5">
+                    <div className="text-2xl shrink-0 mt-0.5">
                       {template.icon}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-bold text-surface-100 text-sm group-hover:text-white transition-colors">
+                        <h3 className="font-bold text-surface-100 text-sm">
                           {template.name}
                         </h3>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="text-xs text-surface-400 font-medium">
                             Utiliser ce modèle
                           </div>
-                          <ChevronRight size={16} className="text-accent-400 group-hover:translate-x-1 transition-transform" />
+                          <ChevronRight size={16} className="text-accent-400" />
                         </div>
                       </div>
                       <p className="text-xs text-surface-400 leading-relaxed pr-8">

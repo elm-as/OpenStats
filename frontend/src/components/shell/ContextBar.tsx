@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Database, ChevronDown, Search, Check, Upload, Command, Sun, Moon,
-  Rows3, Rows4, RefreshCw, Monitor,
+  Rows3, Rows4, RefreshCw, Monitor, Bookmark,
 } from 'lucide-react';
 import logoOS from '../../assets/logoOS.png';
 import type { DatasetSummary } from '../../types';
@@ -18,6 +18,8 @@ interface Props {
   onToggleTheme: () => void;
   density: 'compact' | 'comfortable';
   onToggleDensity: () => void;
+  pinnedCount?: number;
+  onTogglePinned?: () => void;
 }
 
 /**
@@ -28,7 +30,7 @@ interface Props {
  */
 export default function ContextBar({
   datasets, active, isFetching, onSelect, onRefresh, onOpenPalette,
-  theme, onToggleTheme, density, onToggleDensity,
+  theme, onToggleTheme, density, onToggleDensity, pinnedCount = 0, onTogglePinned,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -229,6 +231,25 @@ export default function ContextBar({
       >
         {theme === 'dark' ? <Sun className="w-[13px] h-[13px]" /> : <Moon className="w-[13px] h-[13px]" />}
       </button>
+
+      {onTogglePinned && (
+        <button
+          onClick={onTogglePinned}
+          className="ui-btn ui-btn-ghost ui-focusable px-2"
+          style={{
+            color: pinnedCount > 0 ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
+            background: pinnedCount > 0 ? 'var(--ui-accent-soft)' : 'transparent',
+          }}
+          title="Ouvrir le carnet de bord de l’analyste"
+          aria-label="Carnet de bord de l’analyste"
+        >
+          <Bookmark className="w-[13px] h-[13px]" />
+          <span className="hidden md:inline">Bloc-notes</span>
+          {pinnedCount > 0 && (
+            <span className="ui-tag ui-tag-accent ui-num px-1">{pinnedCount}</span>
+          )}
+        </button>
+      )}
 
       <span
         className="ui-tag ui-tag-success hidden xl:inline-flex mr-1"

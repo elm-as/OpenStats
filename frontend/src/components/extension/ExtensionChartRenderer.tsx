@@ -1,6 +1,5 @@
 import React from 'react';
-import Plot from 'react-plotly.js';
-import { DARK_TEMPLATE, DEFAULT_CONFIG, SCI_COLORS } from '../viz/PlotlyBase';
+import { PlotlyChart, DEFAULT_CONFIG, SCI_COLORS } from '../viz/PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 import { Layout as LayoutIcon } from 'lucide-react';
 
@@ -16,7 +15,6 @@ export function ExtensionChartRenderer({ chart, index }: ExtensionChartRendererP
   const seriesKeys = Object.keys(data[0] || {}).filter(k => k !== xKey);
   const traces: Data[] = [];
   let layout: Partial<Layout> = {
-    ...DARK_TEMPLATE,
     autosize: true,
     margin: { l: 50, r: 20, t: 10, b: 60 },
   };
@@ -57,7 +55,7 @@ export function ExtensionChartRenderer({ chart, index }: ExtensionChartRendererP
       textinfo: 'label+percent',
       hovertemplate: '<b>%{label}</b><br>%{value} (%{percent})<extra></extra>',
     } as Data);
-    layout = { ...DARK_TEMPLATE, autosize: true, margin: { l: 20, r: 20, t: 10, b: 20 } };
+    layout = { autosize: true, margin: { l: 20, r: 20, t: 10, b: 20 } };
   } else if (chart.type === 'scatter') {
     traces.push({
       x: data.map((d: any) => d[xKey]),
@@ -91,26 +89,18 @@ export function ExtensionChartRenderer({ chart, index }: ExtensionChartRendererP
 
   if (chart.type !== 'pie') {
     layout.xaxis = {
-      ...DARK_TEMPLATE.xaxis,
-      title: { text: xKey, font: { color: '#dfe3ee' } },
+      title: { text: xKey },
     };
-    layout.yaxis = { ...DARK_TEMPLATE.yaxis };
   }
-  layout.legend = { orientation: 'h', y: -0.2, font: { color: '#dfe3ee' } };
+  layout.legend = { orientation: 'h', y: -0.2 };
 
   return (
-    <div key={index} className="card bg-white/5 border-white/10 p-4 space-y-4">
-      <h4 className="text-sm font-bold text-surface-200 flex items-center gap-2">
+    <div key={index} className="ui-panel p-4 space-y-4">
+      <h4 className="text-sm font-bold flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
         <LayoutIcon className="w-4 h-4 text-accent-400" />
         {chart.title || `Graphique ${index + 1}`}
       </h4>
-      <Plot
-        data={traces}
-        layout={layout}
-        config={DEFAULT_CONFIG}
-        style={{ width: '100%', height: 300 }}
-        useResizeHandler
-      />
+      <PlotlyChart data={traces} layout={layout} config={DEFAULT_CONFIG} height={300} />
     </div>
   );
 }

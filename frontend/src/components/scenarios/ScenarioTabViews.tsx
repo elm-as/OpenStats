@@ -1,8 +1,7 @@
 import React from 'react';
 import { Badge, Stat, StatGrid } from '../ui';
 import { MonteCarloDistribution } from '../viz';
-import Plot from 'react-plotly.js';
-import { DARK_TEMPLATE, DEFAULT_CONFIG, SCI_COLORS } from '../viz/PlotlyBase';
+import { PlotlyChart, DEFAULT_CONFIG, SCI_COLORS, useCurrentTheme } from '../viz/PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 export function SensitivityCurve({
@@ -12,6 +11,8 @@ export function SensitivityCurve({
   analysis: any;
   colorIdx: number;
 }) {
+  const theme = useCurrentTheme();
+  const guideColor = theme === 'light' ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.3)';
   const color = SCI_COLORS[colorIdx % SCI_COLORS.length];
   const traces: Data[] = [
     {
@@ -27,16 +28,13 @@ export function SensitivityCurve({
   ];
 
   const layout: Partial<Layout> = {
-    ...DARK_TEMPLATE,
     autosize: true,
     margin: { l: 50, r: 15, t: 10, b: 35 },
     xaxis: {
-      ...DARK_TEMPLATE.xaxis,
-      title: { text: analysis.variable, font: { color: '#dfe3ee', size: 10 } },
+      title: { text: analysis.variable, font: { size: 10 } },
     },
     yaxis: {
-      ...DARK_TEMPLATE.yaxis,
-      title: { text: 'Prédiction', font: { color: '#dfe3ee', size: 10 } },
+      title: { text: 'Prédiction', font: { size: 10 } },
     },
     showlegend: false,
     shapes: [
@@ -48,13 +46,16 @@ export function SensitivityCurve({
         x1: analysis.base_mean,
         y0: 0,
         y1: 1,
-        line: { color: 'rgba(255,255,255,0.3)', width: 1, dash: 'dot' },
+        line: { color: guideColor, width: 1, dash: 'dot' },
       },
     ],
   };
 
   return (
-    <div className="rounded-lg p-3 bg-white/[0.02] border border-white/8">
+    <div
+      className="rounded-[var(--ui-radius)] p-3"
+      style={{ background: 'var(--ui-bg-panel)', border: '1px solid var(--ui-border)' }}
+    >
       <div className="flex items-center justify-between mb-2">
         <span className="font-medium text-sm text-strong">{analysis.variable}</span>
         {analysis.elasticity !== null && (
@@ -65,13 +66,7 @@ export function SensitivityCurve({
         <span>μ = {analysis.base_mean.toFixed(3)}</span>
         <span>σ = {analysis.base_std.toFixed(3)}</span>
       </div>
-      <Plot
-        data={traces}
-        layout={layout}
-        config={DEFAULT_CONFIG}
-        style={{ width: '100%', height: 180 }}
-        useResizeHandler
-      />
+      <PlotlyChart data={traces} layout={layout} config={DEFAULT_CONFIG} height={180} />
     </div>
   );
 }

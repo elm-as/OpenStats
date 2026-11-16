@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ANALYSES_DATA,
@@ -7,20 +7,7 @@ import {
 } from '../docs/analysesData';
 import { AnalysisDocDetail } from '../components/docs/AnalysisDocDetail';
 import {
-  Search,
-  BookOpen,
-  Target,
-  Sparkles,
-  ArrowRight,
-  Filter,
-  Layers,
-  ChevronRight,
-  HelpCircle,
-  Upload,
-  Cpu,
-  BarChart3,
-  Award,
-  Zap,
+  Search, BookOpen, ArrowRight, ChevronRight, HelpCircle, Upload,
 } from 'lucide-react';
 
 export default function DocsPage() {
@@ -28,99 +15,81 @@ export default function DocsPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisDoc | null>(null);
 
-  // Filter analyses based on category and search query
   const filteredAnalyses = useMemo(() => {
     return ANALYSES_DATA.filter((item) => {
-      if (selectedCategory !== 'all' && item.category !== selectedCategory) {
-        return false;
-      }
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        return (
-          item.title.toLowerCase().includes(q) ||
-          item.summary.toLowerCase().includes(q) ||
-          item.useCase.toLowerCase().includes(q) ||
-          item.categoryLabel.toLowerCase().includes(q) ||
-          item.interpretationGuide.some(
-            (g) => g.metric.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q)
-          )
-        );
-      }
-      return true;
+      if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.summary.toLowerCase().includes(q) ||
+        item.useCase.toLowerCase().includes(q) ||
+        item.categoryLabel.toLowerCase().includes(q) ||
+        item.interpretationGuide.some(
+          (g) => g.metric.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q)
+        )
+      );
     });
   }, [selectedCategory, searchQuery]);
 
   return (
-    <div className="space-y-8 animate-fade-in pb-16">
-      {/* ─── Hero Banner ─── */}
-      <section className="relative overflow-hidden rounded-2xl bg-surface-900 border border-white/10 shadow-xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 px-6 py-8 md:px-10 md:py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="max-w-2xl space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-500/10 text-accent-400 text-[11px] font-black uppercase tracking-wider border border-accent-500/20">
-              <Sparkles className="w-3.5 h-3.5 text-accent-400" /> Documentation & Formules Mathématiques
-            </div>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-tight">
-              Encyclopédie des Analyses Statistiques & IA
-            </h1>
-            <p className="text-surface-300 text-xs md:text-sm leading-relaxed">
-              Consultez les <strong>explications théoriques</strong>, les <strong>vraies formules mathématiques</strong> et les <strong>guides d'interprétation</strong> des p-values, R², VIF et métriques de chaque test.
-            </p>
-          </div>
-
-          <Link to="/workflow" className="btn-primary shrink-0">
-            <Upload className="w-4 h-4" />
-            Lancer une Analyse
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+    <div className="space-y-5 animate-fade-in pb-12">
+      <section className="ui-panel p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="max-w-2xl space-y-1.5">
+          <span className="ui-tag ui-tag-accent">Référence Méthodologique &amp; Formules</span>
+          <h1 className="text-xl md:text-2xl font-bold ui-t tracking-tight">
+            Manuel des Méthodes Statistiques
+          </h1>
+          <p className="text-xs ui-t-muted leading-relaxed">
+            Hypothèses d’application, équations exactes et règles d’interprétation (p-values, R², VIF, stationnarité, SHAP).
+          </p>
         </div>
+
+        <Link to="/workflow" className="ui-btn ui-btn-primary ui-focusable shrink-0">
+          <Upload className="w-3.5 h-3.5" />
+          Importer des données
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </section>
 
-      {/* ─── Detailed View Modal/Panel or Main Section ─── */}
       {selectedAnalysis ? (
-        <AnalysisDocDetail
-          analysis={selectedAnalysis}
-          onBack={() => setSelectedAnalysis(null)}
-        />
+        <AnalysisDocDetail analysis={selectedAnalysis} onBack={() => setSelectedAnalysis(null)} />
       ) : (
-        <div className="space-y-6">
-          {/* Search & Category Filter Bar */}
-          <div className="card space-y-4">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-              {/* Search Bar */}
+        <div className="space-y-4">
+          <div className="ui-panel p-3.5 space-y-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 ui-t-faint absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher une analyse, p-value, ANOVA, SHAP, VIF, ARIMA..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-900 border border-white/10 text-xs font-medium text-white placeholder:text-muted outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 transition-all shadow-inner"
+                  placeholder="Rechercher : Student, ANOVA, VIF, ARIMA, SHAP, Kruskal-Wallis…"
+                  className="ui-input w-full"
+                  style={{ paddingLeft: 32 }}
                 />
               </div>
 
-              {/* Counter Badge */}
-              <div className="flex items-center gap-2 text-xs font-bold text-muted self-end md:self-auto">
-                <BookOpen className="w-4 h-4 text-accent-400" />
-                <span>
-                  {filteredAnalyses.length} fiche{filteredAnalyses.length > 1 ? 's' : ''} disponible{filteredAnalyses.length > 1 ? 's' : ''}
-                </span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold ui-t-muted shrink-0">
+                <BookOpen className="w-3.5 h-3.5 ui-t-accent" />
+                <span className="ui-num">{filteredAnalyses.length}</span>
+                <span>fiche{filteredAnalyses.length > 1 ? 's' : ''}</span>
               </div>
             </div>
 
-            {/* Category Filter Chips */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2 border-t border-white/5">
+            <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-[var(--ui-border)]">
               {ANALYSES_CATEGORIES.map((cat) => {
                 const isSelected = selectedCategory === cat.id;
                 return (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 active:scale-95 border ${
-                      isSelected
-                        ? 'bg-accent-500 text-white border-accent-500 shadow-md font-black'
-                        : 'bg-white/[0.03] text-muted border-white/10 hover:bg-white/[0.06] hover:text-white'
-                    }`}
+                    className="ui-btn ui-focusable shrink-0"
+                    style={{
+                      background: isSelected ? 'var(--ui-accent-soft)' : 'transparent',
+                      borderColor: isSelected ? 'var(--ui-border-focus)' : 'var(--ui-border)',
+                      color: isSelected ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
+                    }}
                   >
                     {cat.label}
                   </button>
@@ -129,54 +98,43 @@ export default function DocsPage() {
             </div>
           </div>
 
-          {/* ─── Grid of Analyses ─── */}
           {filteredAnalyses.length === 0 ? (
-            <div className="card text-center py-16 space-y-3">
-              <HelpCircle className="w-10 h-10 text-muted mx-auto" />
-              <h3 className="text-sm font-bold text-white">Aucune analyse ne correspond à votre recherche</h3>
-              <p className="text-xs text-muted max-w-sm mx-auto">
-                Essayez d'autres mots-clés comme "t-test", "régression", "p-value" ou "clustering".
+            <div className="ui-panel text-center py-12 space-y-3">
+              <HelpCircle className="w-8 h-8 ui-t-faint mx-auto" />
+              <h3 className="text-sm font-bold ui-t">Aucune fiche ne correspond à votre recherche</h3>
+              <p className="text-xs ui-t-muted max-w-sm mx-auto">
+                Essayez « t-test », « régression », « p-value » ou « clustering ».
               </p>
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                }}
-                className="btn-secondary text-xs"
+                onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
+                className="ui-btn ui-focusable"
               >
-                Réinitialiser la recherche
+                Réinitialiser les filtres
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredAnalyses.map((item) => (
-                <div
+                <button
                   key={item.id}
+                  type="button"
                   onClick={() => setSelectedAnalysis(item)}
-                  className="card group hover:border-accent-500/50 transition-all duration-200 cursor-pointer flex flex-col justify-between p-5 space-y-4 hover:shadow-xl hover:-translate-y-0.5 relative overflow-hidden bg-surface-900/60 border-white/10"
+                  className="ui-panel text-left group p-4 flex flex-col justify-between space-y-3 transition-colors hover:border-[var(--ui-border-strong)] ui-focusable"
                 >
-                  <div className="space-y-3">
+                  <div className="space-y-2 w-full">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-accent-500/10 text-accent-400 border border-accent-500/20">
-                        {item.categoryLabel}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-muted group-hover:text-accent-400 group-hover:translate-x-1 transition-all" />
+                      <span className="ui-tag ui-tag-accent">{item.categoryLabel}</span>
+                      <ChevronRight className="w-3.5 h-3.5 ui-t-faint group-hover:ui-t-accent transition-colors" />
                     </div>
-
-                    <h3 className="text-base font-black text-white group-hover:text-accent-300 transition-colors leading-snug">
-                      {item.title}
-                    </h3>
-
-                    <p className="text-xs text-surface-400 leading-relaxed line-clamp-3">
-                      {item.summary}
-                    </p>
+                    <h3 className="text-sm font-bold ui-t leading-snug">{item.title}</h3>
+                    <p className="text-xs ui-t-muted leading-relaxed line-clamp-3">{item.summary}</p>
                   </div>
 
-                  <div className="pt-2 flex items-center justify-between text-[11px] font-bold text-accent-400/80 group-hover:text-accent-300 transition-colors">
-                    <span>Consulter le cours</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  <div className="pt-2 border-t border-[var(--ui-border)] w-full flex items-center justify-between text-[11px] font-semibold ui-t-accent">
+                    <span>Ouvrir la fiche</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

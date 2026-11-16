@@ -1,6 +1,7 @@
 import React from 'react';
 import { Grid3x3, Scale, Layers } from 'lucide-react';
 import { Section, KpiCard, DataTable } from './ResultAtoms';
+import { PlotlyChart } from '../../viz/PlotlyBase';
 
 /**
  * Résultat d'une estimation de panel.
@@ -15,9 +16,11 @@ export const PanelResultView = ({ resultData }: { resultData: any }) => {
   const re = resultData.random_effects || {};
   const prefereFE = Boolean(hausman.prefer_fixed_effects);
   const retenu = prefereFE ? fe : re;
+  const coefs = (retenu.coefficients || []) as any[];
+  const sortedCoefs = [...coefs].reverse();
 
   const entetes = ['Variable', 'Coefficient', 'Erreur type', 't / z', 'p-valeur', 'Significatif'];
-  const lignesCoefficients = (retenu.coefficients || []).map((c: any) => [
+  const lignesCoefficients = coefs.map((c: any) => [
     c.variable,
     c.coefficient,
     c.std_error,
@@ -31,48 +34,93 @@ export const PanelResultView = ({ resultData }: { resultData: any }) => {
       <Section
         title={`Économétrie de panel — ${resultData.target_column || ''}`}
         icon={Grid3x3}
-        color="#f97316"
+        color="#d97706"
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard label="Entités" value={resultData.n_entities} color="#f97316" />
-          <KpiCard label="Observations" value={resultData.n_observations} color="#8b5cf6" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
+          <KpiCard label="Entités" value={resultData.n_entities} color="#d97706" />
+          <KpiCard label="Observations" value={resultData.n_observations} color="#0284c7" />
           <KpiCard
             label="Panel cylindré"
             value={resultData.is_balanced ? 'oui' : 'non'}
-            color="#10b981"
+            color="#059669"
           />
-          <KpiCard label="R² within" value={fe.r2_within} color="#06b6d4" />
+          <KpiCard label="R² within" value={fe.r2_within} color="#0d9488" />
         </div>
-        <p className="text-[11px] text-surface-400 mt-3 leading-relaxed">
-          Entité : <span className="text-surface-200">{resultData.entity_column}</span> · Période :{' '}
-          <span className="text-surface-200">{resultData.time_column}</span>
+        <p className="text-[11px] text-[var(--ui-text-muted)] mt-3 leading-relaxed">
+          Entité : <span className="text-[var(--ui-text-primary)] font-medium">{resultData.entity_column}</span> · Période :{' '}
+          <span className="text-[var(--ui-text-primary)] font-medium">{resultData.time_column}</span>
         </p>
       </Section>
 
-      <Section title="Test de Hausman" icon={Scale} color="#06b6d4">
-        <div className="grid grid-cols-3 gap-3">
-          <KpiCard label="χ²" value={hausman.statistic} color="#06b6d4" />
-          <KpiCard label="p-valeur" value={hausman.p_value} color="#ef4444" />
+      <Section title="Test de Hausman" icon={Scale} color="#0284c7">
+        <div className="grid grid-cols-3 gap-3 ui-num">
+          <KpiCard label="χ²" value={hausman.statistic} color="#0284c7" />
+          <KpiCard label="p-valeur" value={hausman.p_value} color="#dc2626" />
           <KpiCard
             label="Modèle retenu"
             value={prefereFE ? 'Effets fixes' : 'Effets aléatoires'}
-            color="#10b981"
+            color="#059669"
           />
         </div>
         {hausman.conclusion && (
-          <p className="text-[11px] text-surface-300 mt-3 leading-relaxed">{hausman.conclusion}</p>
+          <p className="text-[11px] text-[var(--ui-text-secondary)] mt-3 leading-relaxed">{hausman.conclusion}</p>
         )}
       </Section>
 
       <Section
         title={`Coefficients — ${prefereFE ? 'effets fixes (within)' : 'effets aléatoires (GLS)'}`}
         icon={Layers}
-        color="#8b5cf6"
+        color="#0284c7"
       >
+        {sortedCoefs.length > 0 && (
+          <div className="mb-4">
+            <PlotlyChart
+              data={[
+                {
+                  type: 'scatter',
+                  mode: 'markers',
+                  name: 'Coefficient ± IC 95%',
+                  x: sortedCoefs.map((c: any) => Number(c.coefficient ?? 0)),
+                  y: sortedCoefs.map((c: any) => c.variable),
+                  error_x: {
+                    type: 'data',
+                    array: sortedCoefs.map((c: any) => 1.96 * Math.abs(Number(c.std_error ?? 0))),
+                    visible: true,
+                    color: '#94a3b8',
+                    thickness: 1.5,
+                  },
+                  marker: {
+                    size: 9,
+                    color: sortedCoefs.map((c: any) =>
+                      !c.significant ? '#64748b' : Number(c.coefficient) >= 0 ? '#059669' : '#dc2626'
+                    ),
+                  },
+                },
+              ]}
+              layout={{
+                title: { text: 'Diagramme des coefficients (β ± IC 95%)', font: { size: 13 } },
+                xaxis: { title: { text: 'Coefficient estimé' }, zeroline: true },
+                yaxis: { automargin: true },
+                showlegend: false,
+                shapes: [
+                  {
+                    type: 'line',
+                    x0: 0,
+                    x1: 0,
+                    y0: -0.5,
+                    y1: Math.max(0.5, sortedCoefs.length - 0.5),
+                    line: { color: '#94a3b8', width: 1, dash: 'dash' },
+                  },
+                ],
+              }}
+              height={Math.max(240, sortedCoefs.length * 34 + 100)}
+            />
+          </div>
+        )}
         {lignesCoefficients.length > 0 ? (
           <DataTable headers={entetes} rows={lignesCoefficients} />
         ) : (
-          <p className="text-[11px] text-surface-400">Aucun coefficient estimé.</p>
+          <p className="text-[11px] text-[var(--ui-text-muted)]">Aucun coefficient estimé.</p>
         )}
       </Section>
     </div>

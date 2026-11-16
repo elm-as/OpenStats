@@ -23,17 +23,17 @@ export function PipelineStepper({
   const ProblemIcon = problemMeta.icon;
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-surface-900 via-surface-900/90 to-surface-950 border border-white/10 shadow-2xl backdrop-blur-xl">
+    <div className="ui-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
       <div className="flex items-center gap-3.5">
-        <div className="w-12 h-12 rounded-2xl bg-accent-500/10 border border-accent-500/30 flex items-center justify-center shadow-inner">
-          <ProblemIcon className="w-6 h-6 text-accent-400" />
+        <div className="w-10 h-10 rounded-lg bg-accent-500/10 border border-accent-500/30 flex items-center justify-center">
+          <ProblemIcon className="w-5 h-5 text-accent-400" />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-white tracking-tight">
+            <h2 className="text-base font-bold text-surface-100 tracking-tight">
               Pipeline Automatique & Économétrique
             </h2>
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-accent-500/20 text-accent-300 border border-accent-500/30">
+            <span className="ui-tag ui-tag-accent text-[10px] font-bold uppercase tracking-wider">
               Interactif
             </span>
           </div>
@@ -44,37 +44,31 @@ export function PipelineStepper({
       </div>
 
       {/* Stepper Tabs */}
-      <div className="flex items-center bg-black/40 p-1.5 rounded-xl border border-white/10">
+      <div className="flex items-center bg-surface-800/50 p-1 rounded-lg border border-white/10">
         <button
           onClick={() => setWorkflowStage('configure')}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-            workflowStage === 'configure'
-              ? 'bg-accent-500 text-surface-950 shadow-md shadow-accent-500/20'
-              : 'text-surface-400 hover:text-white hover:bg-white/5'
+          className={`ui-btn text-xs font-semibold ${
+            workflowStage === 'configure' ? 'ui-btn-primary' : 'ui-btn-ghost'
           }`}
         >
           <span>1. Configuration</span>
         </button>
-        <ChevronRight className="w-3.5 h-3.5 text-surface-600 mx-0.5" />
+        <ChevronRight className="w-3.5 h-3.5 text-surface-500 mx-0.5" />
         <button
           onClick={onGenerateIfNeeded}
-          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-            workflowStage === 'pipeline'
-              ? 'bg-accent-500 text-surface-950 shadow-md shadow-accent-500/20'
-              : 'text-surface-400 hover:text-white hover:bg-white/5'
+          className={`ui-btn text-xs font-semibold ui-num ${
+            workflowStage === 'pipeline' ? 'ui-btn-primary' : 'ui-btn-ghost'
           }`}
         >
           <span>2. Éditeur ({activeStepsCount})</span>
         </button>
         {executed && (
           <>
-            <ChevronRight className="w-3.5 h-3.5 text-surface-600 mx-0.5" />
+            <ChevronRight className="w-3.5 h-3.5 text-surface-500 mx-0.5" />
             <button
               onClick={() => setWorkflowStage('results')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                workflowStage === 'results'
-                  ? 'bg-accent-500 text-surface-950 shadow-md shadow-accent-500/20'
-                  : 'text-surface-400 hover:text-white hover:bg-white/5'
+              className={`ui-btn text-xs font-semibold ${
+                workflowStage === 'results' ? 'ui-btn-primary' : 'ui-btn-ghost'
               }`}
             >
               <span>3. Résultats</span>

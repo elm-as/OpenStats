@@ -152,7 +152,7 @@ export function SqlNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
               onClick={() => setActiveTab('snippets')}
               className={`flex-1 text-[11px] font-semibold py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                 activeTab === 'snippets'
-                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
+                  ? 'bg-sky-500/15 text-sky-400 border border-sky-500/35 shadow-sm'
                   : 'text-surface-400 hover:text-surface-200'
               }`}
             >

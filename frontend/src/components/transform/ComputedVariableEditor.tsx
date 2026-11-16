@@ -51,9 +51,9 @@ export default function ComputedVariableEditor({ datasetId, columns, onComputed 
   };
 
   return (
-    <div className="card mt-4 border border-indigo-200">
-      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
-        <Calculator className="w-5 h-5 text-indigo-600" />
+    <div className="ui-panel p-5 mt-4 border border-accent-500/25">
+      <h3 className="text-base font-bold text-surface-100 flex items-center gap-2 mb-4">
+        <Calculator className="w-4 h-4 text-accent-400" />
         Calculer une nouvelle variable
       </h3>
 
@@ -166,7 +166,7 @@ export default function ComputedVariableEditor({ datasetId, columns, onComputed 
                 <button
                   key={col}
                   onClick={() => insertAtCursor(insertText)}
-                  className="w-full text-left px-2 py-1.5 bg-white border border-gray-200 rounded text-xs font-mono truncate hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-all"
+                  className="w-full text-left px-2 py-1.5 bg-surface-900/50 border border-white/10 rounded text-xs font-mono text-surface-200 truncate hover:bg-accent-500/15 hover:text-accent-400 hover:border-accent-500/30 transition-colors"
                   title={`Insérer ${col}`}
                 >
                   {col}

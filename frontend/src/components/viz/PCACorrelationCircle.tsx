@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart, SCI_COLORS } from './PlotlyBase';
+import { PlotlyChart, SCI_COLORS, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -23,6 +23,10 @@ export default function PCACorrelationCircle({
   title = 'Cercle des corrélations',
 }: Props) {
   const [pcX, pcY] = axes;
+  const theme = useCurrentTheme();
+  const isLight = theme === 'light';
+  const textColor = isLight ? '#0f172a' : '#dfe3ee';
+  const circleGuideColor = isLight ? 'rgba(15,23,42,0.22)' : 'rgba(255,255,255,0.22)';
 
   const extractCoord = (v: number[] | Record<string, number>, idx: number): number => {
     if (Array.isArray(v)) return v[idx] ?? 0;
@@ -44,7 +48,7 @@ export default function PCACorrelationCircle({
       y: cy,
       mode: 'lines',
       type: 'scatter',
-      line: { color: 'rgba(255,255,255,0.15)', width: 1, dash: 'dot' },
+      line: { color: circleGuideColor, width: 1, dash: 'dot' },
       hoverinfo: 'skip',
       showlegend: false,
     };
@@ -67,7 +71,7 @@ export default function PCACorrelationCircle({
       mode: 'text',
       type: 'scatter',
       text: vars,
-      textfont: { size: 12, color: '#dfe3ee' },
+      textfont: { size: 12, color: textColor },
       hovertext: vars.map((v, i) =>
         `<b>${v}</b><br>PC${pcX + 1}: ${xs[i].toFixed(3)}<br>PC${pcY + 1}: ${ys[i].toFixed(3)}<br>cos²: ${(xs[i] ** 2 + ys[i] ** 2).toFixed(3)}`
       ),
@@ -98,7 +102,7 @@ export default function PCACorrelationCircle({
       : `PC${pcY + 1}`;
 
     const lay: Partial<Layout> = {
-      title: { text: title, font: { size: 14, color: '#dfe3ee' } },
+      title: { text: title, font: { size: 14, color: textColor } },
       xaxis: {
         title: { text: xLabel },
         range: [-1.25, 1.25],
@@ -114,7 +118,6 @@ export default function PCACorrelationCircle({
         showgrid: false,
       },
       shapes: [
-        // Cercle de corrélation
         {
           type: 'circle',
           xref: 'x',
@@ -123,7 +126,7 @@ export default function PCACorrelationCircle({
           y0: -1,
           x1: 1,
           y1: 1,
-          line: { color: 'rgba(6,182,212,0.4)', width: 1.5 },
+          line: { color: isLight ? 'rgba(14,116,144,0.4)' : 'rgba(6,182,212,0.4)', width: 1.5 },
         },
       ],
     };
@@ -132,7 +135,7 @@ export default function PCACorrelationCircle({
       traces: [circleTrace, ...arrowTraces, headsTrace, labelsTrace],
       layout: lay,
     };
-  }, [coords, explainedVariance, pcX, pcY, title]);
+  }, [coords, explainedVariance, pcX, pcY, title, isLight, textColor, circleGuideColor]);
 
   return <PlotlyChart data={traces} layout={layout} height={height} />;
 }

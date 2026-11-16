@@ -17,10 +17,12 @@ def _get_dev_user():
 
     # ── 1) Lire le X-Client-Id envoyé par le frontend ──
     client_id = "dev-admin"  # fallback
+    has_client_header = False
     try:
         header_val = (request.headers.get("X-Client-Id") or "").strip().lower()
         if header_val and len(header_val) <= 8 and header_val.isalnum():
             client_id = header_val
+            has_client_header = True
     except Exception:
         pass
 
@@ -30,10 +32,11 @@ def _get_dev_user():
         if user:
             return user
 
-        # Fallback : premier User existant (tests sans X-Client-Id).
-        user = db.session.query(User).first()
-        if user:
-            return user
+        # Fallback : premier User existant uniquement si aucun X-Client-Id explicite n'est fourni.
+        if not has_client_header:
+            user = db.session.query(User).first()
+            if user:
+                return user
     except Exception as exc:
         db.session.rollback()
         try:

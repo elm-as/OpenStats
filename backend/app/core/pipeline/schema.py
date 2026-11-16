@@ -172,7 +172,8 @@ def apply_schema(df: pd.DataFrame, declared: dict[str, str] | None) -> tuple[pd.
             continue
 
         if family == "numeric":
-            converted = pd.to_numeric(out[column], errors="coerce")
+            from app.core.statistical_types import safe_convert_numeric
+            converted, report = safe_convert_numeric(out[column], col_name=column)
             if converted.notna().mean() >= 0.5:
                 if not pd.api.types.is_numeric_dtype(out[column]):
                     out[column] = converted

@@ -183,7 +183,9 @@ export default function TimeSeriesPanel({
       </Section>
 
       {/* Décomposition Plotly stacked */}
-      {results.decomposition && (
+      {results.decomposition &&
+        !('error' in results.decomposition) &&
+        Array.isArray(results.decomposition.observed) && (
         <Section
           title="Décomposition de la série"
           icon={<Activity className="w-4 h-4 text-accent-400" />}
@@ -191,18 +193,18 @@ export default function TimeSeriesPanel({
         >
           <Card noPadding className="!p-0">
             <TSDecomposition
-              dates={results.decomposition.dates}
-              observed={results.decomposition.observed.map(v => v ?? NaN)}
-              trend={results.decomposition.trend.map(v => v ?? NaN)}
-              seasonal={results.decomposition.seasonal.map(v => v ?? NaN)}
-              residuals={results.decomposition.residual.map(v => v ?? 0)}
+              dates={results.decomposition.dates ?? []}
+              observed={(results.decomposition.observed ?? []).map(v => v ?? NaN)}
+              trend={(results.decomposition.trend ?? []).map(v => v ?? NaN)}
+              seasonal={(results.decomposition.seasonal ?? []).map(v => v ?? NaN)}
+              residuals={(results.decomposition.residual ?? []).map(v => v ?? 0)}
             />
           </Card>
         </Section>
       )}
 
       {/* Model ranking */}
-      {results.ranking.length > 0 && (
+      {Array.isArray(results.ranking) && results.ranking.length > 0 && (
         <Section
           title="Classement des modèles"
           icon={<Trophy className="w-4 h-4 text-amber-400" />}
@@ -228,11 +230,16 @@ export default function TimeSeriesPanel({
                       ) : (
                         <span className="w-4 text-center text-xs text-muted font-mono">#{i + 1}</span>
                       )}
-                      <span className={`font-medium ${active ? 'text-accent-200' : 'text-strong'}`}>{r.model}</span>
+                      <span
+                        className="font-medium"
+                        style={{ color: active ? 'var(--ui-accent-text)' : 'var(--ui-text)' }}
+                      >
+                        {r.model}
+                      </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs num">
-                      <span className="text-muted">AIC <span className="text-default">{r.aic.toFixed(1)}</span></span>
-                      {r.bic != null && <span className="text-muted">BIC <span className="text-default">{r.bic.toFixed(1)}</span></span>}
+                      <span className="text-muted">AIC <span className="text-default ui-num">{r.aic != null ? r.aic.toFixed(1) : '—'}</span></span>
+                      {r.bic != null && <span className="text-muted">BIC <span className="text-default ui-num">{r.bic.toFixed(1)}</span></span>}
                     </div>
                   </div>
                 </button>
@@ -264,23 +271,35 @@ export default function TimeSeriesPanel({
             </div>
 
             {/* Plotly forecast */}
-            <TSForecast
-              history={{
-                dates: currentModelResult.history.dates,
-                values: currentModelResult.history.values.map(v => v ?? NaN),
-              }}
-              fitted={{
-                dates: currentModelResult.history.dates,
-                values: currentModelResult.history.fitted.map(v => v ?? NaN),
-              }}
-              forecast={{
-                dates: currentModelResult.forecast.dates,
-                values: currentModelResult.forecast.values.map(v => v ?? NaN),
-                lower: currentModelResult.forecast.lower_ci?.map(v => v ?? NaN),
-                upper: currentModelResult.forecast.upper_ci?.map(v => v ?? NaN),
-              }}
-              yLabel={valueCol}
-            />
+            {currentModelResult.history && currentModelResult.forecast && (
+              <TSForecast
+                history={{
+                  dates: currentModelResult.history.dates ?? [],
+                  values: (currentModelResult.history.values ?? []).map(v => v ?? NaN),
+                }}
+                fitted={Array.isArray(currentModelResult.history.fitted) ? {
+                  dates: currentModelResult.history.dates ?? [],
+                  values: currentModelResult.history.fitted.map(v => v ?? NaN),
+                } : undefined}
+                forecast={{
+                  dates: currentModelResult.forecast.dates ?? [],
+                  values: (
+                    currentModelResult.forecast.values ??
+                    (currentModelResult.forecast as any).mean ??
+                    []
+                  ).map((v: number | null) => v ?? NaN),
+                  lower: (
+                    currentModelResult.forecast.lower_ci ??
+                    (currentModelResult.forecast as any).lower
+                  )?.map((v: number | null) => v ?? NaN),
+                  upper: (
+                    currentModelResult.forecast.upper_ci ??
+                    (currentModelResult.forecast as any).upper
+                  )?.map((v: number | null) => v ?? NaN),
+                }}
+                yLabel={valueCol}
+              />
+            )}
           </Card>
 
           {/* Diagnostics résidus */}

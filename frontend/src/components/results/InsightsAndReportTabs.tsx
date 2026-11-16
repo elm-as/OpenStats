@@ -28,26 +28,26 @@ export function ShapTab({ result }: { result?: ShapResult }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-        <h3 className="text-lg font-semibold text-surface-50 mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-pink-400" />
+      <div className="ui-panel p-4">
+        <h3 className="text-lg font-semibold text-surface-100 mb-4 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-accent-400" />
           Importance des variables (SHAP)
         </h3>
 
         {importance.length > 0 ? (
-          <div className="space-y-2">
+          <div className="space-y-2 ui-num">
             {importance.map((imp: any, i: number) => (
               <div key={i} className="flex items-center gap-3">
                 <span className="text-sm text-surface-300 w-32 truncate">{imp.feature}</span>
                 <div className="flex-1 h-2 bg-surface-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-pink-500 rounded-full"
+                    className="h-full bg-accent-500 rounded-full"
                     style={{
                       width: `${Math.min((imp.mean_shap / importance[0].mean_shap) * 100, 100)}%`,
                     }}
                   />
                 </div>
-                <span className="text-sm font-mono text-pink-300 w-20 text-right">
+                <span className="text-sm font-mono text-accent-400 w-20 text-right">
                   {imp.mean_shap.toFixed(3)}
                 </span>
               </div>

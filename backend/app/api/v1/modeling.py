@@ -62,7 +62,7 @@ def get_model_results(dataset_id):
     if ds is None:
         return jsonify({"error": "Dataset introuvable"}), 404
 
-    results = ds.get("model_results", {})
+    results = dataset_manager.get_model_results(dataset_id)
     if not results:
         return jsonify({"error": "Aucun modèle entraîné"}), 404
 

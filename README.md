@@ -37,10 +37,22 @@ Importez vos données, construisez vos pipelines visuellement, exécutez des req
 - **📜 Génération de Code Source Exportable** — Exportez votre canvas nodal visuel en un clic sous forme de script Python autonome (`.py`), script R (`.R`) ou Notebook Jupyter (`.ipynb`).
 - **📊 Rapports Professionnels Multi-Formats & IA** — Génération automatique de rapports aux formats **PDF**, **DOCX (Word)** ou **PPTX (PowerPoint)** enrichis par une interprétation analytique automatisée par IA.
 - **🖥️ Application Desktop Windows Autonome** — Binaire Windows `.exe` prêt à l'emploi (Electron + PyInstaller), fonctionnant sans prérequis Node/Python sur la machine utilisateur.
-- **🔬 Analyse Méthodique Itérative** — Onze étapes, du cadrage du problème à l'interprétation, avec une **boucle correction / re-diagnostic** : l'application détecte les problèmes statistiques, applique des transformations, re-diagnostique, et recommence tant que la qualité progresse. Chaque correction est réversible et l'utilisateur valide avant écriture.
+- **🔬 Analyse Méthodique & Atelier Libre** — Analyse méthodique en 11 étapes (avec boucle correction / re-diagnostic réversible) complétée par l'**Atelier statistique libre** (`/analyzer?tab=studio`) pour lancer pas-à-pas tests d'hypothèses, régressions, séries multivariées et analyses factorielles.
 - **🧭 Explorateur Adaptatif** — Recherche de résultats pilotée par ce qu'elle trouve : chaque analyse en débloque d'autres. Contrôle du taux de fausses découvertes (Benjamini-Hochberg) sur l'ensemble de la session, avec affichage du nombre réel d'hypothèses testées.
 - **🏆 Comparaison de Modèles** — 15 modèles supervisés et 6 prévisionnistes évalués par validation croisée contre une **référence naïve**, sans laquelle un score n'est pas interprétable.
 - **🧩 Marketplace Local & Auto-Pipeline Intelligent** — Catalogue de templates de pipelines réutilisables (import/export JSON) et assistant de création automatique de recettes adaptées au jeu de données.
+
+---
+
+## 📚 Documentation Officielle
+
+Pour une documentation approfondie et exhaustive, consultez les manuels de référence situés dans le dossier `docs/` :
+
+- 📖 **[Guide Utilisateur (docs/USER_GUIDE.md)](docs/USER_GUIDE.md)** :  
+  Manuel de référence complet couvrant l'ergonomie Desktop (barre de menus native `desktopMenu.cjs`, `AppShell`, `DesktopRibbon`, établi tableur Jamovi avec `VariableDockList` et `SpreadsheetWorkbench`, palette de commandes `Ctrl+K`), les formats d'ingestion (CSV, Excel multi-feuilles, JSON, Parquet avec validation par *magic bytes*), le pipeline méthodique en 11 étapes (boucle de remédiation, convergence, retour arrière), l'explorateur adaptatif (classement par information mutuelle, contrôle global du taux de fausses découvertes Benjamini-Hochberg FDR à 5%), l'atelier statistique libre (Shapiro-Wilk, Student, Welch, Mann-Whitney, ANOVA, Kruskal-Wallis, Chi-2, Fisher, tailles d'effet), les comparaisons post-hoc (Tukey HSD, Games-Howell), les tests d'équivalence (TOST contre marge ou 0.2 sigma), la puissance statistique (post-hoc, MDE, dimensionnement), les analyses factorielles (ACP, AFC, ACM), l'économétrie avancée (OLS robuste White HC1/HC3, diagnostics résiduels, régression quantile, modèles de comptage Poisson & Négative Binomiale, modèles de panel Effets Fixes/Aléatoires & test de Hausman, analyse de survie Kaplan-Meier & Cox, inférence causale PSM/Diff-in-Diff/2SLS, classification ascendante hiérarchique), les séries temporelles uni et multivariées (ADF, KPSS, décomposition, ARIMA, SARIMA, Prophet, Holt-Winters, VAR, VECM, ARDL, BVAR, Johansen, Granger, IRF, FEVD, Chow, QLR), les modèles de Machine Learning avec explicabilité SHAP, le canvas nodal et les exports multi-formats (PDF ReportLab, Word DOCX, PowerPoint PPTX, scripts Python/R/Jupyter à tri topologique).
+
+- 🏗️ **[Architecture Technique (docs/TECHNICAL_ARCHITECTURE.md)](docs/TECHNICAL_ARCHITECTURE.md)** :  
+  Spécification technique détaillée couvrant la topologie système (Electron, React 18 / Vite 7 / Tailwind CSS, Flask Python 3.10, DuckDB SQL OLAP, stockage Parquet versionné, SQLite `openstats.db`), la communication inter-processus (IPC) avec résolution dynamique des ports TCP et authentification par jeton de session éphémère 32 octets (`X-Session-Token`, comparaison en temps constant `hmac.compare_digest`), le mécanisme de surveillance *watchdog* sur `stdin` et l'extinction propre de l'arborescence des processus sous Windows via `taskkill`, le pipeline analytique zero-copy DuckDB, la discipline d'interception d'exceptions contrôlée par analyse statique d'AST (`core/statistical_attempt.py`), la chaîne de compilation et packaging autonome (PyInstaller avec collecte des dépendances paresseuses XGBoost/LightGBM/Prophet/lifelines, Electron Builder, installeur Windows Inno Setup `OpenStats_Setup_v1.0.0.exe`) et les procédures de tests (Pytest, Vitest, TypeScript strict, audit strict des 350 lignes selon ELMAS.md).
 
 ---
 
@@ -48,17 +60,19 @@ Importez vos données, construisez vos pipelines visuellement, exécutez des req
 
 Le projet suit les standards d'[ELMAS.md](ELMAS.md). La conception des moteurs
 d'analyse et leurs garanties statistiques sont décrites dans
-[ARCHITECTURE.md](ARCHITECTURE.md).
+[ARCHITECTURE.md](ARCHITECTURE.md) ainsi que dans
+[docs/TECHNICAL_ARCHITECTURE.md](docs/TECHNICAL_ARCHITECTURE.md).
 
-1. **Plafond de 350 lignes** par fichier. *7 fichiers dépassent actuellement ce seuil* — les moteurs
-   d'analyse ajoutés récemment (`pipeline/stages.py`, les générateurs de code) ont été écrits sans
-   cette contrainte. À découper.
+1. **Plafond de 350 lignes** par fichier respecté sur l'ensemble du dépôt (`backend/app`, `backend/tests`, `backend/scripts`, `frontend/src`, `frontend/electron`, `scripts/`), vérifié par `python scripts/check_line_counts.py` (ou `python backend/scripts/check_line_counts.py`).
 2. **Organisation par domaine métier** : aucun dossier ou fichier fourre-tout (`helpers`, `utils`, `misc`, `common`).
 3. **Séparation stricte des responsabilités** : UI $\rightarrow$ services/logique métier $\rightarrow$ accès aux données.
 4. **Source unique de vérité** : un seul moteur unifié pour les exports et la génération de code.
 
 ```text
-Stats/
+Openstats/
+├── docs/                                 # Documentation officielle de référence
+│   ├── USER_GUIDE.md                     # Manuel utilisateur exhaustif
+│   └── TECHNICAL_ARCHITECTURE.md         # Architecture technique et packaging
 ├── backend/                              # Serveur Python & Moteurs Statistiques
 │   ├── app/
 │   │   ├── api/v1/                       # Contrôleurs API REST segmentés
@@ -70,7 +84,7 @@ Stats/
 │   │   │   └── timeseries/               # Endpoints séries temporelles uni/multivariées
 │   │   ├── core/                         # Logique métier pure
 │   │   │   ├── pipeline/                 # Analyse méthodique : diagnostics, boucle de
-│   │   │   │                             #   correction, catalogue de modèles, étapes
+│   │   │   │                             #   correction, catalogue de modèles, étapes (`stages/`)
 │   │   │   ├── exploration/              # Explorateur adaptatif : sondes, findings, FDR
 │   │   │   ├── measurements.py           # Mesures partagées par les deux moteurs
 │   │   │   ├── statistical_attempt.py    # Échec d'un calcul = résultat, pas exception avalée
@@ -85,29 +99,32 @@ Stats/
 │   │   │   ├── factor_*.py               # ACP, AFC, ACM et sérialisation
 │   │   │   └── hypothesis_testing.py     # Tests d'hypothèses et tailles d'effet (Cohen, etc.)
 │   │   └── services/                     # Couche service & persistance des datasets
-│   └── tests/                            # 414 tests Pytest (core, services, api, e2e)
+│   └── tests/                            # Suites Pytest unitaires, API et E2E (`tests/e2e/`)
 │
-├── frontend/                             # Interface SPA React + TypeScript
+├── frontend/                             # Interface SPA React + TypeScript + Shell Electron
+│   ├── electron/                         # Processus principal (`main.cjs`), menu natif (`desktopMenu.cjs`), preload & splash
 │   └── src/
 │       ├── components/                   # Composants modulaires par domaine métier
-│       │   ├── shell/                    # Châssis : barre de contexte, rail, ⌘K, statut
+│       │   ├── shell/                    # Châssis : ContextBar, DesktopRibbon, NavRail, ⌘K, PinnedDrawer
+│       │   ├── dataset/                  # Établi Jamovi : VariableDockList, SpreadsheetWorkbench, DataProfile
 │       │   ├── methodology/              # Analyse méthodique : étapes, itérations, graphes
 │       │   ├── explorer/                 # Explorateur adaptatif
 │       │   ├── canvas/                   # Canvas nodal, nœuds visuels, modales de résultats
 │       │   ├── pipeline/                 # Assistant Auto-Pipeline et étapes
-│       │   ├── wizard/                   # Wizard d'analyse pas-à-pas
+│       │   ├── wizard/                   # Atelier statistique libre (tests, régression, ACP)
 │       │   ├── results/                  # Visualisation des résultats et interprétations
 │       │   ├── multivariateTS/           # Panneau dédié aux séries multivariées
 │       │   ├── factorAnalysis/           # Vues ACP, AFC, ACM et Scree plot
 │       │   ├── chartBuilder/             # Constructeur de graphiques interactifs
 │       │   ├── scenarios/                # Courbes de sensibilité et simulation
 │       │   ├── transform/                # Préparation et transformations de colonnes
-│       │   ├── extension/                # Extensions Python personnalisées
+│       │   ├── extension/                # Extensions Python personnalisées (repli hors-ligne)
 │       │   ├── viz/                      # Wrappers Plotly, thèmes et outils d'export
 │       │   └── ui/                       # Composants atomiques (Toast, Tabs, Modal)
 │       ├── store/                        # Redux Toolkit & RTK Query segmenté (baseApi + endpoints)
-│       ├── styles/                       # Feuilles CSS + `tokens.css` (design system)
+│       ├── styles/                       # Design system (`tokens.css`, `studio-primitives.css`, thèmes Sombre/Clair)
 │       └── types/                        # Typage strict segmenté (dataset, timeseries, platform)
+├── scripts/                              # Scripts d'assemblage (`build_installer.py`), audit (`check_line_counts.py`) et validation (`run_e2e_tests.py`)
 ├── ELMAS.md                              # Charte d'architecture et de qualité ElmasCore
 └── ARCHITECTURE.md                       # Moteurs d'analyse : conception et garanties
 ```
@@ -134,10 +151,10 @@ Stats/
 
 ### Frontend & UI Visuelle
 - **React 18** + **TypeScript** (mode strict)
-- **Vite** + **Vanilla CSS / Styles modulaires** (design épuré, chiffres tabulaires)
-- **ReactFlow** (`@xyflow/react`) — Canvas nodal visuel interactif
-- **Plotly.js** — Visualisations graphiques haute performance
-- **Monaco Editor** — Éditeur de code intégré avec coloration syntaxique
+- **Vite** + **Tailwind CSS** + Design System modulaire (`tokens.css`, `studio-primitives.css`, thèmes Sombre & Clair, chiffres tabulaires `.ui-num`)
+- **ReactFlow** (`@xyflow/react`) — Canvas nodal visuel interactif (chunk asynchrone dédié)
+- **Plotly.js** — Visualisations graphiques haute performance (chunk asynchrone dédié)
+- **Monaco Editor** — Éditeur de code intégré avec coloration syntaxique et bascule automatique vers un éditeur texte hors-ligne en mode Desktop
 - **Redux Toolkit** + RTK Query (endpoints injectés par domaine)
 - **KaTeX** — Rendu des formules mathématiques
 
@@ -186,7 +203,7 @@ npm install
 npm run dev
 ```
 
-Accédez ensuite à `http://localhost:5173`.
+Accédez ensuite à `http://localhost:3000`.
 
 ### 🖥️ Mode Desktop (Electron + PyInstaller)
 
@@ -198,8 +215,10 @@ cd frontend && npm run electron:dev       # Terminal 2
 # Compilation de l'installateur Windows .exe complet :
 cd backend && python build_backend.py
 cd ../frontend && npm run build:desktop
+# Ou assemblage complet Electron + Inno Setup :
+python scripts/build_installer.py
 ```
-L'installateur généré se trouve dans `frontend/release/OpenStats Desktop Setup 1.0.0.exe`.
+L'installateur généré se trouve dans `frontend/release/OpenStats_Setup_v1.0.0.exe`.
 
 ---
 
@@ -208,7 +227,7 @@ L'installateur généré se trouve dans `frontend/release/OpenStats Desktop Setu
 Conformément à la charte ElmasCore, toute modification doit valider l'ensemble des suites de tests :
 
 ```bash
-# 1. Backend (414 tests Pytest)
+# 1. Backend (Suites Pytest unitaires, API & E2E)
 cd backend
 python -m pytest -p no:qt -q
 
@@ -281,5 +300,5 @@ OpenStats est développé dans une optique **local-first, gratuite et open-sourc
 
 <div align="center">
   <sub><b>ELMAS CORE LABORATORY</b> // <i>"From Data to Systems"</i></sub><br/>
-  <sub>Traitement local · 414 tests · Voir ARCHITECTURE.md pour les garanties statistiques</sub>
+  <sub>Traitement local · Suite Pytest & Vitest · Voir ARCHITECTURE.md pour les garanties statistiques</sub>
 </div>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import { safeMin, safeMax } from './chartAnalyticsExport';
 import type { Data, Layout } from 'plotly.js';
 
@@ -20,6 +20,8 @@ interface Props {
 }
 
 export default function SHAPSummary({ data, topN = 15, height, title = 'SHAP — Impact sur les prédictions' }: Props) {
+  const theme = useCurrentTheme();
+  const isLight = theme === 'light';
   const sorted = useMemo(() => {
     // Tri par moyenne |SHAP| décroissante
     return [...data]
@@ -58,18 +60,18 @@ export default function SHAPSummary({ data, topN = 15, height, title = 'SHAP —
           size: 5,
           color: colors,
           colorscale: [
-            [0, '#3b82f6'],
-            [0.5, '#a78bfa'],
-            [1, '#f97316'],
+            [0, '#0284c7'],
+            [0.5, '#94a3b8'],
+            [1, '#ea580c'],
           ],
-          opacity: 0.7,
-          line: { color: 'rgba(255,255,255,0.15)', width: 0.5 },
+          opacity: 0.72,
+          line: { color: isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)', width: 0.5 },
           showscale: idx === sorted.length - 1,
           colorbar: idx === sorted.length - 1 ? {
-            title: { text: 'Valeur', font: { color: '#cbd5e1' } },
+            title: { text: 'Valeur', font: { color: isLight ? '#0f172a' : '#cbd5e1' } },
             tickvals: [0, 1],
             ticktext: ['Faible', 'Élevée'],
-            tickfont: { color: '#94a3b8' },
+            tickfont: { color: isLight ? '#475569' : '#94a3b8' },
             len: 0.6,
           } : undefined,
         },
@@ -93,7 +95,7 @@ export default function SHAPSummary({ data, topN = 15, height, title = 'SHAP —
     };
 
     return { traces: tr, layout: lay, h: computedH };
-  }, [sorted, height, title]);
+  }, [sorted, height, title, isLight]);
 
   return <PlotlyChart data={traces} layout={layout} height={h} />;
 }

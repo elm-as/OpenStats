@@ -6,6 +6,20 @@ exécutions multi-threadées de nœuds Canvas dans ThreadPoolExecutor.
 
 import sys
 import logging
+import threading
+
+
+def start_background_preload(logger: logging.Logger | None = None) -> threading.Thread:
+    """Lance le préchargement des modules ML en arrière-plan après l'ouverture du port Flask."""
+    worker = threading.Thread(
+        target=preload_heavy_modules,
+        args=(logger,),
+        daemon=True,
+        name="heavy-modules-preload",
+    )
+    worker.start()
+    return worker
+
 
 def preload_heavy_modules(logger: logging.Logger | None = None) -> None:
     """

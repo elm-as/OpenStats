@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, BarChart2, AlertCircle, FileCode, Zap, Info } from 'lucide-react';
 import CodeViewerModal from './CodeViewerModal';
+import { fetchPythonAndRCode } from './canvasCodeExport';
 import { Badge, RenderJson, Section, getNodeLabel } from './results/ResultAtoms';
 import {
   DatasetResultView,
@@ -140,7 +141,7 @@ export default function CanvasResultModal({
       countModel: { titre: 'Modèle de comptage', couleur: '#14b8a6' },
       regressionDiagnostics: { titre: 'Diagnostics de régression', couleur: '#ef4444' },
       powerAnalysis: { titre: 'Puissance statistique', couleur: '#f59e0b' },
-      quantileRegression: { titre: 'Régression quantile', couleur: '#8b5cf6' },
+      quantileRegression: { titre: 'Régression quantile', couleur: '#0ea5e9' },
       equivalenceTest: { titre: "Test d'équivalence (TOST)", couleur: '#10b981' },
     };
     if (VUES_INFERENCE[type]) {
@@ -212,20 +213,20 @@ export default function CanvasResultModal({
       medium: '#f59e0b',
       low: '#10b981',
       info: '#3b82f6',
-      methodological: '#8b5cf6',
+      methodological: '#14b8a6',
     };
 
     return (
-      <div className="mt-6 border-t border-white/[0.04] pt-6">
-        <Section title={`${insights.length} insight(s) généré(s)`} icon={Zap} color="#a855f7">
+      <div className="mt-6 border-t border-white/[0.06] pt-6">
+        <Section title={`${insights.length} insight(s) généré(s)`} icon={Zap} color="#06b6d4">
           <div className="space-y-3">
             {insights.map((ins: any, idx: number) => {
               const sev = ins.severity || ins.type || 'info';
               const col = severityColors[sev] || '#6b7280';
               const isTutorial = ins.tags?.includes('tutorial');
               const bgClass = isTutorial
-                ? 'bg-indigo-900/40 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)]'
-                : 'bg-surface-800/40 border-white/[0.03]';
+                ? 'bg-sky-500/10 border-sky-500/30'
+                : 'bg-surface-800/40 border-white/[0.06]';
               return (
                 <div
                   key={idx}
@@ -238,7 +239,7 @@ export default function CanvasResultModal({
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-bold text-surface-100">{ins.title || 'Insight'}</span>
                         <Badge color={col}>{sev}</Badge>
-                        {isTutorial && <Badge color="#8b5cf6">TUTORIEL</Badge>}
+                        {isTutorial && <Badge color="#0284c7">TUTORIEL</Badge>}
                       </div>
                       <p className="text-xs text-surface-300 leading-relaxed">
                         {ins.description || ins.text || ins.message}
@@ -257,31 +258,13 @@ export default function CanvasResultModal({
   const handleOpenCodeModal = async () => {
     setShowCodeModal(true);
     try {
-      const pyRes = await fetch('/api/v1/canvas/export_code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodes: [{ id: 'node_1', type: nodeType, data: resultData || {} }],
-          edges: [],
-          dataset_name: 'dataset.csv',
-          language: 'python',
-        }),
+      const { pythonCode, rCode: generatedR } = await fetchPythonAndRCode({
+        nodes: [{ id: 'node_1', type: nodeType, data: resultData || {} }],
+        edges: [],
+        dataset_name: 'dataset.csv',
       });
-      const pyData = await pyRes.json();
-      if (pyData.code) setPyCode(pyData.code);
-
-      const rRes = await fetch('/api/v1/canvas/export_code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodes: [{ id: 'node_1', type: nodeType, data: resultData || {} }],
-          edges: [],
-          dataset_name: 'dataset.csv',
-          language: 'r',
-        }),
-      });
-      const rData = await rRes.json();
-      if (rData.code) setRCode(rData.code);
+      if (pythonCode) setPyCode(pythonCode);
+      if (generatedR) setRCode(generatedR);
     } catch (err) {
       console.error(err);
     }
@@ -290,15 +273,15 @@ export default function CanvasResultModal({
   return (
     <>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-        <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md" onClick={onClose} />
-        <div className="relative w-full max-w-4xl bg-surface-900 rounded-2xl shadow-[0_25px_80px_-12px_rgba(0,0,0,0.8)] border border-white/[0.08] flex flex-col max-h-[85vh] overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] bg-gradient-to-r from-surface-800/50 to-surface-900/50 shrink-0">
+        <div className="absolute inset-0 bg-black/75" onClick={onClose} />
+        <div className="ui-panel relative w-full max-w-4xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-surface-800/40 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center border border-accent-500/20">
+              <div className="w-9 h-9 rounded-lg bg-accent-500/15 flex items-center justify-center border border-accent-500/25">
                 <BarChart2 className="text-accent-400" size={18} />
               </div>
               <div>
-                <h2 className="text-base font-bold text-surface-50">{nodeTitle}</h2>
+                <h2 className="text-base font-bold text-surface-100">{nodeTitle}</h2>
                 <p className="text-[11px] text-surface-400">Résultats détaillés du bloc</p>
               </div>
             </div>
@@ -306,13 +289,13 @@ export default function CanvasResultModal({
               <button
                 type="button"
                 onClick={handleOpenCodeModal}
-                className="px-3 py-1.5 rounded-lg bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 border border-accent-500/30 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                className="ui-btn text-xs bg-accent-500/15 hover:bg-accent-500/25 text-accent-400 border-accent-500/30"
               >
                 <FileCode size={14} /> Code Source (Python & R)
               </button>
               <button
                 onClick={onClose}
-                className="p-2 text-surface-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-surface-400 hover:text-surface-100 hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X size={20} />
               </button>

@@ -83,13 +83,10 @@ export default function DataPrepPanel({ datasetId }: Props) {
   const isLoading = isCopying || isCleaning;
 
   return (
-    <div className="bg-surface-800/60 backdrop-blur border border-white/10 rounded-xl overflow-hidden animate-fade-in">
-      <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-accent-500/10 to-transparent">
+    <div className="ui-panel overflow-hidden">
+      <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Settings2 className="w-5 h-5 text-accent-400" />
-            <div className="absolute inset-0 bg-accent-400 blur-md opacity-30 -z-10" />
-          </div>
+          <Settings2 className="w-5 h-5 text-accent-400" />
           <div>
             <h3 className="text-sm font-bold text-surface-100">Préparation des données</h3>
             <p className="text-xs text-surface-400 mt-0.5">Configurez les transformations à appliquer sur une copie du dataset.</p>
@@ -185,8 +182,8 @@ export default function DataPrepPanel({ datasetId }: Props) {
         </div>
 
         {/* Action Area */}
-        <div className="bg-gradient-to-br from-surface-900 to-surface-800 p-4 rounded-xl border border-accent-500/20 shadow-glow-sm">
-          <h4 className="text-sm font-semibold text-surface-300 mb-3 flex items-center gap-2">
+        <div className="bg-surface-900/60 p-4 rounded-xl border border-accent-500/25">
+          <h4 className="text-sm font-semibold text-surface-200 mb-3 flex items-center gap-2">
             <Copy className="w-4 h-4 text-accent-400" />
             Finaliser la copie et appliquer
           </h4>
@@ -199,14 +196,14 @@ export default function DataPrepPanel({ datasetId }: Props) {
                 placeholder={`${datasetDetails?.name || 'Dataset'}-cp`}
                 value={copyName}
                 onChange={e => setCopyName(e.target.value)}
-                className="w-full bg-black/20 border border-white/10 rounded-lg text-sm text-surface-300 px-3 py-2 focus:border-accent-500 focus:ring-1 focus:ring-accent-500 outline-none transition-all"
+                className="ui-input w-full text-sm px-3 py-2"
               />
             </div>
             
             <button
               onClick={handleApply}
               disabled={isLoading || pipeline.length === 0}
-              className="w-full sm:w-auto px-5 py-2 rounded-lg bg-accent-600 hover:bg-accent-500 text-white text-sm font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="ui-btn ui-btn-primary w-full sm:w-auto px-5 py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {isLoading ? (
                 <>

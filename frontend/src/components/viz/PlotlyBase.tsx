@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useMemo } from 'react';
+import React, { lazy, Suspense, useState, useMemo, useRef } from 'react';
 import type { Layout, Config } from 'plotly.js';
 import { Info } from 'lucide-react';
 
@@ -10,6 +10,8 @@ import {
   PALETTES,
   COLORSCALE_VIRIDIS,
   COLORSCALE_RDBU,
+  customizePlotTraces,
+  customizePlotLayout,
   useCurrentTheme,
 } from './plotlyTheme';
 import {
@@ -54,18 +56,21 @@ export function PlotlySkeleton({
 }) {
   return (
     <div
-      className={`w-full rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center ${className}`}
-      style={{ height }}
+      className={`w-full rounded-[var(--ui-radius)] flex items-center justify-center ${className}`}
+      style={{ height, background: 'var(--ui-bg-sunken)', border: '1px solid var(--ui-border)' }}
     >
-      <div className="flex flex-col items-center gap-2 text-surface-500">
-        <div className="w-5 h-5 border-2 border-surface-600 border-t-accent-400 rounded-full animate-spin" />
+      <div className="flex flex-col items-center gap-2 ui-t-muted">
+        <div
+          className="w-5 h-5 border-2 rounded-full animate-spin"
+          style={{ borderColor: 'var(--ui-border-strong)', borderTopColor: 'var(--ui-accent)' }}
+        />
         <span className="text-[10px] uppercase tracking-widest font-bold">Chargement…</span>
       </div>
     </div>
   );
 }
 
-/** Wrapper Plotly avec thème dark uniforme + lazy-load + personnalisation premium + exports. */
+/** Wrapper Plotly avec thème Dark/Light dynamique, lazy-load, personnalisation et exports HD. */
 export function PlotlyChart({
   data,
   layout = {},
@@ -74,7 +79,6 @@ export function PlotlyChart({
   className = '',
 }: PlotlyChartProps) {
   const theme = useCurrentTheme();
-  const activeTemplate = theme === 'light' ? LIGHT_TEMPLATE : DARK_TEMPLATE;
 
   // États de personnalisation locale avec chargement depuis localStorage
   const savedPrefs = useMemo(() => {
@@ -96,16 +100,8 @@ export function PlotlyChart({
   const [opacity, setOpacity] = useState<number>(() => savedPrefs.opacity ?? 0.85);
   const [trendline, setTrendline] = useState<boolean>(() => savedPrefs.trendline ?? false);
   const [showLabels, setShowLabels] = useState<boolean>(() => savedPrefs.showLabels ?? false);
-
-  // Sauvegarde des préférences lors des modifications
-  const handleSetPalette = (p: string) => { setPalette(p); savePref('palette', p); };
-  const handleSetShowGrid = (g: boolean) => { setShowGrid(g); savePref('showGrid', g); };
-  const handleSetLegendPos = (pos: 'right' | 'bottom' | 'none') => { setLegendPos(pos); savePref('legendPos', pos); };
-  const handleSetPointSize = (s: number) => { setPointSize(s); savePref('pointSize', s); };
-  const handleSetLineWidth = (w: number) => { setLineWidth(w); savePref('lineWidth', w); };
-  const handleSetOpacity = (o: number) => { setOpacity(o); savePref('opacity', o); };
-  const handleSetTrendline = (t: boolean) => { setTrendline(t); savePref('trendline', t); };
-  const handleSetShowLabels = (l: boolean) => { setShowLabels(l); savePref('showLabels', l); };
+  const [userTouchedStyle, setUserTouchedStyle] = useState(false);
+  const graphDivRef = useRef<any>(null);
 
   const savePref = (key: string, val: any) => {
     try {
@@ -117,6 +113,22 @@ export function PlotlyChart({
     }
   };
 
+  // Sauvegarde des préférences lors des modifications
+  const handleSetPalette = (p: string) => { setPalette(p); savePref('palette', p); setUserTouchedStyle(true); };
+  const handleSetShowGrid = (g: boolean) => { setShowGrid(g); savePref('showGrid', g); };
+  const handleSetLegendPos = (pos: 'right' | 'bottom' | 'none') => { setLegendPos(pos); savePref('legendPos', pos); setUserTouchedStyle(true); };
+  const handleSetPointSize = (s: number) => { setPointSize(s); savePref('pointSize', s); setUserTouchedStyle(true); };
+  const handleSetLineWidth = (w: number) => { setLineWidth(w); savePref('lineWidth', w); setUserTouchedStyle(true); };
+  const handleSetOpacity = (o: number) => { setOpacity(o); savePref('opacity', o); setUserTouchedStyle(true); };
+  const handleSetTrendline = (t: boolean) => { setTrendline(t); savePref('trendline', t); };
+  const handleSetShowLabels = (l: boolean) => { setShowLabels(l); savePref('showLabels', l); };
+
+  const handleExportImage = async (format: 'png' | 'svg') => {
+    if (!graphDivRef.current) return;
+    const { exportPlotlyFigure } = await import('./PlotlyHeavy');
+    await exportPlotlyFigure(graphDivRef.current, format, chartTitle, theme);
+  };
+
   const handleResetDefaults = () => {
     setPalette('default');
     setShowGrid(true);
@@ -126,6 +138,7 @@ export function PlotlyChart({
     setOpacity(0.85);
     setTrendline(false);
     setShowLabels(false);
+    setUserTouchedStyle(false);
     try {
       localStorage.removeItem('openstats_chart_prefs');
     } catch {
@@ -149,46 +162,21 @@ export function PlotlyChart({
 
   // Appliquer les surcharges dynamiques sur les données et la mise en page
   const { customizedData, customizedLayout } = useMemo(() => {
-    const colors = PALETTES[palette]?.colors || SCI_COLORS;
-    const finalData = data.map((t, idx) => {
-      const traceColor = colors[idx % colors.length];
-      const copy = { ...t };
+    const opts = {
+      data,
+      layout,
+      theme,
+      palette,
+      showGrid,
+      legendPos,
+      pointSize,
+      lineWidth,
+      opacity,
+      showLabels,
+      userTouchedStyle,
+    };
+    const finalData = customizePlotTraces(opts);
 
-      // 1. Couleurs selon le type
-      if (copy.type === 'pie') {
-        copy.marker = { ...copy.marker, colors };
-      } else if (copy.type === 'heatmap') {
-        // Laisser les colormaps configurés par défaut
-      } else {
-        copy.marker = {
-          ...copy.marker,
-          color: copy.marker?.color || traceColor,
-          opacity,
-          size: pointSize,
-        };
-        copy.line = {
-          ...copy.line,
-          color: copy.line?.color || traceColor,
-          width: lineWidth,
-        };
-      }
-
-      // 2. Data Labels
-      if (showLabels) {
-        if (copy.type === 'bar') {
-          copy.texttemplate = '%{y:.2f}';
-          copy.textposition = 'auto';
-        } else if (copy.type === 'scatter' || !copy.type) {
-          copy.mode = 'markers+text' + (copy.mode?.includes('lines') ? '+lines' : '');
-          copy.text = (copy.y as any[])?.map(v => (typeof v === 'number' ? v.toFixed(1) : ''));
-          copy.textposition = 'top center';
-        }
-      }
-
-      return copy;
-    });
-
-    // 3. Trendline automatique
     if (trendline && isScatterNumeric) {
       const targetTrace = data.find(t => Array.isArray(t.x) && Array.isArray(t.y));
       if (targetTrace) {
@@ -207,30 +195,10 @@ export function PlotlyChart({
       }
     }
 
-    // 4. Alignement du Layout
-    const finalLayout: Partial<Layout> = {
-      ...activeTemplate,
-      ...layout,
-      xaxis: {
-        ...activeTemplate.xaxis,
-        ...layout.xaxis,
-        showgrid: showGrid,
-      },
-      yaxis: {
-        ...activeTemplate.yaxis,
-        ...layout.yaxis,
-        showgrid: showGrid,
-      },
-      showlegend: legendPos !== 'none',
-      legend:
-        legendPos === 'bottom'
-          ? { orientation: 'h', y: -0.25, x: 0.5, xanchor: 'center' }
-          : legendPos === 'right'
-          ? { orientation: 'v', x: 1.05, y: 1 }
-          : undefined,
+    return {
+      customizedData: finalData,
+      customizedLayout: customizePlotLayout(opts),
     };
-
-    return { customizedData: finalData, customizedLayout: finalLayout };
   }, [
     data,
     layout,
@@ -243,17 +211,23 @@ export function PlotlyChart({
     trendline,
     isScatterNumeric,
     showLabels,
-    activeTemplate,
+    userTouchedStyle,
+    theme,
   ]);
 
   return (
-    <div className="w-full rounded-xl bg-white/[0.01] border border-white/5 p-4 flex flex-col gap-3 relative transition-all duration-300 hover:border-white/10">
+    <div
+      className="w-full rounded-[var(--ui-radius)] p-3 flex flex-col gap-2.5 relative transition-colors"
+      style={{ background: 'var(--ui-bg-panel)', border: '1px solid var(--ui-border)' }}
+    >
       <PlotlyToolbar
         chartTitle={chartTitle}
         showSettings={showSettings}
         showInterpretation={showInterpretation}
         onToggleSettings={() => setShowSettings(!showSettings)}
         onToggleInterpretation={() => setShowInterpretation(!showInterpretation)}
+        onExportPng={() => { void handleExportImage('png'); }}
+        onExportSvg={() => { void handleExportImage('svg'); }}
         onExportCsv={() => exportChartDataToCsv(data, chartTitle)}
         onExportJson={() => exportChartSpecToJson(data, layout, config, chartTitle)}
       />
@@ -289,17 +263,21 @@ export function PlotlyChart({
           config={config}
           height={height}
           className={className}
+          onGraphDiv={gd => { graphDivRef.current = gd; }}
         />
       </Suspense>
 
       {showInterpretation && (
-        <div className="bg-gradient-to-r from-accent-500/5 to-cyan-500/5 border border-accent-500/20 rounded-xl p-3.5 flex gap-3 animate-fadeIn">
-          <Info className="w-5 h-5 text-accent-400 shrink-0 mt-0.5" />
+        <div
+          className="rounded-[var(--ui-radius)] p-3 flex gap-2.5 animate-fadeIn"
+          style={{ background: 'var(--ui-accent-soft)', border: '1px solid var(--ui-border-strong)' }}
+        >
+          <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--ui-accent)' }} />
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-bold text-accent-300 uppercase tracking-wide">
+            <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--ui-accent-text)' }}>
               Comprendre la visualisation
             </span>
-            <p className="text-xs text-surface-300 leading-relaxed">
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--ui-text-secondary)' }}>
               {getChartInterpretation(detectedChartType, chartTitle, data)}
             </p>
           </div>

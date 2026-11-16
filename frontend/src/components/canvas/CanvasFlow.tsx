@@ -129,7 +129,7 @@ function DnDFlow() {
   });
 
   return (
-    <div className="flex h-[calc(100vh-56px)] w-full text-surface-50">
+    <div className="flex h-full min-h-0 w-full text-surface-50">
       <Sidebar />
       <div className="flex-1 h-full relative" ref={graph.reactFlowWrapper}>
         <TemplateSelector onSelect={graph.loadTemplate} />
@@ -185,8 +185,8 @@ function DnDFlow() {
               nodeStrokeColor="#ffffff"
               nodeColor="#0f172a"
               maskColor="rgba(15,23,42,0.6)"
-              className="!bg-surface-900/90 !border !border-white/[0.1] !rounded-xl !shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden backdrop-blur-md"
-              style={{ right: 20, bottom: 20 }}
+              className="!bg-surface-900/95 !border !border-white/[0.1] !rounded-xl !shadow-lg overflow-hidden"
+              style={{ left: 68, bottom: 20 }}
             />
           )}
         </ReactFlow>

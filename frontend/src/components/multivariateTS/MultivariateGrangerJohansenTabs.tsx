@@ -19,13 +19,13 @@ export function MultivariateGrangerTab({
 
   return (
     <div className="space-y-4">
-      <div className="card">
-        <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <GitCompare className="w-4 h-4 text-purple-500" />
+      <div className="ui-panel p-4">
+        <h4 className="font-semibold text-surface-100 mb-3 flex items-center gap-2">
+          <GitCompare className="w-4 h-4 text-accent-400" />
           Causalité de Granger (max lag = {results.granger_causality.max_lag})
         </h4>
 
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-surface-400 mb-3">
           Régime utilisé pour Granger :{' '}
           <strong>{results.granger_causality.data_regime || 'levels'}</strong>
         </p>
@@ -35,7 +35,7 @@ export function MultivariateGrangerTab({
             <button
               onClick={() => onQuickRerun({ granger_data_mode: 'diff' })}
               disabled={isLoading}
-              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100 transition-all disabled:opacity-50"
+              className="ui-btn text-xs bg-accent-500/15 text-accent-400 border-accent-500/30 hover:bg-accent-500/25 disabled:opacity-50"
             >
               <Wand2 className="w-3.5 h-3.5" />
               Relancer Granger en différences (stationnarité)

@@ -35,15 +35,15 @@ export default function TSDecomposition({
     } as Data);
 
     const tr: Data[] = [
-      baseLine(observed, '#22d3ee', 'Observée', 'x'),
-      baseLine(trend, '#fcd34d', 'Tendance', 'x2'),
-      baseLine(seasonal, '#a78bfa', 'Saisonnier', 'x3'),
+      baseLine(observed, '#0284c7', 'Observée', 'x'),
+      baseLine(trend, '#d97706', 'Tendance', 'x2'),
+      baseLine(seasonal, '#059669', 'Saisonnier', 'x3'),
       {
         x: dates,
         y: residuals,
         type: 'bar',
         name: 'Résidus',
-        marker: { color: residuals.map(r => r >= 0 ? 'rgba(52, 211, 153, 0.7)' : 'rgba(248, 113, 113, 0.7)') },
+        marker: { color: residuals.map(r => r >= 0 ? 'rgba(5, 150, 105, 0.72)' : 'rgba(220, 38, 38, 0.72)') },
         xaxis: 'x4',
         yaxis: 'y4',
         hovertemplate: '<b>%{x}</b><br>Résidu: %{y:.3f}<extra></extra>',

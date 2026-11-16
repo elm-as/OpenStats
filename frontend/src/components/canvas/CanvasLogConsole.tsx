@@ -29,7 +29,7 @@ export default function CanvasLogConsole({ logs, isRunning, onClear }: CanvasLog
   if (logs.length === 0 && !isRunning) return null;
 
   return (
-    <div className={`fixed bottom-4 right-8 z-30 transition-all duration-300 w-[420px] md:w-[500px] rounded-2xl border border-white/[0.1] bg-surface-900/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden ${isExpanded ? 'h-[240px]' : 'h-[44px]'}`}>
+    <div className={`ui-panel fixed bottom-24 right-8 z-30 transition-all duration-300 w-[420px] md:w-[500px] shadow-2xl overflow-hidden ${isExpanded ? 'h-[240px]' : 'h-[44px]'}`}>
       {/* Header */}
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
@@ -52,12 +52,12 @@ export default function CanvasLogConsole({ logs, isRunning, onClear }: CanvasLog
               e.stopPropagation();
               onClear();
             }}
-            className="p-1 text-surface-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+            className="p-1 text-surface-400 hover:text-surface-100 rounded-lg hover:bg-white/10 transition-colors"
             title="Effacer la console"
           >
             <Trash2 size={13} />
           </button>
-          <button className="text-surface-400 hover:text-white">
+          <button className="text-surface-400 hover:text-surface-100">
             {isExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
           </button>
         </div>

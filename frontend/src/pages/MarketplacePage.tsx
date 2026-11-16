@@ -20,12 +20,12 @@ const ICON_MAP: Record<string, React.FC<{ className?: string; style?: React.CSSP
 };
 
 const COLOR_MAP: Record<string, string> = {
-  'bar-chart-3': '#06b6d4',
-  'brain-circuit': '#a855f7',
-  'trending-up': '#3b82f6',
-  brush: '#ec4899',
-  layers: '#10b981',
-  dices: '#f97316',
+  'bar-chart-3': '#0891b2',
+  'brain-circuit': '#0e7490',
+  'trending-up': '#2563eb',
+  brush: '#d97706',
+  layers: '#059669',
+  dices: '#ea580c',
 };
 
 const FILTERS = [
@@ -90,11 +90,11 @@ export default function MarketplacePage() {
             <span className="ui-tag ui-tag-accent">Écosystème Ouvert</span>
             <span className="ui-tag ui-tag-neutral">JSON Templates</span>
           </div>
-          <h1 className="text-lg md:text-xl font-black text-white tracking-tight">
-            Catalogue de Recettes & Extensions
+          <h1 className="text-lg md:text-xl font-bold ui-t tracking-tight">
+            Catalogue de Recettes &amp; Extensions
           </h1>
-          <p className="text-xs text-muted mt-0.5">
-            Installez ou partagez des modèles de pipelines d'analyse statistique et de Machine Learning prêts à l'emploi.
+          <p className="text-xs ui-t-muted mt-0.5">
+            Installez ou partagez des modèles de pipelines statistiques et de Machine Learning réutilisables.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -198,29 +198,29 @@ function MarketplaceCard({
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-lg transition-transform group-hover:scale-110 duration-300"
-          style={{ background: `${accentColor}18`, boxShadow: `0 0 20px ${accentColor}10` }}
+          className="w-10 h-10 rounded-[var(--ui-radius)] flex items-center justify-center shrink-0"
+          style={{ background: `${accentColor}1a`, border: `1px solid ${accentColor}30` }}
         >
           <IconComponent className="w-5 h-5" style={{ color: accentColor }} />
         </div>
         <div className="flex-1 min-w-0 pt-0.5">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-sm text-strong truncate">{item.name}</h3>
+            <h3 className="font-bold text-sm ui-t truncate">{item.name}</h3>
             {item.featured && (
-              <span className="badge badge-warning text-[8px] !px-1.5 !py-0 flex items-center gap-0.5 shrink-0">
-                <Star className="w-2 h-2" />
+              <span className="ui-tag ui-tag-warning shrink-0">
+                <Star className="w-2.5 h-2.5" />
                 Vedette
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-[10px] text-muted">{item.author}</p>
-            <span className="text-faint/30">·</span>
-            <span className="text-[10px] text-muted font-mono">v{item.version}</span>
+            <p className="text-[11px] ui-t-muted">{item.author}</p>
+            <span className="ui-t-faint">·</span>
+            <span className="text-[11px] ui-t-muted ui-mono ui-num">v{item.version}</span>
             {nodeCount !== null && (
               <>
-                <span className="text-faint/30">·</span>
-                <span className="text-[10px] text-faint">{nodeCount} noeud{nodeCount > 1 ? 's' : ''}</span>
+                <span className="ui-t-faint">·</span>
+                <span className="text-[11px] ui-t-faint ui-num">{nodeCount} bloc{nodeCount > 1 ? 's' : ''}</span>
               </>
             )}
           </div>
@@ -252,7 +252,7 @@ function MarketplaceCard({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+      <div className="flex items-center gap-2 pt-3 border-t border-[var(--ui-border)]">
         <button
           type="button"
           onClick={(e) => {
@@ -263,9 +263,9 @@ function MarketplaceCard({
             }
           }}
           disabled={!item.payload?.nodes}
-          className="flex-1 py-1.5 rounded-lg bg-accent-500/10 hover:bg-accent-500/20 text-accent-300 text-[11px] font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 border border-accent-500/20"
+          className="flex-1 ui-btn ui-focusable"
         >
-          <Download className="w-3 h-3" />
+          <Download className="w-3.5 h-3.5 ui-t-accent" />
           Installer
         </button>
         <button
@@ -278,9 +278,9 @@ function MarketplaceCard({
             }
           }}
           disabled={!item.payload?.nodes}
-          className="flex-1 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-[11px] font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 border border-purple-500/20"
+          className="flex-1 ui-btn ui-btn-primary ui-focusable"
         >
-          <Play className="w-3 h-3" />
+          <Play className="w-3.5 h-3.5" />
           Ouvrir
         </button>
       </div>

@@ -130,16 +130,16 @@ export const TimeSeriesResultView = ({
               <div className="grid grid-cols-4 gap-2 text-[11px] py-1 border-b border-white/10 font-medium text-surface-400">
                 <span>Date</span>
                 <span className="text-right text-cyan-400">Observé</span>
-                <span className="text-right text-amber-300">Tendance</span>
-                <span className="text-right text-purple-300">Saison</span>
+                <span className="text-right text-amber-400">Tendance</span>
+                <span className="text-right text-sky-400">Saison</span>
               </div>
-              <div className="max-h-56 overflow-y-auto space-y-1 pr-1 font-mono text-[11px]">
+              <div className="max-h-56 overflow-y-auto space-y-1 pr-1 font-mono ui-num text-[11px]">
                 {resultData.dates.slice(0, 30).map((d: string, i: number) => (
                   <div key={i} className="grid grid-cols-4 gap-2 py-0.5 border-b border-white/5 text-surface-300">
                     <span className="truncate">{d}</span>
                     <span className="text-right text-cyan-400">{resultData.observed[i]?.toFixed(2) ?? '—'}</span>
-                    <span className="text-right text-amber-300">{resultData.trend[i]?.toFixed(2) ?? '—'}</span>
-                    <span className="text-right text-purple-300">{resultData.seasonal[i]?.toFixed(2) ?? '—'}</span>
+                    <span className="text-right text-amber-400">{resultData.trend[i]?.toFixed(2) ?? '—'}</span>
+                    <span className="text-right text-sky-400">{resultData.seasonal[i]?.toFixed(2) ?? '—'}</span>
                   </div>
                 ))}
               </div>

@@ -2,15 +2,26 @@ import os
 import logging
 import uuid
 import time
+import hmac
 os.environ.setdefault("LOKY_MAX_CPU_COUNT", "4")
 from flask import Flask, send_from_directory, request, g, jsonify
+from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
 
 from sqlalchemy import inspect, text
 from werkzeug.exceptions import HTTPException
 
+from app.api.v1.analysis.chart_serialization import sanitize_for_json
 from app.config import Config
 from app.extensions import db, migrate, limiter
+
+
+class _SafeJSONProvider(DefaultJSONProvider):
+    """Sérialise les objets scientifiques sans jamais émettre NaN/Infinity invalides en JSON."""
+
+    def dumps(self, obj, **kwargs):
+        kwargs.setdefault("allow_nan", False)
+        return super().dumps(sanitize_for_json(obj), **kwargs)
 
 
 def _ensure_legacy_schema_compatibility(app: Flask):
@@ -76,6 +87,27 @@ def _setup_logging(app: Flask):
         g.request_id = request.headers.get("X-Request-Id", uuid.uuid4().hex[:12])
         g.request_start = time.time()
 
+        # Protection anti-CSRF par jeton de session éphémère (communication locale sécurisée)
+        expected_token = os.getenv("OPENSTATS_SESSION_TOKEN", "").strip()
+        if expected_token and not app.config.get("TESTING"):
+            is_public_share = (
+                request.method == "GET"
+                and request.path.startswith("/api/v1/canvas/share/")
+            )
+            if request.method == "OPTIONS" or not request.path.startswith("/api/") or is_public_share:
+                return None
+
+            auth_header = request.headers.get("Authorization", "")
+            bearer = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ""
+            client_token = request.headers.get("X-Session-Token", "").strip() or bearer
+
+            if not client_token or not hmac.compare_digest(client_token, expected_token):
+                return jsonify({
+                    "error": "Non autorisé : jeton de session éphémère manquant ou invalide.",
+                    "code": "invalid_session_token",
+                    "request_id": g.request_id,
+                }), 401
+
     @app.after_request
     def _after_request(response):
         duration = int((time.time() - getattr(g, "request_start", time.time())) * 1000)
@@ -97,6 +129,7 @@ def create_app(config_class=Config):
         static_folder=config_class.FRONTEND_DIST_DIR,
         static_url_path="/",
     )
+    app.json = _SafeJSONProvider(app)
     app.config.from_object(config_class)
 
     if app.config.get("LOCAL_DEV_MODE", False) and os.getenv("FLASK_ENV") == "production":
@@ -110,8 +143,11 @@ def create_app(config_class=Config):
 
     CORS(
         app,
-        resources={r"/api/*": {"origins": cors_origins}},
-        allow_headers=["Content-Type", "Authorization", "X-Client-Id", "X-Request-Id", "Accept", "Origin", "User-Agent", "*"],
+        resources={
+            r"/api/*": {"origins": cors_origins},
+            r"/health": {"origins": cors_origins},
+        },
+        allow_headers=["Content-Type", "Authorization", "X-Client-Id", "X-Request-Id", "X-Session-Token", "Accept", "Origin", "User-Agent", "*"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         expose_headers=["Content-Disposition", "X-Request-Id"],
     )
@@ -156,14 +192,6 @@ def create_app(config_class=Config):
         # Enregistrer les exécuteurs de jobs
         from app.tasks.executors import register_all_executors
         register_all_executors()
-
-        # Précharger les modules ML/statistiques pour éviter les erreurs d'importation
-        # concourantes dans le ThreadPoolExecutor du Canvas. Inutile sous test :
-        # les nœuds y sont exécutés de manière synchrone, et le préchargement
-        # coûte environ 1,5 Go de mémoire à chaque création d'application.
-        if not app.config.get("TESTING") and os.getenv("OPENSTATS_PRELOAD", "1") != "0":
-            from app.core.preload import preload_heavy_modules
-            preload_heavy_modules(app.logger)
 
     # Register API blueprints
     from app.api.v1 import api_v1_bp
@@ -233,5 +261,11 @@ def create_app(config_class=Config):
             return send_from_directory(dist_dir, path)
 
         return send_from_directory(dist_dir, "index.html")
+
+    # Lancer le préchargement ML en arrière-plan UNE FOIS tous les blueprints importés
+    # pour éviter tout interblocage du verrou d'importation Python avec le thread principal.
+    if not app.config.get("TESTING") and os.getenv("OPENSTATS_PRELOAD", "1") != "0":
+        from app.core.preload import start_background_preload
+        start_background_preload(app.logger)
 
     return app

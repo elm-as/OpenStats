@@ -317,6 +317,9 @@ def fit_prophet(
             },
             "forecast": {
                 "dates": idx_fc,
+                "values": [_sf(v) for v in future_forecast['yhat']],
+                "lower_ci": [_sf(v) for v in future_forecast['yhat_lower']],
+                "upper_ci": [_sf(v) for v in future_forecast['yhat_upper']],
                 "mean": [_sf(v) for v in future_forecast['yhat']],
                 "lower": [_sf(v) for v in future_forecast['yhat_lower']],
                 "upper": [_sf(v) for v in future_forecast['yhat_upper']],

@@ -24,14 +24,14 @@ export function TypeSummaryCard({
   color: string;
 }) {
   const colors: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-700 border-blue-200',
-    cyan: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    amber: 'bg-amber-50 text-amber-700 border-amber-200',
-    green: 'bg-green-50 text-green-700 border-green-200',
-    purple: 'bg-purple-50 text-purple-700 border-purple-200',
+    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/25',
+    cyan: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25',
+    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
+    green: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
+    purple: 'bg-teal-500/10 text-teal-400 border-teal-500/25',
   };
   return (
-    <div className={`rounded-xl border p-3 text-center ${colors[color]}`}>
+    <div className={`rounded-lg border p-3 text-center ui-num ${colors[color] || colors.blue}`}>
       <Icon className="w-5 h-5 mx-auto mb-1" />
       <p className="text-2xl font-bold">{count}</p>
       <p className="text-xs">{label}</p>
@@ -74,14 +74,14 @@ export function WizardOverviewStep({
     <>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
             <Sparkles className="w-5 h-5 text-primary-600" />
             Assistant d'Analyse
           </h2>
-          <p className="text-sm text-surface-400 mt-1">
+          <p className="text-sm ui-t-muted mt-1">
             {availableCount} analyse(s) disponible(s) sur {totalCount} — basé sur vos types de données
             {(capabilities.summary.excluded_count ?? 0) > 0 && (
-              <span className="text-amber-600 ml-1">
+              <span className="text-amber-500 ml-1">
                 ({capabilities.summary.excluded_count} colonne(s) exclue(s))
               </span>
             )}
@@ -105,23 +105,23 @@ export function WizardOverviewStep({
 
       {/* Column Filter Panel */}
       {showColumnFilter && (
-        <div className="card border-primary-200 bg-primary-50/30">
+        <div className="card" style={{ borderColor: 'var(--ui-border-strong)' }}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <h3 className="font-semibold flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
               <Settings2 className="w-4 h-4 text-primary-600" />
               Sélection des colonnes
             </h3>
             <div className="flex gap-2">
-              <button onClick={onIncludeAll} className="text-xs text-primary-600 hover:underline">
+              <button onClick={onIncludeAll} className="text-xs text-accent-400 hover:underline">
                 Tout inclure
               </button>
-              <span className="text-surface-500">|</span>
+              <span className="ui-t-faint">|</span>
               <button onClick={onExcludeAll} className="text-xs text-red-500 hover:underline">
                 Tout exclure
               </button>
             </div>
           </div>
-          <p className="text-xs text-surface-400 mb-3">
+          <p className="text-xs ui-t-muted mb-3">
             Décochez les colonnes que vous souhaitez exclure des analyses et de la modélisation.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
@@ -130,9 +130,11 @@ export function WizardOverviewStep({
               return (
                 <label
                   key={col}
-                  className={`flex items-center gap-2 text-sm p-2 rounded-lg cursor-pointer transition-colors ${
-                    isExcluded ? 'bg-surface-800 text-surface-500' : 'hover:bg-white text-surface-300'
-                  }`}
+                  className="flex items-center gap-2 text-sm p-2 rounded-[var(--ui-radius-sm)] cursor-pointer transition-colors hover:bg-white/5"
+                  style={{
+                    background: isExcluded ? 'var(--ui-bg-sunken)' : 'var(--ui-bg-raised)',
+                    color: isExcluded ? 'var(--ui-text-faint)' : 'var(--ui-text)',
+                  }}
                 >
                   <input
                     type="checkbox"
@@ -206,7 +208,7 @@ export function WizardOverviewStep({
                   <Icon className={`w-5 h-5 ${meta.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 text-sm">{meta.label}</h3>
+                  <h3 className="font-semibold text-sm" style={{ color: 'var(--ui-text)' }}>{meta.label}</h3>
                   <p className="text-xs text-surface-400 mt-1">
                     {availableInCat}/{analyses.length} analyse(s) disponible(s)
                   </p>
@@ -214,11 +216,11 @@ export function WizardOverviewStep({
                     {analyses.map(a => (
                       <span
                         key={a.key}
-                        className={`text-xs px-1.5 py-0.5 rounded ${
+                        className={
                           a.available
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-surface-800 text-surface-500 line-through'
-                        }`}
+                            ? 'ui-tag ui-tag-ok'
+                            : 'ui-tag line-through opacity-60'
+                        }
                       >
                         {a.available ? 'OK' : 'N/A'}{' '}
                         {a.label.split('(')[0].split('—')[0].trim().slice(0, 25)}

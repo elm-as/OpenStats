@@ -44,8 +44,8 @@ export default function CodeViewerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in nodrag nopan nowheel">
-      <div className="bg-surface-900 border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 nodrag nopan nowheel">
+      <div className="ui-panel w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* En-tête */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-surface-950/60">
           <div className="flex items-center gap-2.5">
@@ -96,7 +96,7 @@ export default function CodeViewerModal({
               <button
                 type="button"
                 onClick={onExportNotebook}
-                className="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-xs font-medium transition-colors flex items-center gap-1.5"
+                className="px-2.5 py-1 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/25 text-xs font-medium transition-colors flex items-center gap-1.5"
               >
                 <FileCode size={13} /> Jupyter (.ipynb)
               </button>

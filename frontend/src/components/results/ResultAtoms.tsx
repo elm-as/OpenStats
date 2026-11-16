@@ -65,14 +65,14 @@ export function MetricBox({
   color: string;
 }) {
   const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-500/10 border-blue-500/20 text-blue-300',
-    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-300',
-    emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300',
-    purple: 'bg-purple-500/10 border-purple-500/20 text-purple-300',
+    blue: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+    emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+    purple: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
   };
 
   return (
-    <div className={`p-4 rounded-lg border ${colorClasses[color] || colorClasses.blue}`}>
+    <div className={`p-4 rounded-lg border ui-num ${colorClasses[color] || colorClasses.blue}`}>
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-xs opacity-80 mt-1">{label}</div>
     </div>
@@ -90,10 +90,10 @@ export function formatNumber(val: number | undefined | null): string {
 
 export function TypeBadge({ type }: { type: string }) {
   const colors: Record<string, string> = {
-    numeric: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    categorical: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    datetime: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    boolean: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    numeric: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    categorical: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
+    datetime: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    boolean: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   };
   return (
     <span className={`text-xs px-2 py-0.5 rounded border ${colors[type] || colors.numeric}`}>

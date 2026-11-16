@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { Node, Edge } from '@xyflow/react';
-import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
+import { apiFetch } from '../../lib/apiBase';
+import { fetchPythonAndRCode, requestCanvasCodeExport } from './canvasCodeExport';
 import { saveUserTemplate } from './templates';
 import type { NodeResult } from './canvasGraphConfig';
 
@@ -46,18 +47,9 @@ export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExpo
     };
 
     try {
-      const response = await fetch(`${API_V1_BASE}/canvas/share`, {
+      const response = await apiFetch('/canvas/share', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Client-Id': (() => {
-            try {
-              return getAnonymousClientId();
-            } catch {
-              return '';
-            }
-          })(),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(pipeline),
       });
       const result = await response.json();
@@ -117,26 +109,13 @@ export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExpo
   const handleOpenGlobalCodeModal = useCallback(async () => {
     setShowGlobalCodeModal(true);
     try {
-      const pyRes = await fetch(`${API_V1_BASE}/canvas/export_code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodes,
-          edges,
-          dataset_name: activeDatasetName,
-          language: 'python',
-        }),
+      const { pythonCode: generatedPy, rCode: generatedR } = await fetchPythonAndRCode({
+        nodes,
+        edges,
+        dataset_name: activeDatasetName,
       });
-      const pyData = await pyRes.json();
-      if (pyData.code) setPythonCode(pyData.code);
-
-      const rRes = await fetch(`${API_V1_BASE}/canvas/export_code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nodes, edges, dataset_name: activeDatasetName, language: 'r' }),
-      });
-      const rData = await rRes.json();
-      if (rData.code) setRCode(rData.code);
+      if (generatedPy) setPythonCode(generatedPy);
+      if (generatedR) setRCode(generatedR);
     } catch (err) {
       console.error('Erreur lors de la génération de code:', err);
     }
@@ -144,17 +123,12 @@ export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExpo
 
   const handleExportNotebook = useCallback(async () => {
     try {
-      const res = await fetch(`${API_V1_BASE}/canvas/export_code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodes,
-          edges,
-          dataset_name: activeDatasetName,
-          language: 'notebook',
-        }),
+      const data = await requestCanvasCodeExport({
+        nodes,
+        edges,
+        dataset_name: activeDatasetName,
+        language: 'notebook',
       });
-      const data = await res.json();
       if (data.notebook_json) {
         const blob = new Blob([JSON.stringify(data.notebook_json, null, 2)], {
           type: 'application/x-ipynb+json',

@@ -212,6 +212,27 @@ class DatasetComputationMixin:
 
         return results
 
+    def get_model_results(self, dataset_id: str) -> dict:
+        """Retourne les résultats du dernier entraînement depuis le cache session ou le stockage."""
+        cache = self._get_cache(dataset_id)
+        cached = cache.get("model_results")
+        if cached:
+            return cached
+
+        latest = (
+            AnalysisResult.query.filter_by(
+                dataset_id=dataset_id,
+                analysis_type="modeling",
+                status="completed",
+            )
+            .order_by(AnalysisResult.created_at.desc())
+            .first()
+        )
+        if not latest:
+            return {}
+        loaded = storage.load_result(dataset_id, latest.id)
+        return loaded or {}
+
     def store_analysis_result(self, dataset_id: str, key: str, value: dict) -> None:
         """Stocke un résultat d'analyse dans le cache session pour les exports/rapports."""
         cache = self._get_cache(dataset_id)

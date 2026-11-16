@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart, SCI_COLORS } from './PlotlyBase';
+import { PlotlyChart, SCI_COLORS, useCurrentTheme } from './PlotlyBase';
 import { safeMax } from './chartAnalyticsExport';
 import type { Data, Layout } from 'plotly.js';
 
@@ -27,6 +27,10 @@ export default function PCABiplot({
   arrowScale,
 }: Props) {
   const [pcX, pcY] = axes;
+  const theme = useCurrentTheme();
+  const titleColor = theme === 'light' ? '#0f172a' : '#dfe3ee';
+  const arrowLabelColor = theme === 'light' ? '#92400e' : '#fcd34d';
+  const arrowLineColor = theme === 'light' ? '#d97706' : '#f59e0b';
 
   const extract = (v: number[] | Record<string, number> | undefined, idx: number): number => {
     if (!v) return 0;
@@ -105,7 +109,7 @@ export default function PCABiplot({
           y: [0, vy],
           mode: 'lines',
           type: 'scatter',
-          line: { color: '#f59e0b', width: 2 },
+          line: { color: arrowLineColor, width: 2 },
           hoverinfo: 'skip',
           showlegend: false,
         } as Data);
@@ -114,9 +118,9 @@ export default function PCABiplot({
           y: [vy],
           mode: 'text+markers',
           type: 'scatter',
-          marker: { color: '#f59e0b', size: 6, symbol: 'arrow', angleref: 'previous' as any },
+          marker: { color: arrowLineColor, size: 6, symbol: 'arrow', angleref: 'previous' as any },
           text: [v],
-          textfont: { size: 11, color: '#fcd34d' },
+          textfont: { size: 11, color: arrowLabelColor },
           textposition: 'top right',
           hovertemplate: `<b>${v}</b><br>loading PC${pcX + 1}: ${extract(variables[v], pcX).toFixed(3)}<br>loading PC${pcY + 1}: ${extract(variables[v], pcY).toFixed(3)}<extra></extra>`,
           showlegend: false,
@@ -132,14 +136,14 @@ export default function PCABiplot({
       : `PC${pcY + 1}`;
 
     const lay: Partial<Layout> = {
-      title: { text: title, font: { size: 14, color: '#dfe3ee' } },
+      title: { text: title, font: { size: 14, color: titleColor } },
       xaxis: { title: { text: xLabel }, zeroline: true },
       yaxis: { title: { text: yLabel }, zeroline: true },
       showlegend: uniqueGroups.length > 0,
     };
 
     return { traces: [...indTraces, ...arrowTraces], layout: lay };
-  }, [individuals, variables, explainedVariance, pcX, pcY, title, arrowScale]);
+  }, [individuals, variables, explainedVariance, pcX, pcY, title, arrowScale, titleColor, arrowLabelColor, arrowLineColor]);
 
   return <PlotlyChart data={traces} layout={layout} height={height} />;
 }

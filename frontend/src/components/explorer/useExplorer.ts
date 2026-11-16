@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
+import { apiFetch } from '../../lib/apiBase';
 import type {
   Capabilities,
   ExplorationResult,
@@ -30,11 +30,6 @@ export function useExplorer(datasetId: string | undefined) {
 
   const abortRef = useRef<AbortController | null>(null);
 
-  const headers = useCallback(
-    () => ({ 'Content-Type': 'application/json', 'X-Client-Id': getAnonymousClientId() }),
-    [],
-  );
-
   /** Ce que l'explorateur peut faire ici — recalculé à chaque changement de cible. */
   useEffect(() => {
     if (!datasetId) return;
@@ -44,10 +39,7 @@ export function useExplorer(datasetId: string | undefined) {
       setLoadingCapabilities(true);
       try {
         const query = target ? `?target=${encodeURIComponent(target)}` : '';
-        const response = await fetch(
-          `${API_V1_BASE}/datasets/${datasetId}/explore/capabilities${query}`,
-          { headers: headers() },
-        );
+        const response = await apiFetch(`/datasets/${datasetId}/explore/capabilities${query}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data: Capabilities = await response.json();
         if (!cancelled) setCapabilities(data);
@@ -62,7 +54,7 @@ export function useExplorer(datasetId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [datasetId, target, headers]);
+  }, [datasetId, target]);
 
   const reset = useCallback(() => {
     setTrace([]);
@@ -143,9 +135,9 @@ export function useExplorer(datasetId: string | undefined) {
       abortRef.current = controller;
 
       try {
-        const response = await fetch(`${API_V1_BASE}/datasets/${datasetId}/explore/stream`, {
+        const response = await apiFetch(`/datasets/${datasetId}/explore/stream`, {
           method: 'POST',
-          headers: headers(),
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ target, budget_sec: budgetSec }),
           signal: controller.signal,
         });
@@ -182,7 +174,7 @@ export function useExplorer(datasetId: string | undefined) {
         abortRef.current = null;
       }
     },
-    [datasetId, running, target, headers, reset, handleEvent],
+    [datasetId, running, target, reset, handleEvent],
   );
 
   useEffect(() => () => abortRef.current?.abort(), []);

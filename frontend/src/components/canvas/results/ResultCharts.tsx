@@ -1,9 +1,21 @@
 import React from 'react';
 import { safeMin, safeMax } from '../../viz/chartAnalyticsExport';
+import { useCurrentTheme } from '../../viz/PlotlyBase';
+
+function useSvgTheme() {
+  const isLight = useCurrentTheme() === 'light';
+  return {
+    isLight,
+    gridStroke: isLight ? '#cbd5e1' : '#334155',
+    circleStroke: isLight ? '#94a3b8' : '#475569',
+    axisFill: isLight ? '#475569' : '#94a3b8',
+    labelFill: isLight ? '#0f172a' : '#cbd5e1',
+    defaultStart: isLight ? '#f1f5f9' : '#1e293b',
+  };
+}
 
 export const SvgScatterPlot = ({
   points,
-  labelKey,
   colors,
   title,
   xLabel,
@@ -18,6 +30,7 @@ export const SvgScatterPlot = ({
   yLabel: string;
   showCircle?: boolean;
 }) => {
+  const { gridStroke, circleStroke, axisFill, labelFill } = useSvgTheme();
   if (points.length === 0) return null;
   const W = 500;
   const H = 360;
@@ -39,32 +52,34 @@ export const SvgScatterPlot = ({
   const sy = (v: number) => H - PAD - ((v - yLo) / (yHi - yLo)) * (H - 2 * PAD);
   const cx = sx(0);
   const cy = sy(0);
-  const palette = colors || ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
+  const palette = colors || ['#0284c7', '#059669', '#d97706', '#dc2626', '#0ea5e9', '#0d9488', '#475569'];
 
   return (
-    <div className="bg-surface-800/30 rounded-xl border border-white/[0.04] p-3 overflow-x-auto">
-      <p className="text-xs font-bold text-surface-300 mb-2">{title}</p>
+    <div
+      className="ui-panel p-3 overflow-x-auto"
+    >
+      <p className="text-xs font-bold mb-2" style={{ color: 'var(--ui-text)' }}>{title}</p>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[600px]" style={{ minWidth: 400 }}>
-        <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke="#334155" strokeWidth="1" strokeDasharray="4,4" />
-        <line x1={cx} y1={PAD} x2={cx} y2={H - PAD} stroke="#334155" strokeWidth="1" strokeDasharray="4,4" />
+        <line x1={PAD} y1={cy} x2={W - PAD} y2={cy} stroke={gridStroke} strokeWidth="1" strokeDasharray="4,4" />
+        <line x1={cx} y1={PAD} x2={cx} y2={H - PAD} stroke={gridStroke} strokeWidth="1" strokeDasharray="4,4" />
         {showCircle && (
           <circle
             cx={cx}
             cy={cy}
-            r={Math.min(sx(1) - sx(0), sy(0) - sy(1))}
+            r={Math.max(1, Math.min(sx(1) - sx(0), sy(0) - sy(1)))}
             fill="none"
-            stroke="#475569"
+            stroke={circleStroke}
             strokeWidth="1"
             strokeDasharray="3,3"
           />
         )}
-        <text x={W / 2} y={H - 8} fill="#94a3b8" fontSize="11" textAnchor="middle">
+        <text x={W / 2} y={H - 8} fill={axisFill} fontSize="11" textAnchor="middle">
           {xLabel}
         </text>
         <text
           x={14}
           y={H / 2}
-          fill="#94a3b8"
+          fill={axisFill}
           fontSize="11"
           textAnchor="middle"
           transform={`rotate(-90, 14, ${H / 2})`}
@@ -75,10 +90,10 @@ export const SvgScatterPlot = ({
           const col = p.color || palette[i % palette.length];
           return (
             <g key={i}>
-              <circle cx={sx(p.x)} cy={sy(p.y)} r={4} fill={col} opacity={0.85} />
-              {showCircle && <line x1={cx} y1={cy} x2={sx(p.x)} y2={sy(p.y)} stroke={col} strokeWidth="1" opacity={0.4} />}
+              <circle cx={sx(p.x)} cy={sy(p.y)} r={4} fill={col} opacity={0.88} />
+              {showCircle && <line x1={cx} y1={cy} x2={sx(p.x)} y2={sy(p.y)} stroke={col} strokeWidth="1" opacity={0.45} />}
               {points.length <= 30 && (
-                <text x={sx(p.x) + 6} y={sy(p.y) - 6} fill="#cbd5e1" fontSize="9">
+                <text x={sx(p.x) + 6} y={sy(p.y) - 6} fill={labelFill} fontSize="9">
                   {p.label}
                 </text>
               )}
@@ -94,36 +109,38 @@ export const SvgBarChart = ({
   values,
   labels,
   title,
-  color = '#06b6d4',
+  color = '#0284c7',
 }: {
   values: number[];
   labels: string[];
   title: string;
   color?: string;
 }) => {
+  const { gridStroke, axisFill, labelFill } = useSvgTheme();
   if (values.length === 0) return null;
   const W = 500;
   const H = 200;
   const PAD = 50;
-  const maxVal = Math.max(safeMax(values), 1);
+  const maxVal = Math.max(safeMax(values), 1e-6);
+  const allProportions = values.every(v => v >= 0 && v <= 1);
   const barW = Math.min(40, (W - 2 * PAD) / values.length - 4);
 
   return (
-    <div className="bg-surface-800/30 rounded-xl border border-white/[0.04] p-3 overflow-x-auto">
-      <p className="text-xs font-bold text-surface-300 mb-2">{title}</p>
+    <div className="ui-panel p-3 overflow-x-auto">
+      <p className="text-xs font-bold mb-2" style={{ color: 'var(--ui-text)' }}>{title}</p>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[600px]" style={{ minWidth: 350 }}>
-        <line x1={PAD} y1={H - PAD} x2={W - PAD} y2={H - PAD} stroke="#334155" strokeWidth="1" />
+        <line x1={PAD} y1={H - PAD} x2={W - PAD} y2={H - PAD} stroke={gridStroke} strokeWidth="1" />
         {values.map((v, i) => {
           const x = PAD + (i + 0.5) * ((W - 2 * PAD) / values.length) - barW / 2;
-          const barH = (v / maxVal) * (H - 2 * PAD);
-          const pct = v > 1 ? v : v * 100;
+          const barH = Math.max(0, (v / maxVal) * (H - 2 * PAD));
+          const displayLabel = allProportions ? `${(v * 100).toFixed(1)}%` : (Number.isInteger(v) ? String(v) : v.toFixed(2));
           return (
             <g key={i}>
-              <rect x={x} y={H - PAD - barH} width={barW} height={barH} fill={color} rx={3} opacity={0.8} />
-              <text x={x + barW / 2} y={H - PAD - barH - 6} fill="#cbd5e1" fontSize="10" textAnchor="middle">
-                {pct.toFixed(1)}%
+              <rect x={x} y={H - PAD - barH} width={barW} height={barH} fill={color} rx={3} opacity={0.85} />
+              <text x={x + barW / 2} y={H - PAD - barH - 6} fill={labelFill} fontSize="10" textAnchor="middle">
+                {displayLabel}
               </text>
-              <text x={x + barW / 2} y={H - PAD + 14} fill="#94a3b8" fontSize="9" textAnchor="middle">
+              <text x={x + barW / 2} y={H - PAD + 14} fill={axisFill} fontSize="9" textAnchor="middle">
                 {labels[i]}
               </text>
             </g>
@@ -138,8 +155,8 @@ export const SvgHeatmap = ({
   matrix,
   labels,
   title,
-  colorStart = '#1e293b',
-  colorEnd = '#3b82f6',
+  colorStart,
+  colorEnd = '#0284c7',
 }: {
   matrix: number[][];
   labels?: string[];
@@ -147,7 +164,9 @@ export const SvgHeatmap = ({
   colorStart?: string;
   colorEnd?: string;
 }) => {
+  const { axisFill, labelFill, defaultStart } = useSvgTheme();
   if (!matrix || matrix.length === 0) return null;
+  const startHex = colorStart || defaultStart;
   const W = 300;
   const H = 300;
   const PAD_L = 60;
@@ -169,9 +188,9 @@ export const SvgHeatmap = ({
   const interpolateColor = (val: number) => {
     const pct = maxVal > 0 ? val / maxVal : 0;
     const c1 = [
-      parseInt(colorStart.slice(1, 3), 16),
-      parseInt(colorStart.slice(3, 5), 16),
-      parseInt(colorStart.slice(5, 7), 16),
+      parseInt(startHex.slice(1, 3), 16),
+      parseInt(startHex.slice(3, 5), 16),
+      parseInt(startHex.slice(5, 7), 16),
     ];
     const c2 = [
       parseInt(colorEnd.slice(1, 3), 16),
@@ -185,13 +204,13 @@ export const SvgHeatmap = ({
   };
 
   return (
-    <div className="bg-surface-800/30 rounded-xl border border-white/[0.04] p-3 overflow-x-auto flex flex-col items-center">
-      <p className="text-xs font-bold text-surface-300 mb-2 w-full text-left">{title}</p>
+    <div className="ui-panel p-3 overflow-x-auto flex flex-col items-center">
+      <p className="text-xs font-bold mb-2 w-full text-left" style={{ color: 'var(--ui-text)' }}>{title}</p>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[400px]">
         <text
           x={PAD_L / 2}
           y={H / 2}
-          fill="#94a3b8"
+          fill={axisFill}
           fontSize="11"
           textAnchor="middle"
           transform={`rotate(-90, ${PAD_L / 2}, ${H / 2})`}
@@ -203,7 +222,7 @@ export const SvgHeatmap = ({
             key={`yl-${i}`}
             x={PAD_L - 8}
             y={PAD_T + (i + 0.5) * cellH + 4}
-            fill="#cbd5e1"
+            fill={labelFill}
             fontSize="10"
             textAnchor="end"
           >
@@ -211,7 +230,7 @@ export const SvgHeatmap = ({
           </text>
         ))}
 
-        <text x={PAD_L + (W - PAD_L - PAD_R) / 2} y={H - 10} fill="#94a3b8" fontSize="11" textAnchor="middle">
+        <text x={PAD_L + (W - PAD_L - PAD_R) / 2} y={H - 10} fill={axisFill} fontSize="11" textAnchor="middle">
           Prédit
         </text>
         {labels?.map((lbl, j) => (
@@ -219,7 +238,7 @@ export const SvgHeatmap = ({
             key={`xl-${j}`}
             x={PAD_L + (j + 0.5) * cellW}
             y={H - PAD_B + 16}
-            fill="#cbd5e1"
+            fill={labelFill}
             fontSize="10"
             textAnchor="middle"
           >
@@ -241,7 +260,7 @@ export const SvgHeatmap = ({
               <text
                 x={PAD_L + (j + 0.5) * cellW}
                 y={PAD_T + (i + 0.5) * cellH + 4}
-                fill={val > maxVal / 2 ? '#ffffff' : '#94a3b8'}
+                fill={val > maxVal * 0.45 ? '#ffffff' : labelFill}
                 fontSize="11"
                 textAnchor="middle"
                 fontWeight="bold"

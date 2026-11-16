@@ -17,8 +17,8 @@ export function SqlFullscreenModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in nodrag nopan nowheel">
-      <div className="bg-surface-900 border border-white/10 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden space-y-4 p-5">
+    <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 nodrag nopan nowheel">
+      <div className="ui-panel w-full max-w-3xl shadow-2xl overflow-hidden space-y-4 p-5">
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">
             <Database size={18} className="text-blue-400" />

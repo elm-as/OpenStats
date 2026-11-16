@@ -1,240 +1,125 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useDeleteDatasetMutation, useListDatasetsQuery } from '../store/api';
 import {
-  Upload, Database, Clock, ArrowRight, Sigma, Trash2,
-  Compass, Workflow, Network, Cpu, ShieldCheck, Layers, FileCode2,
+  Database, Upload, Trash2, Compass, Workflow, Sliders, Network,
+  FileSpreadsheet, Loader2,
 } from 'lucide-react';
+import { useDeleteDatasetMutation, useGetDatasetQuery } from '../store/api';
+import { useWorkspace } from '../components/shell/useWorkspace';
+import { useStatus } from '../components/shell/StatusBar';
 import { useToast } from '../components/ui/Toast';
 import { extractErrorMessage } from '../components/ui/errorMessage';
+import VariableDockList from '../components/dataset/VariableDockList';
+import SpreadsheetWorkbench from '../components/dataset/SpreadsheetWorkbench';
+import FileUpload from '../components/dataset/FileUpload';
+import type { DatasetSummary } from '../types';
 
-interface DatasetItem {
-  id: string;
-  name: string;
-  created_at: string;
-  shape?: { rows: number; columns: number };
-  versions_count?: number;
-  file_size?: number;
-}
-
+/**
+ * Poste de travail Données & Variables (ergonomie logiciel statistique de bureau).
+ * Combine l'explorateur de session, la liste typée des variables et la grille tableur en direct.
+ */
 export default function Dashboard() {
-  const { data: result, isLoading } = useListDatasetsQuery();
-  const datasets: DatasetItem[] = result?.datasets ?? [];
-  const [deleteDataset, { isLoading: isDeleting }] = useDeleteDatasetMutation();
   const navigate = useNavigate();
+  const { datasets, active, activeId, isLoading, selectDataset } = useWorkspace();
+  const [deleteDataset, { isLoading: isDeleting }] = useDeleteDatasetMutation();
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
+  const { setStatus } = useStatus();
   const toast = useToast();
 
-  const totalRows = useMemo(
-    () => datasets.reduce((acc, d) => acc + (d.shape?.rows ?? 0), 0),
-    [datasets],
-  );
-  const totalCols = useMemo(
-    () => datasets.reduce((acc, d) => acc + (d.shape?.columns ?? 0), 0),
-    [datasets],
-  );
+  const { data: datasetDetail, isFetching: isDetailFetching } = useGetDatasetQuery(activeId!, {
+    skip: !activeId,
+  });
+
+  useEffect(() => {
+    setSelectedColumn(null);
+  }, [activeId]);
+
+  useEffect(() => {
+    if (!active) {
+      setStatus({ busy: false, message: 'Aucune session active', items: [] });
+      return;
+    }
+    const colsCount = datasetDetail?.profile?.dictionary?.length ?? active.shape.columns;
+    setStatus({
+      busy: isDetailFetching,
+      message: 'Tableur DuckDB / Parquet prêt',
+      items: [
+        { id: 'vars', label: `${colsCount} variables`, tone: 'accent' },
+        ...(datasetDetail?.profile?.memory_usage_mb != null
+          ? [{ id: 'ram', label: `${datasetDetail.profile.memory_usage_mb.toFixed(1)} Mo`, tone: 'neutral' as const }]
+          : []),
+      ],
+    });
+  }, [active, datasetDetail, isDetailFetching, setStatus]);
 
   const handleDelete = async (datasetId: string, datasetName: string) => {
-    const confirmed = window.confirm(`Supprimer définitivement le dataset "${datasetName}" ?`);
+    const confirmed = window.confirm(`Supprimer définitivement le dataset « ${datasetName} » ?`);
     if (!confirmed) return;
     try {
       await deleteDataset(datasetId).unwrap();
-      toast.success({ title: 'Dataset supprimé', description: `"${datasetName}" a été retiré de la mémoire locale.` });
+      toast.success({ title: 'Dataset supprimé', description: `« ${datasetName} » retiré de la session locale.` });
     } catch (error) {
       toast.error({ title: 'Suppression impossible', description: extractErrorMessage(error) });
     }
   };
 
+  const dictionary = datasetDetail?.profile?.dictionary ?? [];
+
   return (
-    <div className="flex flex-col space-y-5 animate-fade-in">
-      {/* ── Console Header (En-tête Station) ── */}
-      <header className="ui-panel p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="ui-tag ui-tag-success">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Moteur Local Actif
-            </span>
-            <span className="ui-tag ui-tag-neutral">DuckDB 1.0</span>
-            <span className="ui-tag ui-tag-accent">Zero Lock-in</span>
-          </div>
-          <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">
-            Console d'Ingénierie Statistique
-          </h1>
-          <p className="text-xs text-muted mt-0.5">
-            Exploration heuristique, diagnostics méthodiques en 11 étapes et modélisation nodale sans dépendance cloud.
-          </p>
-        </div>
+    <div className="h-full flex min-h-0 overflow-hidden">
+      {/* ── Dock latéral gauche : Jeux de données + Liste des Variables (type Jamovi) ── */}
+      <aside
+        className="hidden md:flex w-[276px] shrink-0 flex-col min-h-0"
+        style={{ background: 'var(--ui-bg-panel)', borderRight: '1px solid var(--ui-border)' }}
+        aria-label="Inspecteur de session et variables"
+      >
+        <DatasetSessionList
+          datasets={datasets}
+          activeId={activeId}
+          isLoading={isLoading}
+          isDeleting={isDeleting}
+          onSelect={selectDataset}
+          onDelete={handleDelete}
+        />
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Link to="/workflow" className="ui-btn ui-btn-primary ui-focusable">
-            <Upload className="w-3.5 h-3.5" />
-            Importer des données
-          </Link>
-          <Link to="/canvas" className="ui-btn ui-focusable">
-            <Network className="w-3.5 h-3.5" />
-            Nouveau Canvas
-          </Link>
-          <Link to="/docs" className="ui-btn ui-btn-ghost ui-focusable text-xs">
-            Documentation
-          </Link>
-        </div>
-      </header>
+        {active && (
+          <div className="flex-1 min-h-0 flex flex-col" style={{ borderTop: '1px solid var(--ui-border)' }}>
+            <VariableDockList
+              columns={dictionary}
+              selectedColumn={selectedColumn}
+              onSelectColumn={col => setSelectedColumn(col || null)}
+            />
+          </div>
+        )}
+      </aside>
 
-      {/* ── Télémétrie Système (4 Indicateurs clés) ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="ui-panel p-3">
-          <div className="flex items-center justify-between text-muted text-[11px] font-semibold uppercase tracking-wider mb-1">
-            <span>Jeux de données</span>
-            <Database className="w-3.5 h-3.5 text-accent-400" />
-          </div>
-          <div className="text-xl font-bold text-white ui-num">
-            {datasets.length}
-          </div>
-          <div className="text-[10.5px] text-muted mt-0.5">Disponibles en session</div>
-        </div>
-
-        <div className="ui-panel p-3">
-          <div className="flex items-center justify-between text-muted text-[11px] font-semibold uppercase tracking-wider mb-1">
-            <span>Enregistrements</span>
-            <Layers className="w-3.5 h-3.5 text-emerald-400" />
-          </div>
-          <div className="text-xl font-bold text-white ui-num">
-            {totalRows.toLocaleString()}
-          </div>
-          <div className="text-[10.5px] text-muted mt-0.5">Lignes indexées DuckDB</div>
-        </div>
-
-        <div className="ui-panel p-3">
-          <div className="flex items-center justify-between text-muted text-[11px] font-semibold uppercase tracking-wider mb-1">
-            <span>Dimensions</span>
-            <Sigma className="w-3.5 h-3.5 text-blue-400" />
-          </div>
-          <div className="text-xl font-bold text-white ui-num">
-            {totalCols}
-          </div>
-          <div className="text-[10.5px] text-muted mt-0.5">Variables réparties</div>
-        </div>
-
-        <div className="ui-panel p-3">
-          <div className="flex items-center justify-between text-muted text-[11px] font-semibold uppercase tracking-wider mb-1">
-            <span>Rigueur Statistique</span>
-            <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-          </div>
-          <div className="text-sm font-bold text-white mt-1">
-            FDR Benjamini-H.
-          </div>
-          <div className="text-[10.5px] text-muted mt-0.5">Contrôle des faux positifs</div>
-        </div>
-      </div>
-
-      {/* ── Les 3 Piliers d'Analyse (Portails d'Action) ── */}
-      <section className="space-y-2.5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
-            Piliers d'Analyse & Modélisation
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Pilier 1 : Explorateur */}
-          <div className="ui-panel p-4 flex flex-col justify-between hover:border-accent-400/40 transition-colors">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="ui-tag ui-tag-accent">Découverte Adaptative</span>
-                <Compass className="w-4 h-4 text-accent-400" />
-              </div>
-              <h3 className="text-sm font-bold text-white mb-1">Explorateur de Données</h3>
-              <p className="text-xs text-muted leading-relaxed mb-4">
-                Sondes heuristiques automatisées, information mutuelle non-linéaire et contrôle strict du taux de fausses découvertes (FDR).
-              </p>
-            </div>
-            <Link
-              to="/explorer"
-              className="text-xs font-semibold text-accent-400 hover:text-accent-300 flex items-center gap-1 mt-auto"
-            >
-              Lancer l'exploration <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {/* Pilier 2 : Analyse Méthodique */}
-          <div className="ui-panel p-4 flex flex-col justify-between hover:border-emerald-400/40 transition-colors">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="ui-tag ui-tag-success">Processus en 11 Étapes</span>
-                <Workflow className="w-4 h-4 text-emerald-400" />
-              </div>
-              <h3 className="text-sm font-bold text-white mb-1">Analyse Méthodique</h3>
-              <p className="text-xs text-muted leading-relaxed mb-4">
-                Cadrage, audit qualité, remédiations statistiques validées et benchmark prédictif contre références naïves.
-              </p>
-            </div>
-            <Link
-              to="/analyzer"
-              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 mt-auto"
-            >
-              Démarrer le diagnostic <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {/* Pilier 3 : Canvas Nodal */}
-          <div className="ui-panel p-4 flex flex-col justify-between hover:border-blue-400/40 transition-colors">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="ui-tag ui-tag-info">Studio Nodal</span>
-                <Network className="w-4 h-4 text-blue-400" />
-              </div>
-              <h3 className="text-sm font-bold text-white mb-1">Canvas Nodal Interactif</h3>
-              <p className="text-xs text-muted leading-relaxed mb-4">
-                Graphe visuel libre de 25+ blocs, requêtes SQL DuckDB et export direct en scripts Python, R ou Notebooks Jupyter.
-              </p>
-            </div>
-            <Link
-              to="/canvas"
-              className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-auto"
-            >
-              Ouvrir le canvas <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Bibliothèque de Données (Data Grid Pro) ── */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
-              Bibliothèque de Données en Mémoire
-            </h2>
-            <span className="ui-tag ui-tag-neutral">{datasets.length}</span>
-          </div>
-          <Link to="/workflow" className="text-xs font-semibold text-accent-400 hover:underline">
-            + Ajouter un dataset
-          </Link>
-        </div>
-
+      {/* ── Zone principale : Tableur en direct ou ouverture de fichier ── */}
+      <section className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="ui-panel h-32 animate-pulse bg-white/5" />
-            ))}
+          <div className="flex-1 flex items-center justify-center gap-2 ui-t-muted">
+            <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--ui-accent)' }} />
+            <span style={{ fontSize: 'var(--ui-fs-sm)' }}>Chargement des données locales…</span>
           </div>
-        ) : datasets.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {datasets.map((ds) => (
-              <DatasetCard key={ds.id} ds={ds} onDelete={handleDelete} isDeleting={isDeleting} />
-            ))}
-          </div>
+        ) : active ? (
+          <>
+            <ActiveDatasetToolbar
+              active={active}
+              sheetName={datasetDetail?.profile?.selected_sheet}
+              memoryMb={datasetDetail?.profile?.memory_usage_mb}
+              onNavigate={path => navigate(`${path}${path.includes('?') ? '&' : '?'}dataset=${encodeURIComponent(active.id)}`)}
+            />
+            <SpreadsheetWorkbench
+              datasetId={active.id}
+              dictionary={dictionary}
+              selectedColumn={selectedColumn}
+              onSelectColumn={col => setSelectedColumn(col || null)}
+            />
+          </>
         ) : (
-          <div className="ui-panel p-8 text-center flex flex-col items-center justify-center">
-            <Database className="w-10 h-10 text-muted mb-3 opacity-60" />
-            <h3 className="text-sm font-bold text-white mb-1">Aucun jeu de données chargé</h3>
-            <p className="text-xs text-muted max-w-sm mb-4">
-              Importez un fichier CSV, XLSX, Parquet ou JSON pour démarrer vos analyses statistiques.
-            </p>
-            <Link to="/workflow" className="ui-btn ui-btn-primary ui-focusable">
-              <Upload className="w-3.5 h-3.5" />
-              Importer un fichier
-            </Link>
+          <div className="flex-1 overflow-y-auto ui-scroll p-6 flex flex-col">
+            <div className="max-w-2xl w-full mx-auto my-auto">
+              <FileUpload onUploaded={id => navigate(`/workflow/${id}/profile`)} />
+            </div>
           </div>
         )}
       </section>
@@ -242,74 +127,159 @@ export default function Dashboard() {
   );
 }
 
-function DatasetCard({
-  ds,
-  onDelete,
-  isDeleting,
+function DatasetSessionList({
+  datasets, activeId, isLoading, isDeleting, onSelect, onDelete,
 }: {
-  ds: DatasetItem;
-  onDelete: (id: string, name: string) => Promise<void>;
+  datasets: DatasetSummary[];
+  activeId: string | null;
+  isLoading: boolean;
   isDeleting: boolean;
+  onSelect: (id: string) => void;
+  onDelete: (id: string, name: string) => Promise<void>;
 }) {
-  const navigate = useNavigate();
-  const rows = ds.shape?.rows ?? 0;
-  const cols = ds.shape?.columns ?? 0;
-
   return (
-    <div className="ui-panel p-3.5 flex flex-col justify-between space-y-3 hover:border-accent-500/30 transition-colors group">
-      <div>
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <h4 className="text-xs font-bold text-white truncate group-hover:text-accent-300 transition-colors" title={ds.name}>
-            {ds.name}
-          </h4>
-          <button
-            onClick={() => onDelete(ds.id, ds.name)}
-            disabled={isDeleting}
-            className="p-1 rounded text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
-            title="Supprimer définitivement"
-            aria-label="Supprimer ce jeu de données"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+    <div className="flex flex-col max-h-[42%] shrink-0">
+      <div
+        className="px-2.5 flex items-center justify-between shrink-0"
+        style={{ height: 30, borderBottom: '1px solid var(--ui-border)', background: 'var(--ui-bg-sunken)' }}
+      >
+        <div className="flex items-center gap-1.5">
+          <Database className="w-3 h-3" style={{ color: 'var(--ui-accent)' }} />
+          <span className="ui-label">Jeux de données</span>
+          <span className="ui-tag ui-tag-neutral ui-num">{datasets.length}</span>
         </div>
-
-        <div className="flex items-center gap-3 text-[11px] text-muted font-mono">
-          <span>{rows.toLocaleString()} L</span>
-          <span>•</span>
-          <span>{cols} col.</span>
-          {ds.versions_count != null && ds.versions_count > 1 && (
-            <>
-              <span>•</span>
-              <span>v{ds.versions_count}</span>
-            </>
-          )}
-        </div>
+        <Link to="/workflow" className="text-[11px] font-bold ui-t-accent hover:underline flex items-center gap-1">
+          <Upload className="w-3 h-3" /> Ouvrir
+        </Link>
       </div>
 
-      <div className="flex items-center gap-1.5 pt-2 border-t border-[var(--ui-border)]">
+      <ul className="overflow-y-auto ui-scroll p-1 space-y-0.5">
+        {isLoading && (
+          <li className="px-2 py-3 text-center ui-t-faint" style={{ fontSize: 'var(--ui-fs-xs)' }}>
+            Lecture du catalogue…
+          </li>
+        )}
+
+        {!isLoading && datasets.length === 0 && (
+          <li className="px-2 py-4 text-center ui-t-faint" style={{ fontSize: 'var(--ui-fs-xs)' }}>
+            Aucun jeu chargé en mémoire
+          </li>
+        )}
+
+        {datasets.map(ds => {
+          const isCurrent = ds.id === activeId;
+          return (
+            <li key={ds.id} className="group flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onSelect(ds.id)}
+                className="ui-focusable flex-1 min-w-0 flex items-center gap-2 px-2 rounded-[var(--ui-radius-sm)] text-left"
+                style={{
+                  height: 28,
+                  background: isCurrent ? 'var(--ui-accent-soft)' : 'transparent',
+                  color: isCurrent ? 'var(--ui-accent-text)' : 'var(--ui-text-secondary)',
+                  borderLeft: isCurrent ? '2px solid var(--ui-accent)' : '2px solid transparent',
+                }}
+              >
+                <span className="flex-1 min-w-0 truncate" style={{ fontSize: 'var(--ui-fs-sm)', fontWeight: isCurrent ? 700 : 500 }}>
+                  {ds.name}
+                </span>
+                <span className="ui-mono ui-num shrink-0" style={{ fontSize: 10, color: 'var(--ui-text-faint)' }}>
+                  {ds.shape.rows.toLocaleString('fr-FR')}×{ds.shape.columns}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(ds.id, ds.name)}
+                disabled={isDeleting}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded ui-t-faint hover:text-[var(--ui-danger)] transition-opacity ui-focusable"
+                title={`Supprimer ${ds.name}`}
+                aria-label={`Supprimer ${ds.name}`}
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function ActiveDatasetToolbar({
+  active, sheetName, memoryMb, onNavigate,
+}: {
+  active: DatasetSummary;
+  sheetName?: string;
+  memoryMb?: number;
+  onNavigate: (path: string) => void;
+}) {
+  return (
+    <div
+      className="px-3 flex items-center justify-between gap-2 shrink-0 overflow-x-auto no-scrollbar"
+      style={{
+        height: 36,
+        background: 'var(--ui-bg-panel)',
+        borderBottom: '1px solid var(--ui-border)',
+      }}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="font-bold truncate ui-t" style={{ fontSize: 'var(--ui-fs-base)' }} title={active.name}>
+          {active.name}
+        </span>
+        <span className="ui-tag ui-tag-neutral ui-num shrink-0">
+          {active.shape.rows.toLocaleString('fr-FR')} × {active.shape.columns}
+        </span>
+        {sheetName && (
+          <span className="ui-tag ui-tag-accent shrink-0">{sheetName}</span>
+        )}
+        {memoryMb != null && (
+          <span className="hidden lg:inline-flex ui-tag ui-tag-neutral ui-num shrink-0">
+            {memoryMb.toFixed(1)} Mo
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-1 shrink-0">
         <button
-          onClick={() => navigate(`/explorer?dataset=${ds.id}`)}
-          className="flex-1 ui-btn text-[11px] py-1 h-7"
-          title="Explorer les signaux"
+          type="button"
+          onClick={() => onNavigate(`/workflow/${active.id}/profile`)}
+          className="ui-btn ui-focusable"
+          style={{ height: 26, padding: '0 8px' }}
         >
-          <Compass className="w-3 h-3 text-accent-400" />
-          Explorer
+          <FileSpreadsheet className="w-3 h-3" /> Typage
         </button>
         <button
-          onClick={() => navigate(`/analyzer?dataset=${ds.id}`)}
-          className="flex-1 ui-btn text-[11px] py-1 h-7"
-          title="Diagnostic méthodique 11 étapes"
+          type="button"
+          onClick={() => onNavigate('/explorer')}
+          className="ui-btn ui-focusable"
+          style={{ height: 26, padding: '0 8px' }}
         >
-          <Workflow className="w-3 h-3 text-emerald-400" />
-          Méthode
+          <Compass className="w-3 h-3 ui-t-accent" /> Explorer
         </button>
         <button
-          onClick={() => navigate(`/canvas?dataset=${ds.id}`)}
-          className="flex-1 ui-btn text-[11px] py-1 h-7"
-          title="Ouvrir dans le Canvas nodal"
+          type="button"
+          onClick={() => onNavigate('/analyzer')}
+          className="ui-btn ui-btn-primary ui-focusable"
+          style={{ height: 26, padding: '0 8px' }}
         >
-          <Network className="w-3 h-3 text-blue-400" />
-          Canvas
+          <Workflow className="w-3 h-3" /> Méthodologie
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate('/analyzer?tab=studio')}
+          className="ui-btn ui-focusable"
+          style={{ height: 26, padding: '0 8px' }}
+        >
+          <Sliders className="w-3 h-3 ui-t-warning" /> Tests &amp; Séries
+        </button>
+        <button
+          type="button"
+          onClick={() => onNavigate('/canvas')}
+          className="ui-btn ui-focusable"
+          style={{ height: 26, padding: '0 8px' }}
+        >
+          <Network className="w-3 h-3 text-[var(--ui-info)]" /> Canvas
         </button>
       </div>
     </div>

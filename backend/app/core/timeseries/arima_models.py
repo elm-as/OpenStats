@@ -7,6 +7,7 @@ de modeles.
 
 from __future__ import annotations
 
+import warnings
 from typing import Any
 
 import numpy as np
@@ -16,26 +17,45 @@ from statsmodels.tsa.arima.model import ARIMA
 from app.core.timeseries.residual_diagnostics import _sf
 
 
-def _auto_arima_order(series: pd.Series, max_p: int = 3, max_d: int = 2, max_q: int = 3) -> tuple[int, int, int]:
-    """Sélection automatique de l'ordre ARIMA par AIC (grille limitée)."""
-    best_aic = np.inf
-    best_order = (1, 1, 1)
+def _estimate_diff_order(series: pd.Series, max_d: int) -> int:
+    """Estime l'ordre d'intégration d via tests de stationnarité avant sélection ARMA."""
+    if max_d <= 0 or len(series) < 12:
+        return 0
+    try:
+        from app.core.timeseries.stationarity import test_stationarity
+        cur = series.dropna()
+        for d in range(max_d + 1):
+            if d > 0:
+                cur = cur.diff().dropna()
+            if len(cur) < 10:
+                return d
+            verdict = test_stationarity(cur)
+            if verdict.get("is_stationary"):
+                return d
+        return min(max_d, 1)
+    except Exception:
+        return min(max_d, 1)
 
-    for d in range(max_d + 1):
-        for p in range(max_p + 1):
-            for q in range(max_q + 1):
-                if p == 0 and q == 0:
-                    continue
-                try:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        model = ARIMA(series, order=(p, d, q))
-                        fit = model.fit()
-                        if fit.aic < best_aic:
-                            best_aic = fit.aic
-                            best_order = (p, d, q)
-                except Exception:
-                    continue
+
+def _auto_arima_order(series: pd.Series, max_p: int = 2, max_d: int = 2, max_q: int = 2) -> tuple[int, int, int]:
+    """Sélection rapide et rigoureuse de l'ordre ARIMA (d fixé par stationnarité, (p, q) par AIC)."""
+    best_aic = np.inf
+    d = _estimate_diff_order(series, max_d)
+    best_order = (1, d, 1)
+
+    for p in range(max_p + 1):
+        for q in range(max_q + 1):
+            if p == 0 and q == 0:
+                continue
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    fit = ARIMA(series, order=(p, d, q)).fit()
+                    if np.isfinite(fit.aic) and fit.aic < best_aic:
+                        best_aic = float(fit.aic)
+                        best_order = (p, d, q)
+            except Exception:
+                continue
 
     return best_order
 

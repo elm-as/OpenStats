@@ -108,3 +108,74 @@ class TestDuckDBSecurity:
     def test_missing_file_raises_filenotfound(self):
         with pytest.raises(FileNotFoundError):
             compute_descriptive_stats_duckdb("non_existent_file.parquet", [])
+
+    def test_rejects_null_byte_in_column_name(self, tmp_path):
+        parquet_file = str(tmp_path / "test_null.parquet")
+        df = pd.DataFrame({"normal": [1, 2, 3]})
+        df.to_parquet(parquet_file)
+
+        cols_info = [{"name": "evil\x00col", "type": "numeric"}]
+        stats = compute_descriptive_stats_duckdb(parquet_file, cols_info)
+        assert "evil\x00col" not in stats
+
+    def test_sql_node_blocks_external_file_access(self, monkeypatch):
+        from app.api.v1.canvas.nodes.sql import execute_sql
+        from app.services.dataset_service import dataset_manager
+
+        df = pd.DataFrame({"val": [1, 2, 3]})
+        monkeypatch.setattr(dataset_manager, "get_df", lambda *args, **kwargs: df)
+
+        # Tentative de lecture de fichier local via SQL dans DuckDB
+        malicious_query = "SELECT * FROM read_csv_auto('secret.csv')"
+        res = execute_sql({"query": malicious_query}, "dataset_test")
+        assert res["status"] == "error"
+        assert "disabled through configuration" in res["error"].lower() or "permission error" in res["error"].lower()
+
+
+class TestLocalSessionSecurity:
+    """Vérifie la protection par jeton de session éphémère (anti-CSRF local)."""
+
+    def test_session_token_enforcement(self, monkeypatch):
+        from app import create_app
+        from app.config import Config
+
+        class SessionTestConfig(Config):
+            TESTING = False  # Pour activer la vérification _before_request
+            SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+
+        token = "secret-session-token-12345"
+        monkeypatch.setenv("OPENSTATS_SESSION_TOKEN", token)
+        monkeypatch.setenv("OPENSTATS_PRELOAD", "0")
+
+        test_app = create_app(SessionTestConfig)
+        client = test_app.test_client()
+
+        # 1. /health doit toujours répondre 200 sans jeton
+        res_health = client.get("/health")
+        assert res_health.status_code == 200
+
+        # 2. Requête API sans jeton -> 401
+        res_unauth = client.get("/api/v1/workspaces")
+        assert res_unauth.status_code == 401
+        assert res_unauth.get_json()["code"] == "invalid_session_token"
+
+        # 3. Requête API avec mauvais jeton -> 401
+        res_bad = client.get("/api/v1/workspaces", headers={"X-Session-Token": "mauvais-token"})
+        assert res_bad.status_code == 401
+
+        # 4. Requête API avec jeton valide via X-Session-Token -> passe (200 ou route traitée)
+        res_ok_header = client.get("/api/v1/workspaces", headers={"X-Session-Token": token})
+        assert res_ok_header.status_code != 401
+
+        # 5. Requête API avec jeton valide via Bearer -> passe
+        res_ok_bearer = client.get("/api/v1/workspaces", headers={"Authorization": f"Bearer {token}"})
+        assert res_ok_bearer.status_code != 401
+
+    @pytest.mark.parametrize("builtin_name", ["getattr", "setattr", "delattr"])
+    def test_sandbox_blocks_attribute_introspection_builtins(self, builtin_name: str):
+        """Vérifie que getattr/setattr/delattr sont bloqués dès l'analyse AST et dans le runtime sandbox."""
+        code = f"{builtin_name}(df, 'columns')"
+        with pytest.raises(ValueError, match="Appel de fonction interdit"):
+            validate_python_code_safety(code)
+
+

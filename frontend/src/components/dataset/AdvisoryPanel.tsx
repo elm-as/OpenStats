@@ -12,36 +12,36 @@ interface Advisory {
 
 const severityConfig = {
   critical: {
-    bg: 'bg-red-100/70 border-red-500/40 hover:bg-red-100',
+    bg: 'bg-red-500/10 border-red-500/35 hover:bg-red-500/15',
     icon: AlertCircle,
     iconColor: 'text-red-400',
     label: 'Critique',
-    labelColor: 'text-red-300',
-    title: 'text-red-200',
+    labelColor: 'text-red-400 bg-red-500/15',
+    title: 'text-red-300',
   },
   warning: {
-    bg: 'bg-amber-100/60 border-amber-500/40 hover:bg-amber-100',
+    bg: 'bg-amber-500/10 border-amber-500/35 hover:bg-amber-500/15',
     icon: AlertTriangle,
     iconColor: 'text-amber-400',
     label: 'Attention',
-    labelColor: 'text-amber-300',
-    title: 'text-amber-200',
+    labelColor: 'text-amber-400 bg-amber-500/15',
+    title: 'text-amber-300',
   },
   info: {
-    bg: 'bg-blue-100/50 border-blue-500/30 hover:bg-blue-100/80',
+    bg: 'bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15',
     icon: Info,
     iconColor: 'text-blue-400',
     label: 'Info',
-    labelColor: 'text-blue-300',
-    title: 'text-blue-200',
+    labelColor: 'text-blue-400 bg-blue-500/15',
+    title: 'text-blue-300',
   },
   methodological: {
-    bg: 'bg-purple-100/50 border-purple-500/30 hover:bg-purple-100/80',
+    bg: 'bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/15',
     icon: Sparkles,
-    iconColor: 'text-purple-400',
+    iconColor: 'text-teal-400',
     label: 'Méthodo',
-    labelColor: 'text-purple-300',
-    title: 'text-purple-200',
+    labelColor: 'text-teal-400 bg-teal-500/15',
+    title: 'text-teal-300',
   },
 };
 
@@ -52,26 +52,26 @@ function AdvisoryCard({ advisory }: { advisory: Advisory }) {
 
   return (
     <div
-      className={`border rounded-lg ${config.bg} cursor-pointer transition-all`}
+      className={`border rounded-lg ${config.bg} cursor-pointer transition-colors`}
       onClick={() => setExpanded(!expanded)}
     >
       <div className="flex items-center gap-3 px-3 py-2">
         <Icon className={`w-4 h-4 flex-shrink-0 ${config.iconColor}`} />
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <span className={`text-sm font-medium truncate ${config.title}`}>{advisory.title}</span>
-          <span className={`text-xs px-1.5 py-0.5 rounded ${config.labelColor} bg-black/20`}>
+          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${config.labelColor}`}>
             {config.label}
           </span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
         />
       </div>
       {expanded && (
-        <div className="px-3 pb-3 pt-1 space-y-2 border-t border-white/5">
-          <p className="text-sm text-gray-700 leading-relaxed">{advisory.message}</p>
+        <div className="px-3 pb-3 pt-1.5 space-y-2 border-t border-white/10">
+          <p className="text-sm text-surface-200 leading-relaxed">{advisory.message}</p>
           {advisory.suggestion && (
-            <p className="text-sm text-gray-500 italic flex items-start gap-2">
+            <p className="text-sm text-surface-400 italic flex items-start gap-2">
               <Sparkles className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-accent-400" />
               <span>{advisory.suggestion}</span>
             </p>
@@ -88,7 +88,7 @@ export default function AdvisoryPanel({ datasetId }: { datasetId: string }) {
 
   if (isLoading) {
     return (
-      <div className="bg-surface-800/60 backdrop-blur border border-white/10 rounded-xl p-3 text-sm text-gray-400">
+      <div className="ui-panel p-3 text-sm text-surface-400">
         Analyse des diagnostics en cours...
       </div>
     );
@@ -103,46 +103,46 @@ export default function AdvisoryPanel({ datasetId }: { datasetId: string }) {
   const hasCritical = criticals.length > 0;
 
   return (
-    <div className="bg-surface-800/60 backdrop-blur border border-white/10 rounded-xl overflow-hidden">
+    <div className="ui-panel overflow-hidden">
       {/* Header cliquable */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-colors"
       >
         <div className="flex items-center gap-3">
           <AlertTriangle className={`w-4 h-4 ${hasCritical ? 'text-red-400' : 'text-amber-400'}`} />
-          <h3 className="text-sm font-semibold text-gray-700">
+          <h3 className="text-sm font-semibold text-surface-100">
             Diagnostics
-            <span className="ml-2 text-xs font-normal text-gray-500">({data.count})</span>
+            <span className="ml-2 text-xs font-normal text-surface-400 ui-num">({data.count})</span>
           </h3>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex gap-2 text-xs">
+          <div className="flex gap-2 text-xs ui-num">
             {criticals.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-red-100/60 text-red-300 border border-red-500/30">
+              <span className="px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30">
                 {criticals.length} critique{criticals.length > 1 ? 's' : ''}
               </span>
             )}
             {warnings.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-100/50 text-amber-300 border border-amber-500/30">
+              <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
                 {warnings.length} attention
               </span>
             )}
             {infos.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-blue-100/50 text-blue-300 border border-blue-500/30">
+              <span className="px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">
                 {infos.length} info
               </span>
             )}
           </div>
           <ChevronDown
-            className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 text-surface-400 transition-transform ${open ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
 
       {/* Contenu déroulant */}
       {open && (
-        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-white/10 animate-slide-up">
+        <div className="px-4 pb-4 pt-2 space-y-2 border-t border-white/10">
           {criticals.map((a: Advisory, i: number) => <AdvisoryCard key={`c${i}`} advisory={a} />)}
           {warnings.map((a: Advisory, i: number) => <AdvisoryCard key={`w${i}`} advisory={a} />)}
           {infos.map((a: Advisory, i: number) => <AdvisoryCard key={`i${i}`} advisory={a} />)}

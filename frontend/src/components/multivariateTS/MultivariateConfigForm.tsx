@@ -111,13 +111,13 @@ export function MultivariateConfigForm({
           Date : <strong>{dateCol}</strong> — Horizon : <strong>{forecastSteps}</strong> pas
         </p>
 
-        <div className="mb-4 p-3 rounded-lg border border-indigo-200 bg-indigo-50">
-          <p className="text-xs font-semibold text-indigo-800 mb-2">Preset académique</p>
-          <p className="text-xs text-indigo-700 mb-3">
+        <div className="mb-4 p-3 rounded-lg border border-sky-500/30 bg-sky-500/10">
+          <p className="text-xs font-semibold text-sky-400 mb-1.5">Preset académique</p>
+          <p className="text-xs text-surface-300 mb-3">
             Reproduit l'approche "Bodjong" : VAR forcé en niveaux avec constante + tendance (trend=ct),
             et Granger en niveaux.
           </p>
-          <button onClick={onApplyAcademicPreset} className="btn-primary text-sm">
+          <button onClick={onApplyAcademicPreset} className="ui-btn ui-btn-primary text-xs">
             Appliquer preset académique et lancer
           </button>
         </div>

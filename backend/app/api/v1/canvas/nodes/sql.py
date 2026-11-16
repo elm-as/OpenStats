@@ -17,8 +17,10 @@ def execute_sql(data, dataset_id):
 
     try:
         import duckdb
-        # La requête peut utiliser la table 'df' automatiquement trouvée dans l'environnement local par DuckDB
-        new_df = duckdb.query(query).df()
+        # Connexion isolée en mémoire avec interdiction stricte d'accès externe (fichiers locaux, réseau)
+        con = duckdb.connect(database=":memory:", config={"enable_external_access": "false"})
+        con.register("df", df)
+        new_df = con.execute(query).df()
         
         fd, temp_path = tempfile.mkstemp(suffix=".parquet")
         os.close(fd)

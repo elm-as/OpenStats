@@ -54,11 +54,19 @@ function build(spec: ChartSpec): Built | null {
       return {
         data: [
           { x: centers, y: counts, type: 'bar', width, name: 'effectif',
-            marker: { color: ACCENT, opacity: 0.75 }, showlegend: false },
+            marker: { color: ACCENT, opacity: 0.78 }, showlegend: false },
           ...marks,
         ],
-        layout: { shapes: guides, bargap: 0.02, xaxis: { title: s.column ?? '' }, yaxis: { title: 'effectif' } },
-        height: 240,
+        layout: {
+          shapes: guides,
+          bargap: 0.02,
+          showlegend: marks.length > 0,
+          legend: { orientation: 'h', y: 1.14, x: 0, xanchor: 'left' },
+          margin: { l: 46, r: 12, t: 28, b: 44 },
+          xaxis: { title: { text: s.column ?? '' } },
+          yaxis: { title: { text: 'effectif' } },
+        },
+        height: 255,
       };
     }
 
@@ -78,13 +86,16 @@ function build(spec: ChartSpec): Built | null {
           type: 'bar',
           orientation: horizontal ? 'h' : 'v',
           marker: { color },
+          showlegend: false,
           hovertemplate: horizontal ? '%{y}<br>%{x:.4g}<extra></extra>' : '%{x}<br>%{y:.4g}<extra></extra>',
         }],
         layout: {
-          margin: horizontal ? { l: 150, r: 16, t: 8, b: 32 } : undefined,
-          yaxis: horizontal ? { automargin: true, autorange: 'reversed' } : {},
+          showlegend: false,
+          margin: horizontal ? { l: 150, r: 16, t: 8, b: 36 } : { l: 46, r: 14, t: 10, b: 64 },
+          xaxis: horizontal ? {} : { tickangle: labels.length > 4 ? -30 : 0, automargin: true },
+          yaxis: horizontal ? { automargin: true, autorange: 'reversed' } : { title: { text: 'effectif' } },
         },
-        height: horizontal ? Math.max(200, labels.length * 22 + 60) : 240,
+        height: horizontal ? Math.max(200, labels.length * 22 + 60) : 255,
       };
     }
 
@@ -96,11 +107,13 @@ function build(spec: ChartSpec): Built | null {
         data: [{
           x: values.map(v => v * 100), y: labels, type: 'bar', orientation: 'h',
           marker: { color: values.map(v => (v > 0.3 ? DANGER : v > 0.05 ? WARNING : SUCCESS)) },
-          hovertemplate: '%{y}<br>%{x:.1f} %% manquants<extra></extra>',
+          showlegend: false,
+          hovertemplate: '%{y}<br>%{x:.1f} % manquants<extra></extra>',
         }],
         layout: {
-          margin: { l: 150, r: 16, t: 8, b: 34 },
-          xaxis: { title: '% de valeurs manquantes', range: [0, 100] },
+          showlegend: false,
+          margin: { l: 150, r: 16, t: 8, b: 40 },
+          xaxis: { title: { text: '% de valeurs manquantes' }, range: [0, 100] },
           yaxis: { automargin: true, autorange: 'reversed' },
         },
         height: Math.max(200, labels.length * 20 + 60),
@@ -160,10 +173,11 @@ function build(spec: ChartSpec): Built | null {
       return {
         data: [{
           x, y, type: 'scatter', mode: 'markers',
-          marker: { color: ACCENT, size: 5, opacity: 0.55 },
+          marker: { color: ACCENT, size: 5, opacity: 0.6 },
+          showlegend: false,
           hovertemplate: `${s.x_col}=%{x:.4g}<br>${s.y_col}=%{y:.4g}<extra></extra>`,
         }],
-        layout: { xaxis: { title: s.x_col ?? '' }, yaxis: { title: s.y_col ?? '' } },
+        layout: { xaxis: { title: { text: s.x_col ?? '' } }, yaxis: { title: { text: s.y_col ?? '' } }, showlegend: false },
         height: 260,
       };
     }
@@ -176,7 +190,7 @@ function build(spec: ChartSpec): Built | null {
           y: group.values, type: 'box', name: group.name,
           boxpoints: 'outliers', marker: { size: 4 },
         })),
-        layout: { yaxis: { title: s.value_col ?? '' }, xaxis: { title: s.group_col ?? '' }, showlegend: false },
+        layout: { yaxis: { title: { text: s.value_col ?? '' } }, xaxis: { title: { text: s.group_col ?? '' } }, showlegend: false },
         height: 260,
       };
     }
@@ -189,9 +203,10 @@ function build(spec: ChartSpec): Built | null {
       const baseline: number | null = s.baseline ?? null;
 
       // Le meilleur modele est mis en avant ; la reference naive apparait comme
-      // une ligne, car un score ne se lit pas sans elle.
+      // une ligne horizontale lisible sans chevaucher les barres.
       const bestValue = lowerIsBetter ? Math.min(...values) : Math.max(...values);
       const colors = values.map(v => (v === bestValue ? SUCCESS : ACCENT));
+      const maxY = Math.max(...values, baseline ?? 0, 1e-6);
 
       const shapes = baseline !== null ? [{
         type: 'line', yref: 'y', y0: baseline, y1: baseline,
@@ -200,26 +215,31 @@ function build(spec: ChartSpec): Built | null {
       }] : [];
 
       const annotations = baseline !== null ? [{
-        xref: 'paper', x: 1, y: baseline, yanchor: 'bottom', xanchor: 'right',
-        text: `référence ${s.baseline_label ?? ''} : ${Number(baseline).toFixed(3)}`,
-        showarrow: false, font: { size: 9, color: DANGER },
+        xref: 'paper', x: 0.01, y: maxY * 1.15, yanchor: 'top', xanchor: 'left',
+        text: `--- référence ${s.baseline_label ?? ''} : ${Number(baseline).toFixed(3)}`,
+        showarrow: false, font: { size: 10, color: DANGER },
       }] : [];
 
       return {
         data: [{
           x: labels, y: values, type: 'bar',
           marker: { color: colors },
+          showlegend: false,
           text: values.map(v => v.toFixed(3)),
           texttemplate: '%{text}', textposition: 'outside',
           hovertemplate: `%{x}<br>${s.metric ?? 'score'} = %{y:.4f}<extra></extra>`,
         }],
         layout: {
           shapes, annotations,
-          xaxis: { tickangle: -30, automargin: true },
-          yaxis: { title: String(s.metric ?? 'score'), rangemode: lowerIsBetter ? 'tozero' : 'normal' },
-          margin: { l: 56, r: 16, t: 20, b: 90 },
+          showlegend: false,
+          xaxis: { tickangle: -25, automargin: true },
+          yaxis: {
+            title: { text: String(s.metric ?? 'score') },
+            range: lowerIsBetter ? [0, maxY * 1.2] : undefined,
+          },
+          margin: { l: 56, r: 16, t: 28, b: 96 },
         },
-        height: 300,
+        height: 310,
       };
     }
 
@@ -246,13 +266,13 @@ function build(spec: ChartSpec): Built | null {
       return {
         data: [
           { x: predicted, y: residuals, type: 'scatter', mode: 'markers',
-            marker: { color: ACCENT, size: 5, opacity: 0.5 }, name: 'résidus',
+            marker: { color: ACCENT, size: 5, opacity: 0.55 }, name: 'résidus', showlegend: false,
             hovertemplate: 'prédit %{x:.4g}<br>résidu %{y:.4g}<extra></extra>' },
         ],
         layout: {
           shapes: [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 0, y1: 0,
                      line: { color: DANGER, width: 1, dash: 'dash' } }],
-          xaxis: { title: 'valeur prédite' }, yaxis: { title: 'résidu' },
+          xaxis: { title: { text: 'valeur prédite' } }, yaxis: { title: { text: 'résidu' } },
           showlegend: false,
         },
         height: 260,

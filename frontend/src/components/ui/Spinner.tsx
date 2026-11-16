@@ -28,7 +28,7 @@ export function LoadingOverlay({ show, label, children }: LoadingOverlayProps) {
   return (
     <div className="relative">
       {children}
-      <div className="absolute inset-0 flex items-center justify-center bg-surface-900/60 backdrop-blur-sm rounded-xl z-10">
+      <div className="absolute inset-0 flex items-center justify-center bg-surface-900/75 rounded-xl z-10">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin text-accent-400" />
           {label && <span className="text-xs text-muted">{label}</span>}

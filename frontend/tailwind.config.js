@@ -4,7 +4,26 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Slate-ink dark backgrounds
+        // Tokens sémantiques studio (CSS variables Light/Dark automatiques)
+        ui: {
+          app: 'var(--ui-bg-app)',
+          sunken: 'var(--ui-bg-sunken)',
+          panel: 'var(--ui-bg-panel)',
+          raised: 'var(--ui-bg-raised)',
+          overlay: 'var(--ui-bg-overlay)',
+          input: 'var(--ui-bg-input)',
+          border: 'var(--ui-border)',
+          'border-strong': 'var(--ui-border-strong)',
+          accent: 'var(--ui-accent)',
+          'accent-hover': 'var(--ui-accent-hover)',
+          'accent-soft': 'var(--ui-accent-soft)',
+          'accent-text': 'var(--ui-accent-text)',
+          text: 'var(--ui-text)',
+          secondary: 'var(--ui-text-secondary)',
+          muted: 'var(--ui-text-muted)',
+          faint: 'var(--ui-text-faint)',
+        },
+        // Slate-ink backgrounds (hérité, ponté en Light par theme-light.css)
         surface: {
           DEFAULT: '#0c0f1a',
           50: '#f0f1f5',
@@ -270,43 +289,27 @@ export default {
         display: ['Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
-        'grid-pattern': `linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px)`,
-        'gradient-radial': 'radial-gradient(ellipse at center, var(--tw-gradient-stops))',
-        'glow-cyan': 'radial-gradient(ellipse at 50% 0%, rgba(6, 182, 212, 0.15) 0%, transparent 60%)',
-        'glow-violet': 'radial-gradient(ellipse at 80% 20%, rgba(37, 99, 235, 0.1) 0%, transparent 50%)',
+        'grid-pattern': `linear-gradient(var(--ui-border) 1px, transparent 1px), linear-gradient(90deg, var(--ui-border) 1px, transparent 1px)`,
       },
       backgroundSize: {
         'grid-40': '40px 40px',
       },
       boxShadow: {
-        'glow-sm': '0 0 15px -3px rgba(6, 182, 212, 0.2)',
-        'glow': '0 0 30px -5px rgba(6, 182, 212, 0.3)',
-        'glow-lg': '0 0 50px -10px rgba(6, 182, 212, 0.4)',
-        'glow-violet': '0 0 30px -5px rgba(37, 99, 235, 0.3)',
-        'inner-glow': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
-        'glass': '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+        'studio-sm': 'var(--ui-shadow-sm)',
+        'studio-md': 'var(--ui-shadow-md)',
+        'studio-lg': 'var(--ui-shadow-lg)',
       },
       borderRadius: {
-        '2xl': '1rem',
-        '3xl': '1.5rem',
+        '2xl': '0.5rem',
+        '3xl': '0.625rem',
       },
       animation: {
-        'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
-        'float': 'float 6s ease-in-out infinite',
-        'slide-up': 'slide-up 0.4s ease-out',
-        'fade-in': 'fade-in 0.3s ease-out',
+        'slide-up': 'slide-up 0.2s ease-out',
+        'fade-in': 'fade-in 0.16s ease-out',
       },
       keyframes: {
-        'glow-pulse': {
-          '0%, 100%': { opacity: '0.4' },
-          '50%': { opacity: '1' },
-        },
-        'float': {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-6px)' },
-        },
         'slide-up': {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'fade-in': {

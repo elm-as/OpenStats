@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import type { ChartDataResponse } from '../../types';
-import Plot from 'react-plotly.js';
-import { DARK_TEMPLATE, DEFAULT_CONFIG, SCI_COLORS } from '../viz/PlotlyBase';
+import { PlotlyChart, DEFAULT_CONFIG, SCI_COLORS, useCurrentTheme } from '../viz/PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 import { Histogram, BoxPlot, ViolinPlot } from '../viz';
 
@@ -47,6 +46,8 @@ export function ChartRenderer({
 }
 
 export function PlotlyChartFromBackend({ data }: { data: ChartDataResponse }) {
+  const theme = useCurrentTheme();
+  const polarLineColor = theme === 'light' ? '#cbd5e1' : '#334155';
   const { traces, layout } = useMemo(() => {
     const series: any[] = data.series || [];
     const points: any[] = data.data || [];
@@ -158,6 +159,7 @@ export function PlotlyChartFromBackend({ data }: { data: ChartDataResponse }) {
           tr.push({
             x: points.map(p => p.x),
             y: points.map(p => p.y),
+            name: (data as any).y_col || 'Points',
             type: 'scatter',
             mode: 'markers',
             marker: {
@@ -205,16 +207,15 @@ export function PlotlyChartFromBackend({ data }: { data: ChartDataResponse }) {
     const isPolar = data.chart_type === 'radar';
 
     const lay: Partial<Layout> = {
-      ...DARK_TEMPLATE,
       title: (data as any).chart_title
-        ? { text: (data as any).chart_title, font: { color: '#dfe3ee', size: 16 } }
+        ? { text: (data as any).chart_title, font: { size: 15 } }
         : undefined,
       autosize: true,
       barmode: data.chart_type === 'stacked_bar' ? 'stack' : 'group',
       polar: isPolar
         ? {
-            radialaxis: { visible: true, gridcolor: '#334155', linecolor: '#334155' },
-            angularaxis: { gridcolor: '#334155', linecolor: '#334155' },
+            radialaxis: { visible: true, gridcolor: polarLineColor, linecolor: polarLineColor },
+            angularaxis: { gridcolor: polarLineColor, linecolor: polarLineColor },
             bgcolor: 'transparent',
           }
         : undefined,
@@ -222,33 +223,27 @@ export function PlotlyChartFromBackend({ data }: { data: ChartDataResponse }) {
         data.chart_type === 'pie' || isPolar
           ? undefined
           : {
-              ...DARK_TEMPLATE.xaxis,
-              title: { text: (data as any).x_col || '', font: { color: '#dfe3ee' } },
+              title: { text: (data as any).x_col || '' },
               tickangle: -25,
+              automargin: true,
             },
       yaxis:
         data.chart_type === 'pie' || isPolar
           ? undefined
           : {
-              ...DARK_TEMPLATE.yaxis,
-              title: { text: (data as any).y_col || '', font: { color: '#dfe3ee' } },
+              title: { text: (data as any).y_col || '' },
               type: (data as any).log_y ? 'log' : 'linear',
+              automargin: true,
             },
-      legend: { orientation: 'h', y: -0.2, font: { color: '#dfe3ee' } },
+      legend: { orientation: 'h', y: -0.2 },
       showlegend:
-        data.chart_type !== 'scatter' || series.length > 1 || !!(data as any).color_col,
+        (data.chart_type !== 'scatter' && data.chart_type !== 'bubble') ||
+        series.length > 1 ||
+        !!(data as any).color_col,
     };
 
     return { traces: tr, layout: lay };
-  }, [data]);
+  }, [data, polarLineColor]);
 
-  return (
-    <Plot
-      data={traces}
-      layout={layout}
-      config={DEFAULT_CONFIG}
-      style={{ width: '100%', height: 440 }}
-      useResizeHandler
-    />
-  );
+  return <PlotlyChart data={traces} layout={layout} config={DEFAULT_CONFIG} height={440} />;
 }

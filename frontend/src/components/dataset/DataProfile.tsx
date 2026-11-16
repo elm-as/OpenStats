@@ -18,8 +18,8 @@ const TYPE_ICONS: Record<string, any> = {
 
 const TYPE_COLORS: Record<string, string> = {
   continu: '!bg-blue-500/10 !text-blue-400 !border-blue-500/20',
-  discret: '!bg-indigo-500/10 !text-indigo-400 !border-indigo-500/20',
-  temporel: '!bg-purple-500/10 !text-purple-400 !border-purple-500/20',
+  discret: '!bg-sky-500/10 !text-sky-400 !border-sky-500/20',
+  temporel: '!bg-cyan-500/10 !text-cyan-400 !border-cyan-500/20',
   catégoriel_nominal: '!bg-amber-500/10 !text-amber-400 !border-amber-500/20',
   binaire: '!bg-emerald-500/10 !text-emerald-400 !border-emerald-500/20',
 };
@@ -70,36 +70,36 @@ export default function DataProfile({ profile, datasetId }: Props) {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-6 bg-accent-500 rounded-full" />
-            <h2 className="text-3xl font-black text-white tracking-tighter">Profilage Sémantique</h2>
+            <h2 className="text-2xl font-bold text-surface-100 tracking-tight">Profilage Sémantique</h2>
           </div>
-          <p className="text-sm text-surface-500 font-bold max-w-lg">
-            Analyse structurelle et détection de types avancée. Le dictionnaire de données est injecté 
+          <p className="text-sm text-surface-400 max-w-lg">
+            Analyse structurelle et détection de types avancée. Le dictionnaire de données est injecté
             comme contexte sémantique pour l'IA.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-white/5 p-1 rounded-2xl border border-white/5">
+        <div className="ui-panel flex items-center gap-3 p-1">
           {[
             { label: 'Lignes', value: profile.shape.rows.toLocaleString(), icon: Layers },
             { label: 'Colonnes', value: profile.shape.columns, icon: BarChart },
           ].map((stat) => (
-            <div key={stat.label} className="px-5 py-3 text-center">
-              <p className="text-xs font-black text-surface-600 uppercase tracking-widest">{stat.label}</p>
-              <p className="text-xl font-black text-white num">{stat.value}</p>
+            <div key={stat.label} className="px-5 py-2.5 text-center">
+              <p className="text-xs font-semibold text-surface-400 uppercase tracking-wider">{stat.label}</p>
+              <p className="text-xl font-bold text-surface-100 ui-num">{stat.value}</p>
             </div>
           ))}
         </div>
       </div>
 
       {profile.excel_sheets && profile.excel_sheets.length > 0 && (
-        <div className="card p-5 bg-gradient-to-r from-accent-500/10 via-surface-900 to-accent-500/5 border border-accent-500/20 rounded-2xl space-y-3">
+        <div className="ui-panel p-5 border-l-4 border-l-accent-500 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-accent-400 font-bold text-sm">
               <FileSpreadsheet className="w-5 h-5" />
               <span>Feuilles du classeur Excel :</span>
             </div>
             {isSwitchingSheet && (
-              <span className="flex items-center gap-2 text-xs text-accent-300 animate-pulse font-bold">
+              <span className="flex items-center gap-2 text-xs text-accent-400 font-semibold">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" /> Chargement de la feuille...
               </span>
             )}
@@ -112,16 +112,14 @@ export default function DataProfile({ profile, datasetId }: Props) {
                   key={sheet}
                   disabled={isSwitchingSheet}
                   onClick={() => handleSheetChange(sheet)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-2 border ${
-                    isSelected
-                      ? 'bg-accent-500 text-white border-accent-400 shadow-glow'
-                      : 'bg-white/5 text-surface-300 hover:bg-white/10 hover:text-white border-white/10'
+                  className={`ui-btn px-3.5 py-2 text-xs font-semibold flex items-center gap-2 ${
+                    isSelected ? 'ui-btn-primary' : ''
                   } ${isSwitchingSheet ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5" />
                   {sheet}
                   {isSelected && (
-                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1.5 py-0.5 rounded-md ml-1">
+                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-85 ml-1">
                       Active
                     </span>
                   )}

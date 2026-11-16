@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Play, Square, RotateCcw, AlertCircle, Workflow, Check, Loader2,
-  CircleDashed, MinusCircle, Save, ChevronDown,
-} from 'lucide-react';
+import { BarChart3, Check, CircleDashed, Loader2, MinusCircle, Workflow } from 'lucide-react';
 import StageView from './StageView';
 import ResultSummary from './ResultSummary';
 import ResultActions from './ResultActions';
+import RemedyApplication from './RemedyApplication';
+import MethodologyToolbar from './MethodologyToolbar';
 import { useMethodology } from './useMethodology';
 import type { CorrectionReport, MethodologyResult, Remedy, Stage } from './methodologyTypes';
 import { useStatus } from '../shell/StatusBar';
@@ -24,8 +23,10 @@ interface Props {
 }
 
 export default function MethodologyPanel({ datasetId, datasetName }: Props) {
-  const { columns, stages, running, done, error, run, stop, reset,
-          applyRemedies, applying, applyResult } = useMethodology(datasetId);
+  const {
+    columns, stages, running, done, error, run, stop, reset,
+    applyRemedies, applying, applyResult,
+  } = useMethodology(datasetId);
   const { setStatus } = useStatus();
 
   const [target, setTarget] = useState<string | null>(null);
@@ -108,85 +109,21 @@ export default function MethodologyPanel({ datasetId, datasetName }: Props) {
 
   return (
     <div className="flex flex-col" style={{ gap: 'var(--ui-gap-3)' }}>
-      {/* ── Barre d'exécution ── */}
-      <div
-        className="ui-panel flex items-center flex-wrap"
-        style={{ gap: 'var(--ui-gap-3)', padding: '0 var(--ui-pad-x)', minHeight: 46 }}
-      >
-        <div className="flex items-center gap-2 shrink-0">
-          <Workflow className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
-          <span style={{ fontSize: 'var(--ui-fs-md)', fontWeight: 700 }}>Méthodologie itérative</span>
-        </div>
-
-        <span className="ui-sep" aria-hidden />
-
-        <label className="flex items-center gap-2">
-          <span className="ui-label">Cible</span>
-          <select
-            value={target ?? ''}
-            onChange={e => { setTarget(e.target.value || null); reset(); }}
-            disabled={running}
-            className="ui-select ui-focusable"
-            style={{ minWidth: 170 }}
-          >
-            <option value="">Sans cible</option>
-            {columns.map(col => <option key={col} value={col}>{col}</option>)}
-          </select>
-        </label>
-
-        <label className="flex items-center gap-2">
-          <span className="ui-label">Itérations max</span>
-          <input
-            type="number" min={1} max={10} value={maxIterations}
-            onChange={e => setMaxIterations(Math.max(1, Math.min(10, Number(e.target.value) || 5)))}
-            disabled={running}
-            className="ui-input ui-focusable ui-num"
-            style={{ width: 56 }}
-          />
-        </label>
-
-        <label className="flex items-center gap-1.5" title="Autorise log, Box-Cox, différenciation… qui modifient l’échelle des variables.">
-          <input
-            type="checkbox" checked={allowAggressive}
-            onChange={e => setAllowAggressive(e.target.checked)}
-            disabled={running}
-          />
-          <span style={{ fontSize: 'var(--ui-fs-sm)' }}>Transformations d’échelle</span>
-        </label>
-
-        <span className="flex-1" />
-
-        {started && !running && (
-          <button onClick={reset} className="ui-btn ui-btn-ghost ui-focusable">
-            <RotateCcw className="w-3 h-3" />
-            Effacer
-          </button>
-        )}
-        {running ? (
-          <button onClick={stop} className="ui-btn ui-focusable">
-            <Square className="w-3 h-3" />
-            Arrêter
-          </button>
-        ) : (
-          <button
-            onClick={() => { setPinned(false); run({ target, maxIterations, allowAggressive }); }}
-            className="ui-btn ui-btn-primary ui-focusable"
-          >
-            <Play className="w-3 h-3" />
-            {started ? 'Relancer' : 'Lancer l’analyse'}
-          </button>
-        )}
-      </div>
-
-      {error && (
-        <div
-          className="ui-panel flex items-start gap-2"
-          style={{ padding: 'var(--ui-gap-2) var(--ui-pad-x)', borderColor: 'var(--ui-danger)' }}
-        >
-          <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: 'var(--ui-danger)' }} />
-          <span style={{ fontSize: 'var(--ui-fs-sm)', color: 'var(--ui-danger)' }}>{error}</span>
-        </div>
-      )}
+      <MethodologyToolbar
+        columns={columns}
+        target={target}
+        setTarget={setTarget}
+        maxIterations={maxIterations}
+        setMaxIterations={setMaxIterations}
+        allowAggressive={allowAggressive}
+        setAllowAggressive={setAllowAggressive}
+        running={running}
+        started={started}
+        error={error}
+        onRun={() => { setPinned(false); run({ target, maxIterations, allowAggressive }); }}
+        onStop={stop}
+        onReset={reset}
+      />
 
       {done && stages.length > 0 && (
         <ResultSummary
@@ -252,8 +189,13 @@ export default function MethodologyPanel({ datasetId, datasetName }: Props) {
                         {title}
                       </span>
                       {stage && stage.charts.length > 0 && (
-                        <span className="ui-num ml-auto shrink-0 ui-t-faint" style={{ fontSize: '9.5px' }}>
-                          {stage.charts.length}◫
+                        <span
+                          className="ui-num ml-auto shrink-0 ui-t-faint inline-flex items-center gap-0.5"
+                          style={{ fontSize: '9.5px' }}
+                          title={`${stage.charts.length} graphique(s)`}
+                        >
+                          {stage.charts.length}
+                          <BarChart3 className="w-2.5 h-2.5" />
                         </span>
                       )}
                     </button>
@@ -303,93 +245,5 @@ export default function MethodologyPanel({ datasetId, datasetName }: Props) {
         </div>
       )}
     </div>
-  );
-}
-
-function RemedyApplication({
-  remedies, selected, onToggle, onApply, applying, result,
-}: {
-  remedies: Remedy[];
-  selected: Set<string>;
-  onToggle: (key: string) => void;
-  onApply: () => void;
-  applying: boolean;
-  result: string | null;
-}) {
-  const [open, setOpen] = useState(false);
-  const count = remedies.filter(r => selected.has(`${r.action}::${r.columns.join(',')}`)).length;
-
-  return (
-    <section className="ui-panel overflow-hidden">
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="ui-panel-header ui-focusable w-full"
-        style={{ border: 0, borderBottom: '1px solid var(--ui-border)', cursor: 'pointer' }}
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-1.5">
-          <ChevronDown
-            className="w-3 h-3"
-            style={{ transform: open ? undefined : 'rotate(-90deg)', transition: 'transform 0.12s' }}
-          />
-          Appliquer les corrections au dataset
-        </span>
-        <span className="ui-num">{count}/{remedies.length}</span>
-      </button>
-
-      {open && (
-        <div style={{ padding: 'var(--ui-gap-2) var(--ui-pad-x)' }}>
-          <p className="ui-t-muted" style={{ fontSize: 'var(--ui-fs-xs)', marginBottom: 8, lineHeight: 1.6 }}>
-            Ces corrections ont été retenues par la boucle. Décochez celles que vous ne
-            souhaitez pas conserver. L’application crée une <strong>nouvelle version</strong> du
-            dataset : l’originale reste intacte et reste restaurable.
-          </p>
-
-          <ul className="flex flex-col" style={{ gap: 2, marginBottom: 10 }}>
-            {remedies.map(remedy => {
-              const key = `${remedy.action}::${remedy.columns.join(',')}`;
-              return (
-                <li key={key}>
-                  <label
-                    className="flex items-start gap-2 rounded-[var(--ui-radius-sm)] px-1.5 py-1"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(key)}
-                      onChange={() => onToggle(key)}
-                      style={{ marginTop: 2 }}
-                    />
-                    <span className="min-w-0">
-                      <span style={{ fontSize: 'var(--ui-fs-sm)', fontWeight: 600 }}>{remedy.label}</span>
-                      {remedy.aggressive && (
-                        <span className="ui-tag ui-tag-warning" style={{ marginLeft: 6 }}>échelle modifiée</span>
-                      )}
-                      <span className="block ui-t-faint" style={{ fontSize: 'var(--ui-fs-xs)' }}>
-                        {remedy.rationale}
-                      </span>
-                    </span>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onApply}
-              disabled={applying || count === 0}
-              className="ui-btn ui-btn-primary ui-focusable"
-            >
-              {applying ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-              Appliquer {count} correction{count > 1 ? 's' : ''}
-            </button>
-            {result && (
-              <span className="ui-t-success" style={{ fontSize: 'var(--ui-fs-sm)' }}>{result}</span>
-            )}
-          </div>
-        </div>
-      )}
-    </section>
   );
 }

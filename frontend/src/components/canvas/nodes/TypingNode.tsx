@@ -60,7 +60,7 @@ export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     <NodeShell
       id={id}
       data={data}
-      color="#6366f1"
+      color="#0284c7"
       icon={Type}
       title="Detection de types"
       hasInput
@@ -71,7 +71,7 @@ export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
       </div>
 
       {dsId && columns.length > 0 && (
-        <div className="mt-2 text-[10px] text-indigo-300/80 bg-indigo-500/10 p-2 rounded-lg border border-indigo-500/15">
+        <div className="mt-2 text-[10px] ui-num text-sky-400 bg-sky-500/10 p-2 rounded-lg border border-sky-500/20">
           {activeCount}/{columns.length} colonnes actives —{' '}
           {Object.keys(typeOverrides).filter(k => typeOverrides[k] !== 'auto').length}{' '}
           override(s)
@@ -79,14 +79,14 @@ export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
       )}
 
       {excludedColumns.length > 0 && (
-        <div className="mt-1 text-[9px] text-amber-400/80 bg-amber-500/10 p-2 rounded-lg border border-amber-500/15">
+        <div className="mt-1 text-[9px] text-amber-400 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
           {excludedColumns.length} colonne(s) exclue(s) : {excludedColumns.join(', ')}
         </div>
       )}
 
       <button
         onClick={() => setIsModalOpen(true)}
-        className="w-full mt-2 py-2 px-3 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-xs font-medium text-indigo-300 transition-colors flex items-center justify-center gap-2"
+        className="w-full mt-2 py-2 px-3 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 text-xs font-medium text-sky-400 transition-colors flex items-center justify-center gap-2"
       >
         <Settings size={13} /> Configurer les types
       </button>
@@ -95,17 +95,17 @@ export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
         createPortal(
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div
-              className="absolute inset-0 bg-surface-950/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/70"
               onClick={() => setIsModalOpen(false)}
             />
-            <div className="relative w-full max-w-lg bg-surface-900 rounded-2xl shadow-2xl border border-white/[0.08] flex flex-col max-h-[80vh]">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] bg-surface-800/30 rounded-t-2xl shrink-0">
-                <h3 className="text-sm font-bold text-surface-50 flex items-center gap-2">
-                  <Type size={16} className="text-indigo-400" /> Configuration des Types
+            <div className="relative ui-panel w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[80vh]">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-surface-800/30 rounded-t-xl shrink-0">
+                <h3 className="text-sm font-bold text-surface-100 flex items-center gap-2">
+                  <Type size={16} className="text-sky-400" /> Configuration des Types
                 </h3>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="text-surface-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  className="text-surface-400 hover:text-surface-100 p-1.5 rounded-lg hover:bg-white/10 transition-colors"
                 >
                   <X size={16} />
                 </button>
@@ -198,7 +198,7 @@ export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
                               value={overrideVal}
                               onChange={e => handleTypeChange(colName, e.target.value)}
                               disabled={isExcluded}
-                              className="bg-surface-900 border border-white/[0.1] rounded-lg px-2 py-1.5 text-xs text-surface-100 focus:outline-none focus:border-indigo-500/50 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="ui-select cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                               style={{ width: 110 }}
                             >
                               <option value="auto">Auto</option>

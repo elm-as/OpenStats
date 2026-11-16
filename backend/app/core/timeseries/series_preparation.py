@@ -90,6 +90,22 @@ def _infer_or_guess_freq(index: pd.DatetimeIndex) -> str:
     return "D"
 
 
+def _align_to_frequency(
+    obj: pd.Series | pd.DataFrame,
+    freq: str,
+) -> pd.Series | pd.DataFrame:
+    """Aligne une série ou table temporelle sur une fréquence sans effacer les dates non ancrées."""
+    inferred = pd.infer_freq(obj.index)
+    if inferred:
+        return obj.asfreq(inferred).ffill().bfill()
+
+    aligned = obj.asfreq(freq)
+    if aligned.dropna().empty and not obj.dropna().empty:
+        # Ex. enregistrements le 15 du mois rééchantillonnés sur l'ancre MS/YS
+        aligned = obj.resample(freq).mean()
+    return aligned.ffill().bfill()
+
+
 def _prepare_series(
     df: pd.DataFrame,
     date_col: str,
@@ -105,10 +121,7 @@ def _prepare_series(
     series = series[~series.index.duplicated(keep="last")]
 
     freq = _infer_or_guess_freq(series.index)
-    series = series.asfreq(freq)
-
-    series = series.ffill().bfill()
-    return series
+    return _align_to_frequency(series, freq)
 
 
 def _detect_seasonal_period(series: pd.Series) -> int:
@@ -178,7 +191,4 @@ def _prepare_multivariate(
     tmp = tmp[~tmp.index.duplicated(keep="last")]
 
     freq = _infer_or_guess_freq(tmp.index)
-    tmp = tmp.asfreq(freq)
-
-    tmp = tmp.ffill().bfill()
-    return tmp
+    return _align_to_frequency(tmp, freq)

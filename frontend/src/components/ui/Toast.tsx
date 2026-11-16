@@ -173,7 +173,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
   return (
     <div
       role={toast.variant === 'error' ? 'alert' : 'status'}
-      className="pointer-events-auto rounded-xl border backdrop-blur-md shadow-lg animate-slide-in-right"
+      className="pointer-events-auto rounded-xl border shadow-lg animate-slide-in-right"
       style={{
         background: style.bg,
         borderColor: style.border,

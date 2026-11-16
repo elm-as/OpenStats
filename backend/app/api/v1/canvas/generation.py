@@ -8,11 +8,18 @@ import json
 import os
 import uuid
 import logging
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 
 from app.api.v1 import api_v1_bp
+from app.config import Config
 
 logger = logging.getLogger(__name__)
+
+
+def _shares_dir() -> str:
+    """Retourne le dossier de persistance des canvas partagés."""
+    data_dir = current_app.config.get("DATA_DIR") or Config.DATA_DIR
+    return os.path.join(data_dir, "shares")
 
 
 @api_v1_bp.route("/canvas/share", methods=["POST"])
@@ -23,7 +30,7 @@ def share_canvas():
         return jsonify({"error": "Body requis"}), 400
 
     share_id = str(uuid.uuid4())
-    share_dir = os.path.join(os.getcwd(), "data", "shares")
+    share_dir = _shares_dir()
     os.makedirs(share_dir, exist_ok=True)
 
     file_path = os.path.join(share_dir, f"{share_id}.json")
@@ -39,7 +46,7 @@ def get_shared_canvas(share_id: str):
     if not share_id.replace("-", "").isalnum():
         return jsonify({"error": "Invalid share ID"}), 400
 
-    share_dir = os.path.join(os.getcwd(), "data", "shares")
+    share_dir = _shares_dir()
     file_path = os.path.join(share_dir, f"{share_id}.json")
     if not os.path.exists(file_path):
         return jsonify({"error": "Lien introuvable ou expiré"}), 404

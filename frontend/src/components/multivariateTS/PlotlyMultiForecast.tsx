@@ -1,7 +1,6 @@
 import React from 'react';
-import Plot from 'react-plotly.js';
 import type { Data, Layout } from 'plotly.js';
-import { DARK_TEMPLATE, DEFAULT_CONFIG } from '../viz/PlotlyBase';
+import { PlotlyChart, DEFAULT_CONFIG, useCurrentTheme } from '../viz/PlotlyBase';
 import { COLORS, FORECAST_COLORS } from './constants';
 
 export function PlotlyMultiForecast({
@@ -25,6 +24,10 @@ export function PlotlyMultiForecast({
   dualAxis: boolean;
   height: number;
 }) {
+  const theme = useCurrentTheme();
+  const isLight = theme === 'light';
+  const accentColor = isLight ? '#0e7490' : '#67e8f9';
+  const rightAxisColor = isLight ? '#b45309' : '#fcd34d';
   const dates = data.map(r => String(r.date || ''));
   const traces: Data[] = [];
   const getCol = (key: string) =>
@@ -124,7 +127,7 @@ export function PlotlyMultiForecast({
       x1: forecastStart,
       y0: 0,
       y1: 1,
-      line: { color: '#67e8f9', width: 1.5, dash: 'dot' },
+      line: { color: accentColor, width: 1.5, dash: 'dot' },
     });
   }
 
@@ -137,43 +140,33 @@ export function PlotlyMultiForecast({
           yref: 'paper',
           text: 'Prévision',
           showarrow: false,
-          font: { size: 10, color: '#67e8f9' },
+          font: { size: 10, color: accentColor },
         },
       ]
     : [];
 
   const layout: Partial<Layout> = {
-    ...DARK_TEMPLATE,
     autosize: true,
     margin: { l: 60, r: dualAxis ? 60 : 20, t: 30, b: 60 },
-    xaxis: { ...DARK_TEMPLATE.xaxis, tickangle: -25 },
+    xaxis: { tickangle: -25 },
     yaxis: {
-      ...DARK_TEMPLATE.yaxis,
-      title: { text: 'Valeur', font: { color: '#dfe3ee', size: 10 } },
+      title: { text: 'Valeur', font: { size: 11 } },
     },
     yaxis2: dualAxis
       ? {
-          title: { text: 'Valeur (axe droit)', font: { color: '#fcd34d', size: 10 } },
+          title: { text: 'Valeur (axe droit)', font: { color: rightAxisColor, size: 10 } },
           overlaying: 'y',
           side: 'right',
-          gridcolor: 'transparent',
+          showgrid: false,
           zeroline: false,
-          tickfont: { color: '#fcd34d', size: 9 },
+          tickfont: { color: rightAxisColor, size: 9 },
         }
       : undefined,
-    legend: { orientation: 'h', y: -0.18, font: { color: '#dfe3ee', size: 10 } },
+    legend: { orientation: 'h', y: -0.2, font: { size: 10 } },
     shapes,
     annotations,
     hovermode: 'x unified',
   };
 
-  return (
-    <Plot
-      data={traces}
-      layout={layout}
-      config={DEFAULT_CONFIG}
-      style={{ width: '100%', height }}
-      useResizeHandler
-    />
-  );
+  return <PlotlyChart data={traces} layout={layout} config={DEFAULT_CONFIG} height={height} />;
 }

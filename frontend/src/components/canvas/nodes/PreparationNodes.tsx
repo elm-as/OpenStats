@@ -112,7 +112,7 @@ export function TransformNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
                         type="checkbox"
                         checked={selectedActions.has(act.key)}
                         onChange={() => toggleAction(act.key)}
-                        className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-pink-500"
+                        className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-accent-500"
                       />
                       <span className="text-[11px] text-surface-300">{act.label}</span>
                     </label>

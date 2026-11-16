@@ -191,3 +191,43 @@ def run_panel_analysis(dataset_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@api_v1_bp.route("/datasets/<dataset_id>/analysis/advanced", methods=["POST"])
+def run_advanced_analysis(dataset_id):
+    """Exécute une analyse avancée (Survie, Causalité, Panel, Quantiles, Puissance, TOST)."""
+    payload = request.get_json(silent=True) or {}
+    analysis_key = payload.get("analysis_key")
+    params = payload.get("params") or {}
+
+    allowed_keys = {
+        "survival",
+        "causal",
+        "panel",
+        "quantileRegression",
+        "powerAnalysis",
+        "equivalenceTest",
+    }
+    if analysis_key not in allowed_keys:
+        return jsonify({"error": f"Analyse avancée '{analysis_key}' non supportée"}), 400
+
+    from app.api.v1.canvas.nodes import NODE_EXECUTORS
+
+    executor = NODE_EXECUTORS.get(analysis_key)
+    if executor is None:
+        return jsonify({"error": f"Exécuteur '{analysis_key}' introuvable"}), 500
+
+    try:
+        raw = executor(params, dataset_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    if isinstance(raw, dict) and raw.get("status") == "error":
+        return jsonify({"error": raw.get("error") or raw.get("message") or "Erreur d'exécution"}), 400
+
+    unwrapped = (
+        raw.get("result")
+        if isinstance(raw, dict) and raw.get("result") is not None
+        else raw
+    )
+    return jsonify({"analysis_key": analysis_key, "result": unwrapped})
+

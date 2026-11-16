@@ -2,7 +2,7 @@ import ReactPlotly from 'react-plotly.js';
 const Plot = (ReactPlotly as any).default || ReactPlotly;
 import type { Layout, Config, Data } from 'plotly.js';
 import { useMemo } from 'react';
-import { DARK_TEMPLATE, DEFAULT_CONFIG } from './PlotlyBase';
+import { DEFAULT_CONFIG } from './plotlyTheme';
 
 interface Props {
   data: Data[];
@@ -10,15 +10,52 @@ interface Props {
   config?: Partial<Config>;
   height?: number | string;
   className?: string;
+  onGraphDiv?: (gd: any) => void;
+}
+
+/** Exporte une figure Plotly existante en image haute définition avec fond lisible. */
+export async function exportPlotlyFigure(
+  graphDiv: any,
+  format: 'png' | 'svg',
+  chartTitle: string | undefined,
+  theme: 'dark' | 'light'
+): Promise<void> {
+  if (!graphDiv) return;
+  const mod = await import('plotly.js/dist/plotly');
+  const PlotlyLib = (mod as any).default || mod;
+  const filename = (chartTitle || 'openstats_graph')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+  const bg = theme === 'dark' ? '#0e1118' : '#ffffff';
+  await PlotlyLib.relayout(graphDiv, { paper_bgcolor: bg, plot_bgcolor: bg });
+  try {
+    await PlotlyLib.downloadImage(graphDiv, {
+      format,
+      filename: filename || 'openstats_graph',
+      width: 1200,
+      height: 700,
+      scale: format === 'png' ? 3 : 1,
+    });
+  } finally {
+    await PlotlyLib.relayout(graphDiv, {
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+    });
+  }
 }
 
 /** Composant lourd (Plotly) lazy-loadé via PlotlyBase. */
-export default function PlotlyHeavy({ data, layout = {}, config = {}, height = 400, className = '' }: Props) {
+export default function PlotlyHeavy({
+  data,
+  layout = {},
+  config = {},
+  height = 400,
+  className = '',
+  onGraphDiv,
+}: Props) {
   const merged = useMemo<Partial<Layout>>(() => ({
-    ...DARK_TEMPLATE,
     ...layout,
-    xaxis: { ...DARK_TEMPLATE.xaxis, ...(layout.xaxis || {}) },
-    yaxis: { ...DARK_TEMPLATE.yaxis, ...(layout.yaxis || {}) },
     autosize: true,
   }), [layout]);
 
@@ -32,6 +69,8 @@ export default function PlotlyHeavy({ data, layout = {}, config = {}, height = 4
         config={mergedConfig}
         style={{ width: '100%', height: '100%' }}
         useResizeHandler
+        onInitialized={(_fig: any, gd: any) => onGraphDiv?.(gd)}
+        onUpdate={(_fig: any, gd: any) => onGraphDiv?.(gd)}
       />
     </div>
   );

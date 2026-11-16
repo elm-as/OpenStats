@@ -115,7 +115,7 @@ export function NodeShell({
       )}
 
       <div
-        className={`rounded-2xl overflow-hidden bg-surface-900/90 backdrop-blur-2xl transition-all duration-300 border group-hover:border-white/[0.2] ${statusBorder} ${shadowGlow}`}
+        className={`rounded-xl overflow-hidden bg-surface-900/95 transition-colors border group-hover:border-white/[0.2] ${statusBorder} ${shadowGlow}`}
       >
         <div
           className="h-1 w-full"
@@ -189,7 +189,7 @@ export function NodeShell({
                       e.stopPropagation();
                       onOpenResult(id);
                     }}
-                    className="text-[10px] font-bold text-accent-300 hover:text-white bg-accent-500/20 hover:bg-accent-500/40 px-2 py-0.5 rounded-md transition-colors border border-accent-500/30"
+                    className="text-[10px] font-bold text-accent-300 hover:text-surface-100 bg-accent-500/20 hover:bg-accent-500/40 px-2 py-0.5 rounded-md transition-colors border border-accent-500/30"
                   >
                     Voir détails
                   </button>

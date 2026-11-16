@@ -25,6 +25,7 @@ BLOCKED_BUILTINS = frozenset({
     "open", "exec", "eval", "compile", "__import__",
     "globals", "locals", "input", "breakpoint", "memoryview",
     "type", "classmethod", "staticmethod", "property",
+    "getattr", "setattr", "delattr",
 })
 
 # Patterns d'attaque connus

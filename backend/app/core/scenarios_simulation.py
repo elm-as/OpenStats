@@ -8,6 +8,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from app.core.scenarios_base import prepare_prediction_frame
+
 
 def sensitivity_analysis(
     model: Any,
@@ -25,10 +27,7 @@ def sensitivity_analysis(
     if variable not in feature_names:
         raise ValueError(f"Variable '{variable}' non trouvée dans les features")
 
-    X_base = df[feature_names].copy()
-    for col in X_base.columns:
-        if X_base[col].isna().any():
-            X_base[col] = X_base[col].fillna(X_base[col].median())
+    X_base = prepare_prediction_frame(df, feature_names)
 
     col_values = X_base[variable]
     col_mean = float(col_values.mean())
@@ -81,10 +80,7 @@ def tornado_chart_data(
     Données pour tornado chart : pour chaque variable, calcule
     la prédiction à mean-σ*std et mean+σ*std.
     """
-    X_base = df[feature_names].copy()
-    for col in X_base.columns:
-        if X_base[col].isna().any():
-            X_base[col] = X_base[col].fillna(X_base[col].median())
+    X_base = prepare_prediction_frame(df, feature_names)
 
     baseline_pred = float(np.nanmean(model.predict(X_base)))
     bars = []
@@ -134,10 +130,7 @@ def partial_dependence_data(
     n_points: int = 30,
 ) -> dict:
     """Partial Dependence Plots : effet marginal de chaque feature."""
-    X = df[feature_names].copy()
-    for col in X.columns:
-        if X[col].isna().any():
-            X[col] = X[col].fillna(X[col].median())
+    X = prepare_prediction_frame(df, feature_names)
 
     pdp_results = {}
 
@@ -180,10 +173,7 @@ def monte_carlo_simulation(
     """
     rng = np.random.default_rng(seed)
 
-    X_base = df[feature_names].copy()
-    for col in X_base.columns:
-        if X_base[col].isna().any():
-            X_base[col] = X_base[col].fillna(X_base[col].median())
+    X_base = prepare_prediction_frame(df, feature_names)
 
     numeric_features = [f for f in feature_names if pd.api.types.is_numeric_dtype(X_base[f])]
     stds = {f: float(X_base[f].std()) for f in numeric_features}
@@ -238,10 +228,7 @@ def stress_test(
     if sigmas is None:
         sigmas = [1.0, 2.0]
 
-    X_base = df[feature_names].copy()
-    for col in X_base.columns:
-        if X_base[col].isna().any():
-            X_base[col] = X_base[col].fillna(X_base[col].median())
+    X_base = prepare_prediction_frame(df, feature_names)
 
     baseline_pred = float(np.nanmean(model.predict(X_base)))
     results = []

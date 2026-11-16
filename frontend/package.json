@@ -40,7 +40,7 @@
       "target": [
         "nsis"
       ],
-      "icon": "public/vite.svg"
+      "icon": "electron/icon.ico"
     },
     "nsis": {
       "oneClick": false,

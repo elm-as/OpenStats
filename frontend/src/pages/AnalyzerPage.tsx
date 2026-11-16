@@ -1,30 +1,61 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Activity, Sparkles, Settings2, Database, Upload, Workflow } from 'lucide-react';
+import { lazy, Suspense } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Activity, Sparkles, Settings2, Database, Upload, Workflow, Sliders,
+} from 'lucide-react';
 import AutoPipelinePanel from '../components/pipeline/AutoPipelinePanel';
 import InsightsPanel from '../components/results/InsightsPanel';
 import DataPrepPanel from '../components/transform/DataPrepPanel';
 import MethodologyPanel from '../components/methodology/MethodologyPanel';
 import { useWorkspace } from '../components/shell/useWorkspace';
-import { useNavigate } from 'react-router-dom';
+
+const AnalysisWizard = lazy(() => import('../components/wizard/AnalysisWizard'));
 
 const TABS = [
-  { key: 'methodology' as const, label: 'Analyse méthodique', icon: Workflow },
-  { key: 'overview' as const, label: 'Pipeline automatique', icon: Activity },
-  { key: 'insights' as const, label: 'Insights & corrélations', icon: Sparkles },
-  { key: 'prep' as const, label: 'Préparation', icon: Settings2 },
-];
+  { key: 'methodology', label: 'Analyse méthodique', icon: Workflow },
+  { key: 'studio', label: 'Atelier statistique libre', icon: Sliders },
+  { key: 'overview', label: 'Pipeline automatique', icon: Activity },
+  { key: 'insights', label: 'Insights & corrélations', icon: Sparkles },
+  { key: 'prep', label: 'Préparation', icon: Settings2 },
+] as const;
+
+type AnalyzerTab = (typeof TABS)[number]['key'];
+
+function isAnalyzerTab(value: string | null): value is AnalyzerTab {
+  return value !== null && TABS.some(t => t.key === value);
+}
+
+function StudioFallback() {
+  return (
+    <div className="ui-panel p-6 flex items-center justify-center gap-2.5" style={{ minHeight: '36vh' }}>
+      <div
+        className="w-4 h-4 rounded-full animate-spin"
+        style={{ border: '2px solid var(--ui-border)', borderTopColor: 'var(--ui-accent)' }}
+      />
+      <span className="text-xs ui-t-muted">Chargement de l’atelier statistique…</span>
+    </div>
+  );
+}
 
 /**
- * Écran Analyse auto.
- *
- * Le dataset actif vient du châssis : plus de sélecteur local ni de bannière,
- * l'espace est rendu au contenu.
+ * Écran Analyse : Méthodologie 11 étapes, Atelier statistique libre
+ * (Tests d'hypothèses, Séries temporelles, ACP/AFC, Scénarios, Extensions),
+ * Pipeline automatique, Insights & Préparation.
  */
 export default function AnalyzerPage() {
   const { active, isLoading, datasets } = useWorkspace();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'methodology' | 'overview' | 'insights' | 'prep'>('methodology');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const rawTab = searchParams.get('tab');
+  const tab: AnalyzerTab = isAnalyzerTab(rawTab) ? rawTab : 'methodology';
+
+  const handleSelectTab = (next: AnalyzerTab) => {
+    const updated = new URLSearchParams(searchParams);
+    if (next === 'methodology') updated.delete('tab');
+    else updated.set('tab', next);
+    setSearchParams(updated, { replace: true });
+  };
 
   if (isLoading) {
     return (
@@ -60,9 +91,8 @@ export default function AnalyzerPage() {
 
   return (
     <div className="flex flex-col" style={{ gap: 'var(--ui-gap-3)' }}>
-      {/* Barre d'onglets de l'écran */}
       <div
-        className="ui-panel flex items-center"
+        className="ui-panel flex items-center overflow-x-auto no-scrollbar"
         style={{ padding: '0 var(--ui-pad-x)', gap: 'var(--ui-gap-1)', minHeight: 40 }}
         role="tablist"
       >
@@ -73,8 +103,8 @@ export default function AnalyzerPage() {
               key={entry.key}
               role="tab"
               aria-selected={selected}
-              onClick={() => setTab(entry.key)}
-              className="ui-focusable flex items-center gap-1.5 px-2.5 rounded-[var(--ui-radius-sm)]"
+              onClick={() => handleSelectTab(entry.key)}
+              className="ui-focusable flex items-center gap-1.5 px-2.5 rounded-[var(--ui-radius-sm)] shrink-0"
               style={{
                 height: 'var(--ui-control-h)',
                 fontSize: 'var(--ui-fs-sm)',
@@ -92,6 +122,12 @@ export default function AnalyzerPage() {
 
       {tab === 'methodology' && (
         <MethodologyPanel key={active.id} datasetId={active.id} datasetName={active.name} />
+      )}
+
+      {tab === 'studio' && (
+        <Suspense fallback={<StudioFallback />}>
+          <AnalysisWizard key={active.id} datasetId={active.id} />
+        </Suspense>
       )}
 
       {tab === 'overview' && (

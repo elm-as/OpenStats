@@ -65,39 +65,39 @@ export function AutoPipelineRecipeStage({
     <div className="space-y-6">
       {/* Analyses demandées que le profil ne permet pas de poser */}
       {pipelineWarnings.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+        <div className="ui-panel p-4 border-l-4 border-l-amber-500 bg-amber-500/10 space-y-2">
           {pipelineWarnings.map((message, i) => (
             <div key={i} className="flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-amber-100 leading-relaxed">{message}</p>
+              <p className="text-xs text-surface-200 leading-relaxed">{message}</p>
             </div>
           ))}
         </div>
       )}
 
       {/* Header de l'éditeur */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-900/80 border border-white/10 shadow-xl backdrop-blur-xl">
+      <div className="ui-panel flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4">
         <div>
           <div className="flex items-center gap-2">
             <button
               onClick={onBack}
-              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-surface-400 hover:text-white transition-all mr-1"
+              className="ui-btn ui-btn-ghost p-1.5 mr-1"
               title="Revenir à la configuration"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h3 className="text-base font-bold text-white tracking-tight">{pipelineTitle}</h3>
+            <h3 className="text-base font-bold text-surface-100 tracking-tight">{pipelineTitle}</h3>
           </div>
           <p className="text-xs text-surface-400 mt-1 leading-relaxed">
             {pipelineDesc} •{' '}
-            <span className="text-accent-300 font-semibold">{activeSteps.length} étapes actives</span>
+            <span className="text-accent-400 font-semibold ui-num">{activeSteps.length} étapes actives</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setShowAddStepModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-surface-200 hover:text-white transition-all flex items-center gap-1.5"
+            className="ui-btn text-xs"
           >
             <Plus className="w-3.5 h-3.5 text-accent-400" />
             <span>Ajouter une étape</span>
@@ -105,7 +105,7 @@ export function AutoPipelineRecipeStage({
 
           <button
             onClick={onShowCodeModal}
-            className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-surface-200 hover:text-white transition-all flex items-center gap-1.5"
+            className="ui-btn text-xs"
           >
             <FileCode className="w-3.5 h-3.5 text-amber-400" />
             <span>Code Source</span>
@@ -114,12 +114,12 @@ export function AutoPipelineRecipeStage({
           <button
             onClick={onOpenCanvas}
             disabled={isGeneratingCanvas}
-            className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-surface-200 hover:text-white transition-all flex items-center gap-1.5"
+            className="ui-btn text-xs"
           >
             {isGeneratingCanvas ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
             ) : (
-              <Layers className="w-3.5 h-3.5 text-purple-400" />
+              <Layers className="w-3.5 h-3.5 text-sky-400" />
             )}
             <span>Ouvrir en Canvas</span>
           </button>
@@ -127,7 +127,7 @@ export function AutoPipelineRecipeStage({
           <button
             onClick={onExecute}
             disabled={isExecuting || activeSteps.length === 0}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-accent-500 to-indigo-600 hover:from-accent-400 hover:to-indigo-500 text-surface-950 font-bold text-xs shadow-lg shadow-accent-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2"
+            className="ui-btn ui-btn-primary text-xs font-bold"
           >
             {isExecuting ? (
               <>
@@ -136,7 +136,7 @@ export function AutoPipelineRecipeStage({
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-surface-950" />
+                <Play className="w-3.5 h-3.5" />
                 <span>Lancer l'Exécution</span>
               </>
             )}
@@ -145,7 +145,7 @@ export function AutoPipelineRecipeStage({
       </div>
 
       {/* Liste des Étapes */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {editableSteps.map((step, idx) => {
           const isFirst = idx === 0;
           const isLast = idx === editableSteps.length - 1;
@@ -153,10 +153,8 @@ export function AutoPipelineRecipeStage({
           return (
             <div
               key={step.key}
-              className={`p-4 rounded-2xl border transition-all ${
-                step.enabled
-                  ? 'bg-surface-900/70 border-white/10 hover:border-white/20'
-                  : 'bg-white/[0.01] border-white/5 opacity-50'
+              className={`ui-panel p-4 transition-colors ${
+                step.enabled ? 'border-white/10' : 'opacity-50'
               }`}
             >
               <div className="flex items-center justify-between gap-4">
@@ -169,19 +167,19 @@ export function AutoPipelineRecipeStage({
                     title={step.enabled ? 'Désactiver cette étape' : 'Activer cette étape'}
                   >
                     <div
-                      className={`w-4 h-4 rounded-full bg-surface-950 shadow-md transition-transform ${
+                      className={`w-4 h-4 rounded-full bg-surface-950 shadow-sm transition-transform ${
                         step.enabled ? 'translate-x-4' : 'translate-x-0'
                       }`}
                     />
                   </button>
 
-                  <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 text-xs font-bold text-surface-300 flex items-center justify-center font-mono">
+                  <div className="w-6 h-6 rounded-md bg-white/5 border border-white/10 text-xs font-bold text-surface-300 flex items-center justify-center font-mono ui-num">
                     {idx + 1}
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-bold text-white tracking-tight">{step.label}</h4>
+                      <h4 className="text-xs font-bold text-surface-100 tracking-tight">{step.label}</h4>
                       <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-surface-400 font-mono">
                         {step.operation}
                       </span>
@@ -193,20 +191,16 @@ export function AutoPipelineRecipeStage({
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => onToggleStepExpanded(idx)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1 ${
-                      step.isExpanded
-                        ? 'bg-accent-500/20 text-accent-300 border border-accent-500/30'
-                        : 'bg-white/5 hover:bg-white/10 text-surface-300 hover:text-white'
-                    }`}
+                    className={`ui-btn text-[11px] ${step.isExpanded ? 'ui-btn-primary' : 'ui-btn-ghost'}`}
                   >
-                    <Settings2 className="w-3 h-3 text-accent-400" />
+                    <Settings2 className="w-3 h-3" />
                     <span>{step.isExpanded ? 'Fermer' : 'Options'}</span>
                   </button>
 
                   <button
                     onClick={() => onMoveStep(idx, 'up')}
                     disabled={isFirst}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 text-surface-400 hover:text-white transition-all"
+                    className="ui-btn ui-btn-ghost p-1.5 disabled:opacity-30"
                   >
                     <ChevronUp className="w-3.5 h-3.5" />
                   </button>
@@ -214,14 +208,14 @@ export function AutoPipelineRecipeStage({
                   <button
                     onClick={() => onMoveStep(idx, 'down')}
                     disabled={isLast}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 disabled:opacity-30 text-surface-400 hover:text-white transition-all"
+                    className="ui-btn ui-btn-ghost p-1.5 disabled:opacity-30"
                   >
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
 
                   <button
                     onClick={() => onRemoveStep(idx)}
-                    className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                    className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
                     title="Supprimer cette étape"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -243,30 +237,30 @@ export function AutoPipelineRecipeStage({
 
       {/* Modal d'ajout d'étape */}
       {showAddStepModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="w-full max-w-lg bg-surface-900 border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="ui-panel w-full max-w-lg p-5 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-surface-100 flex items-center gap-2">
                 <Plus className="w-4 h-4 text-accent-400" />
                 Ajouter une étape au Pipeline
               </h3>
               <button
                 onClick={() => setShowAddStepModal(false)}
-                className="text-surface-400 hover:text-white"
+                className="text-surface-400 hover:text-surface-100"
               >
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-1 ui-scroll">
               {availableAnalyses.map(a => (
                 <div
                   key={a.key}
                   onClick={() => onAddStepFromCatalog(a.key)}
-                  className="p-3 rounded-xl bg-white/[0.02] hover:bg-white/5 border border-white/10 hover:border-accent-500/40 cursor-pointer transition-all flex items-center justify-between"
+                  className="p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/10 hover:border-accent-500/40 cursor-pointer transition-colors flex items-center justify-between"
                 >
                   <div>
-                    <p className="text-xs font-bold text-white">{a.label}</p>
+                    <p className="text-xs font-bold text-surface-100">{a.label}</p>
                     <p className="text-[11px] text-surface-400 mt-0.5">{a.description}</p>
                   </div>
                   <Plus className="w-4 h-4 text-accent-400 shrink-0" />

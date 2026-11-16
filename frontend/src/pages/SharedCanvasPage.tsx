@@ -1,36 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ReactFlow, ReactFlowProvider, Background, MiniMap, Controls, Node, Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Loader2, AlertCircle, Home, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Home, CheckCircle2 } from 'lucide-react';
 import { nodeTypes, edgeTypes } from '../components/canvas/CanvasFlow';
 import CanvasResultModal from '../components/canvas/CanvasResultModal';
-import { API_V1_BASE, getAnonymousClientId } from '../lib/apiBase';
+import { apiFetch } from '../lib/apiBase';
 
 export default function SharedCanvasPage() {
   const { shareId } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
-  
   const [selectedResultNode, setSelectedResultNode] = useState<{ id: string; type: string; title: string; result: any } | null>(null);
 
   useEffect(() => {
     async function fetchShared() {
       try {
-        const res = await fetch(`${API_V1_BASE}/canvas/share/${shareId}`, {
-          headers: {
-            'X-Client-Id': (() => { try { return getAnonymousClientId(); } catch { return ''; } })(),
-          },
-        });
+        const res = await apiFetch(`/canvas/share/${shareId}`);
         const result = await res.json();
-        if (result.success) {
-          setData(result.data);
-        } else {
-          setError(result.error || "Impossible de charger ce lien partagé.");
-        }
-      } catch (err) {
-        setError("Erreur réseau. Impossible de contacter le serveur.");
+        if (result.success) setData(result.data);
+        else setError(result.error || 'Impossible de charger ce lien partagé.');
+      } catch {
+        setError('Erreur réseau. Impossible de contacter le serveur.');
       } finally {
         setLoading(false);
       }
@@ -40,37 +32,33 @@ export default function SharedCanvasPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-950 flex flex-col items-center justify-center text-surface-400">
-        <Loader2 className="animate-spin mb-4 text-accent-500" size={32} />
-        <p>Chargement du rapport partagé...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center ui-t-muted" style={{ background: 'var(--ui-bg-app)' }}>
+        <Loader2 className="animate-spin mb-3 ui-t-accent w-7 h-7" />
+        <p className="text-xs">Chargement du workflow partagé…</p>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-surface-950 flex flex-col items-center justify-center text-surface-400 p-6">
-        <AlertCircle className="text-red-500 mb-4" size={48} />
-        <h2 className="text-xl font-bold text-surface-50 mb-2">Lien introuvable</h2>
-        <p className="mb-6">{error}</p>
-        <Link to="/" className="px-5 py-2.5 bg-surface-800 hover:bg-surface-700 text-surface-200 rounded-lg flex items-center gap-2 transition-colors">
-          <Home size={18} /> Retour à l'accueil
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 ui-t-muted" style={{ background: 'var(--ui-bg-app)' }}>
+        <AlertCircle className="ui-t-danger mb-3 w-10 h-10" />
+        <h2 className="text-lg font-bold ui-t mb-1">Lien introuvable</h2>
+        <p className="text-xs mb-5">{error}</p>
+        <Link to="/" className="ui-btn ui-focusable">
+          <Home className="w-4 h-4" /> Retour à l’accueil
         </Link>
       </div>
     );
   }
 
-  // Injecter l'état `runStatus` dans les noeuds pour qu'ils s'affichent correctement
   const nodes: Node[] = data.nodes.map((n: any) => {
     const nodeRes = data.results && data.results[n.id];
     return {
       ...n,
-      data: {
-        ...n.data,
-        runStatus: nodeRes?.status || 'success', // Show success if no result is strictly tracked but the pipeline finished
-      },
-      draggable: false, // Read only
-      selectable: true, // We want them to click to see results
+      data: { ...n.data, runStatus: nodeRes?.status || 'success' },
+      draggable: false,
+      selectable: true,
     };
   });
 
@@ -78,27 +66,29 @@ export default function SharedCanvasPage() {
     ...e,
     id: `e-${e.source}-${e.target}`,
     type: 'animatedDataEdge',
-    data: { color: '#38bdf8', speed: '3s', speedOffset: '1.5s' } // Defaults, could be inferred properly
+    data: { color: '#22b8cf', speed: '3s', speedOffset: '1.5s' },
   }));
-  
-  // Try to find the node label
+
   const getNodeLabel = (nodeId: string) => {
     const node = data.nodes.find((n: any) => n.id === nodeId);
     return node?.type || nodeId;
   };
 
   return (
-    <div className="h-screen w-full flex flex-col bg-surface-950">
-      <header className="h-14 border-b border-white/[0.06] bg-surface-900/50 backdrop-blur flex items-center justify-between px-6 z-10 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
-            <span className="text-white font-black text-sm tracking-tighter">OS</span>
-          </div>
-          <span className="font-bold text-surface-100">OpenStats by Elmas</span>
-          <span className="px-2 py-0.5 rounded-full bg-accent-500/10 text-accent-400 text-[10px] font-bold uppercase tracking-widest border border-accent-500/20">Read-Only</span>
+    <div className="h-screen w-full flex flex-col" style={{ background: 'var(--ui-bg-app)', color: 'var(--ui-text)' }}>
+      <header
+        className="h-12 flex items-center justify-between px-4 z-10 shrink-0"
+        style={{ background: 'var(--ui-bg-panel)', borderBottom: '1px solid var(--ui-border)' }}
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="px-2 py-1 rounded-[var(--ui-radius-sm)] ui-mono text-xs font-bold" style={{ background: 'var(--ui-accent)', color: 'var(--ui-on-accent)' }}>
+            OS
+          </span>
+          <span className="font-bold text-xs ui-t">OpenStats Studio</span>
+          <span className="ui-tag ui-tag-accent uppercase">Lecture seule</span>
         </div>
-        <Link to="/" className="text-sm font-semibold text-surface-400 hover:text-white transition-colors">
-          Créer votre propre analyse
+        <Link to="/" className="ui-btn ui-focusable">
+          Ouvrir mon espace de travail
         </Link>
       </header>
 
@@ -112,55 +102,51 @@ export default function SharedCanvasPage() {
             fitView
             nodesDraggable={false}
             nodesConnectable={false}
-            elementsSelectable={true}
-            onNodeClick={(event, node) => {
-               if (data.results && data.results[node.id]) {
-                 setSelectedResultNode({
-                   id: node.id,
-                   type: node.type || '',
-                   title: getNodeLabel(node.id),
-                   result: data.results[node.id].result
-                 });
-               }
+            elementsSelectable
+            onNodeClick={(_event, node) => {
+              if (data.results && data.results[node.id]) {
+                setSelectedResultNode({
+                  id: node.id,
+                  type: node.type || '',
+                  title: getNodeLabel(node.id),
+                  result: data.results[node.id].result,
+                });
+              }
             }}
-            className="bg-surface-950"
+            style={{ background: 'var(--ui-bg-app)' }}
           >
-            <Background color="#1e293b" gap={24} size={1.5} />
-            <Controls showInteractive={false} className="!bg-surface-800/90 !border !border-white/[0.08] !rounded-xl !shadow-2xl [&>button]:!bg-transparent [&>button]:!border-white/[0.06] [&>button]:!text-surface-300 [&>button:hover]:!bg-white/10 [&>button]:!rounded-lg" />
-            <MiniMap
-              nodeStrokeColor="#ffffff"
-              nodeColor="#0f172a"
-              maskColor="rgba(15,23,42,0.6)"
-              className="!bg-surface-900/90 !border !border-white/[0.1] !rounded-xl !shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden backdrop-blur-md"
-              style={{ right: 20, bottom: 20 }}
-            />
+            <Background color="var(--ui-border-strong)" gap={24} size={1.2} />
+            <Controls showInteractive={false} />
+            <MiniMap maskColor="rgba(15,23,42,0.45)" style={{ right: 16, bottom: 16 }} />
           </ReactFlow>
         </ReactFlowProvider>
-        
-        {/* Results Panel overlay */}
+
         {data.results && (
-          <div className="absolute top-4 right-4 w-[320px] max-h-[calc(100vh-100px)] overflow-auto z-20 rounded-2xl border border-white/[0.08] bg-surface-900/95 backdrop-blur-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] pointer-events-auto">
-            <div className="px-5 py-4 border-b border-white/[0.06]">
-              <h3 className="text-sm font-bold text-surface-100 flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-emerald-400" />
-                Pipeline Complété
+          <div
+            className="ui-panel absolute top-4 right-4 w-[310px] max-h-[calc(100vh-96px)] overflow-auto ui-scroll z-20 pointer-events-auto"
+            style={{ boxShadow: 'var(--ui-shadow-lg)' }}
+          >
+            <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--ui-border)', background: 'var(--ui-bg-raised)' }}>
+              <h3 className="text-xs font-bold ui-t flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 ui-t-success" />
+                Pipeline complété
               </h3>
-              <p className="text-[11px] text-surface-400 mt-1">Cliquez sur un nœud ou utilisez les boutons ci-dessous pour voir les résultats.</p>
+              <p className="text-[11px] ui-t-muted mt-0.5">Sélectionnez un nœud pour inspecter ses sorties.</p>
             </div>
-            <div className="divide-y divide-white/[0.04]">
+            <div className="divide-y divide-[var(--ui-border)]">
               {Object.entries(data.results).filter(([k]) => k !== '_global').map(([nodeId, res]: [string, any]) => {
                 if (!res || res.status !== 'success' || res.result === undefined) return null;
                 return (
-                  <div key={nodeId} className="px-5 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
-                    <span className="text-xs font-bold text-surface-200">{getNodeLabel(nodeId)}</span>
+                  <div key={nodeId} className="px-4 py-2.5 flex items-center justify-between hover:bg-[var(--ui-bg-raised)]">
+                    <span className="text-xs font-semibold ui-t">{getNodeLabel(nodeId)}</span>
                     <button
                       onClick={() => setSelectedResultNode({
                         id: nodeId,
-                        type: data.nodes.find((n:any) => n.id === nodeId)?.type || '',
+                        type: data.nodes.find((n: any) => n.id === nodeId)?.type || '',
                         title: getNodeLabel(nodeId),
-                        result: res.result
+                        result: res.result,
                       })}
-                      className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1.5 rounded bg-accent-500/10 text-accent-400 hover:bg-accent-500 hover:text-white transition-colors"
+                      className="ui-btn text-[11px] h-7"
                     >
                       Voir
                     </button>
@@ -170,7 +156,7 @@ export default function SharedCanvasPage() {
             </div>
           </div>
         )}
-        
+
         <CanvasResultModal
           isOpen={!!selectedResultNode}
           onClose={() => setSelectedResultNode(null)}

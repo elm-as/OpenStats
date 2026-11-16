@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { API_V1_BASE, getAnonymousClientId } from '../lib/apiBase';
+import { API_V1_BASE, buildApiHeaders } from '../lib/apiBase';
 import type { DatasetSummary, JobStatus } from '../types';
 
 export type PaginatedDatasets = {
@@ -50,14 +50,7 @@ export const baseApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: API_V1_BASE,
     timeout: 120000,
-    prepareHeaders: headers => {
-      try {
-        headers.set('X-Client-Id', getAnonymousClientId());
-      } catch {
-        // ignore (SSR / storage error)
-      }
-      return headers;
-    },
+    prepareHeaders: headers => buildApiHeaders(headers),
   }),
   tagTypes: ['Dataset', 'Analysis', 'Model', 'Insights', 'Diagnostics', 'Marketplace'],
   endpoints: () => ({}),

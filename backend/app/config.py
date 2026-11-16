@@ -19,7 +19,7 @@ class Config:
     LOCAL_DEV_MODE = _is_local_dev
     UPLOAD_FOLDER = os.path.abspath(os.getenv("UPLOAD_FOLDER", os.path.join(_BASE_DIR, "uploads")))
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_UPLOAD_MB", "200")) * 1024 * 1024  # 200 MB par défaut en local
-    ALLOWED_EXTENSIONS = {"csv", "xlsx", "xls", "json", "jsonl"}
+    ALLOWED_EXTENSIONS = {"csv", "xlsx", "xls", "json", "jsonl", "parquet"}
     FRONTEND_DIST_DIR = os.path.abspath(os.getenv(
         "FRONTEND_DIST_DIR",
         os.path.join(_REPO_DIR, "frontend", "dist"),

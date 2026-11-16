@@ -45,6 +45,7 @@ export default function AnalysisWizard({ datasetId }: Props) {
     testResult,
     stationarityResult,
     modelResults,
+    advancedResult,
     error,
     setError,
     resetResults,
@@ -101,8 +102,19 @@ export default function AnalysisWizard({ datasetId }: Props) {
 
   const handleSelectAnalysis = (analysis: AnalysisCapability) => {
     if (!analysis.available) return;
+    const defaults: Record<string, string> = {};
+    for (const field of analysis.config_fields || []) {
+      if (field.type !== 'select') continue;
+      if (field.key === 'forecast_steps' && field.options.includes('10')) {
+        defaults[field.key] = '10';
+      } else if (field.key === 'method' && field.options.includes('psm')) {
+        defaults[field.key] = 'psm';
+      } else if (field.options.length === 1 && !field.optional) {
+        defaults[field.key] = field.options[0];
+      }
+    }
     setSelectedAnalysis(analysis);
-    setConfigValues({});
+    setConfigValues(defaults);
     setSelectedModels([]);
     resetResults();
     if (
@@ -132,7 +144,7 @@ export default function AnalysisWizard({ datasetId }: Props) {
 
     if (selectedAnalysis.config_fields) {
       for (const field of selectedAnalysis.config_fields) {
-        if (!configValues[field.key]) {
+        if (!field.optional && !configValues[field.key]) {
           setError(`Veuillez sélectionner : ${field.label}`);
           return;
         }
@@ -153,7 +165,7 @@ export default function AnalysisWizard({ datasetId }: Props) {
       }
     }
 
-    if (selectedAnalysis.category === 'modeling' && !configValues.target_column) {
+    if (selectedAnalysis.key.startsWith('modeling_') && !configValues.target_column) {
       setError('Veuillez sélectionner la variable cible');
       return;
     }
@@ -283,6 +295,7 @@ export default function AnalysisWizard({ datasetId }: Props) {
           testResult={testResult}
           stationarityResult={stationarityResult}
           modelResults={modelResults}
+          advancedResult={advancedResult}
           isLoading={isLoading}
           error={error}
           onReset={resetWizard}

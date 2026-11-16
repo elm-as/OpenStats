@@ -103,51 +103,50 @@
      ═══════════════════════════════════════════ */
 
   .badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap;
-    background: rgba(6, 182, 212, 0.12);
-    border: 1px solid rgba(6, 182, 212, 0.25);
-    color: #67e8f9;
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-[var(--ui-radius-sm)] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap;
+    background: var(--ui-accent-soft);
+    border: 1px solid var(--ui-accent-soft);
+    color: var(--ui-accent-text);
   }
   .badge-success {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.25);
-    color: #6ee7b7;
+    background: var(--ui-success-soft);
+    border-color: var(--ui-success-soft);
+    color: var(--ui-success);
   }
   .badge-warning {
-    background: rgba(245, 158, 11, 0.12);
-    border-color: rgba(245, 158, 11, 0.25);
-    color: #fcd34d;
+    background: var(--ui-warning-soft);
+    border-color: var(--ui-warning-soft);
+    color: var(--ui-warning);
   }
   .badge-danger {
-    background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.25);
-    color: #fca5a5;
+    background: var(--ui-danger-soft);
+    border-color: var(--ui-danger-soft);
+    color: var(--ui-danger);
   }
   .badge-info {
-    background: rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.25);
-    color: #93c5fd;
+    background: var(--ui-info-soft);
+    border-color: var(--ui-info-soft);
+    color: var(--ui-info);
   }
   .badge-neutral {
-    background: rgba(148, 163, 184, 0.1);
-    border-color: rgba(148, 163, 184, 0.2);
-    color: var(--text-muted);
+    background: var(--ui-bg-raised);
+    border-color: var(--ui-border);
+    color: var(--ui-text-muted);
   }
 
-  /* Chip = badge plus arrondi, contenu plus libre */
+  /* Chip = badge compact interactif */
   .chip {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: var(--text-secondary);
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[var(--ui-radius-sm)] text-xs font-medium whitespace-nowrap;
+    background: var(--ui-bg-raised);
+    border: 1px solid var(--ui-border);
+    color: var(--ui-text-secondary);
   }
   .chip-active {
-    background: rgba(6, 182, 212, 0.15);
-    border-color: rgba(6, 182, 212, 0.35);
-    color: #67e8f9;
+    background: var(--ui-accent-soft);
+    border-color: var(--ui-border-focus);
+    color: var(--ui-accent-text);
   }
 
-  /* Pastille colorée */
   .dot {
     @apply inline-block w-2 h-2 rounded-full flex-shrink-0;
   }
@@ -157,32 +156,32 @@
      ═══════════════════════════════════════════ */
 
   .stat {
-    @apply rounded-lg border p-3;
-    background: rgba(15, 23, 42, 0.4);
-    border-color: var(--glass-border);
+    @apply border p-3 rounded-[var(--ui-radius)];
+    background: var(--ui-bg-sunken);
+    border-color: var(--ui-border);
   }
   .stat-label {
-    @apply flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-medium;
-    color: var(--text-muted);
+    @apply flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold;
+    color: var(--ui-text-muted);
   }
   .stat-value {
     @apply text-lg md:text-xl font-bold mt-1;
-    color: var(--text-primary);
+    color: var(--ui-text);
     font-variant-numeric: tabular-nums;
   }
   .stat-delta {
     @apply text-xs font-medium;
   }
-  .stat-delta-up { color: #6ee7b7; }
-  .stat-delta-down { color: #fca5a5; }
+  .stat-delta-up { color: var(--ui-success); }
+  .stat-delta-down { color: var(--ui-danger); }
 
   /* ═══════════════════════════════════════════
      SKELETON
      ═══════════════════════════════════════════ */
 
   .skeleton {
-    @apply rounded-md;
-    background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%);
+    @apply rounded-[var(--ui-radius-sm)];
+    background: linear-gradient(90deg, var(--ui-bg-raised) 0%, var(--ui-bg-overlay) 50%, var(--ui-bg-raised) 100%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.4s infinite linear;
   }
@@ -197,11 +196,11 @@
 
   .divider {
     @apply h-px w-full;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    background: var(--ui-border);
   }
   .divider-v {
     @apply w-px self-stretch;
-    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.08), transparent);
+    background: var(--ui-border);
   }
 
   /* ═══════════════════════════════════════════
@@ -237,9 +236,9 @@
      ═══════════════════════════════════════════ */
 
   .empty-state {
-    @apply flex flex-col items-center justify-center text-center py-10 px-6 rounded-xl border border-dashed;
-    border-color: rgba(255, 255, 255, 0.1);
-    color: var(--text-muted);
+    @apply flex flex-col items-center justify-center text-center py-8 px-6 rounded-[var(--ui-radius)] border border-dashed;
+    border-color: var(--ui-border-strong);
+    color: var(--ui-text-muted);
   }
 
   /* ═══════════════════════════════════════════
@@ -247,19 +246,18 @@
      ═══════════════════════════════════════════ */
 
   .focus-ring {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-950;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/40;
   }
 
   /* ── Inputs ── */
   select, input[type="text"], input[type="number"], input[type="password"], textarea {
-    @apply rounded-lg px-3 py-2 text-[13px] transition-all duration-300 w-full outline-none border;
-    background: rgba(15, 23, 42, 0.4);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #f1f5f9;
+    @apply rounded-[var(--ui-radius-sm)] px-2.5 py-1.5 text-[12.5px] transition-colors duration-150 w-full outline-none border;
+    background: var(--ui-bg-input);
+    border-color: var(--ui-border);
+    color: var(--ui-text);
   }
-  select:focus, input[type="text"]:focus, input[type="password"]:focus {
-    @apply border-accent-500/50 ring-4 ring-accent-500/10;
-    background: rgba(15, 23, 42, 0.6);
+  select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, textarea:focus {
+    border-color: var(--ui-border-focus);
   }
 
   /* ── Table ── */

@@ -1,34 +1,35 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TOKENS — socle du design system (Charte ELMAS.md)
-   Une seule source de vérité pour couleurs, densité et typographie.
+   TOKENS — source unique de vérité (Charte ELMAS.md)
+   Fournit les variables --ui-* et les alias hérités (--surface-*, --text-*).
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Fonds minéraux d'ingénierie */
-  --ui-bg-app: #08090c;
-  --ui-bg-sunken: #050608;
-  --ui-bg-panel: #0e1117;
-  --ui-bg-raised: #151922;
-  --ui-bg-overlay: #1c2230;
-  --ui-bg-input: #090c12;
+  /* Fonds minéraux d'ingénierie (Dark Workbench) */
+  --ui-bg-app: #080a0f;
+  --ui-bg-sunken: #05070b;
+  --ui-bg-panel: #0e1118;
+  --ui-bg-raised: #151a24;
+  --ui-bg-overlay: #1d2433;
+  --ui-bg-input: #0a0d14;
 
   /* Bordures techniques */
-  --ui-border: rgba(148, 163, 184, 0.12);
-  --ui-border-strong: rgba(148, 163, 184, 0.22);
-  --ui-border-focus: rgba(34, 184, 207, 0.55);
+  --ui-border: rgba(148, 163, 184, 0.13);
+  --ui-border-strong: rgba(148, 163, 184, 0.24);
+  --ui-border-focus: rgba(34, 184, 207, 0.6);
 
   /* Texte */
-  --ui-text: #e8eef7;
-  --ui-text-secondary: #b3c0d1;
-  --ui-text-muted: #7d8da3;
-  --ui-text-faint: #526074;
-  --ui-text-inverse: #050608;
+  --ui-text: #eaf0f8;
+  --ui-text-secondary: #b8c4d4;
+  --ui-text-muted: #8494aa;
+  --ui-text-faint: #5c6b80;
+  --ui-text-inverse: #05070b;
 
   /* Accents scientifiques */
   --ui-accent: #22b8cf;
   --ui-accent-hover: #3dcbe0;
   --ui-accent-soft: rgba(34, 184, 207, 0.14);
   --ui-accent-text: #67e8f9;
+  --ui-on-accent: #04141a;
 
   --ui-success: #10b981;
   --ui-success-soft: rgba(16, 185, 129, 0.14);
@@ -39,7 +40,7 @@
   --ui-info: #38bdf8;
   --ui-info-soft: rgba(56, 189, 248, 0.14);
 
-  /* Ombres et profondeur */
+  /* Ombres sobres */
   --ui-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --ui-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
   --ui-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
@@ -76,6 +77,36 @@
   --ui-fs-lg: 15px;
   --ui-fs-xl: 19px;
 
+  /* Alias compatibilité couches héritées (basculent avec le thème) */
+  --color-accent: 6 182 212;
+  --color-secondary: 37 99 235;
+  --surface-0: var(--ui-bg-sunken);
+  --surface-1: var(--ui-bg-panel);
+  --surface-2: var(--ui-bg-raised);
+  --surface-3: var(--ui-bg-overlay);
+  --glass-bg: var(--ui-bg-panel);
+  --glass-border: var(--ui-border);
+  --glass-border-hover: var(--ui-border-strong);
+  --glass-highlight: transparent;
+  --text-primary: var(--ui-text);
+  --text-secondary: var(--ui-text-secondary);
+  --text-muted: var(--ui-text-muted);
+  --text-faint: var(--ui-text-faint);
+  --text-inverse: var(--ui-text-inverse);
+  --color-success: var(--ui-success);
+  --color-warning: var(--ui-warning);
+  --color-danger: var(--ui-danger);
+  --color-info: var(--ui-info);
+  --radius-sm: var(--ui-radius-sm);
+  --radius-md: var(--ui-radius);
+  --radius-lg: var(--ui-radius-lg);
+  --radius-xl: var(--ui-radius-lg);
+  --pad-tight: 0.5rem;
+  --pad-cozy: 0.625rem;
+  --pad-comfy: 0.875rem;
+  --pad-spacious: 1.25rem;
+  --content-max-w: min(1600px, 96vw);
+
   color-scheme: dark;
 }
 
@@ -88,32 +119,34 @@
   --ui-bg-input: #ffffff;
 
   --ui-border: rgba(15, 23, 42, 0.12);
-  --ui-border-strong: rgba(15, 23, 42, 0.2);
-  --ui-border-focus: rgba(8, 145, 178, 0.55);
+  --ui-border-strong: rgba(15, 23, 42, 0.22);
+  --ui-border-focus: rgba(14, 116, 144, 0.55);
 
   --ui-text: #0f172a;
   --ui-text-secondary: #334155;
-  --ui-text-muted: #55637a;
-  --ui-text-faint: #7c8798;
+  --ui-text-muted: #475569;
+  --ui-text-faint: #64748b;
   --ui-text-inverse: #ffffff;
 
-  --ui-accent: #0891b2;
-  --ui-accent-hover: #0e7490;
-  --ui-accent-soft: rgba(8, 145, 178, 0.1);
+  /* WCAG AA (> 5.3:1) sur blanc et pour --ui-on-accent (#ffffff) */
+  --ui-accent: #0e7490;
+  --ui-accent-hover: #155e75;
+  --ui-accent-soft: rgba(14, 116, 144, 0.1);
   --ui-accent-text: #0e7490;
+  --ui-on-accent: #ffffff;
 
-  --ui-success: #059669;
-  --ui-success-soft: rgba(5, 150, 105, 0.1);
+  --ui-success: #047857;
+  --ui-success-soft: rgba(4, 120, 87, 0.1);
   --ui-warning: #b45309;
   --ui-warning-soft: rgba(180, 83, 9, 0.1);
   --ui-danger: #dc2626;
   --ui-danger-soft: rgba(220, 38, 38, 0.09);
-  --ui-info: #2563eb;
-  --ui-info-soft: rgba(37, 99, 235, 0.09);
+  --ui-info: #1d4ed8;
+  --ui-info-soft: rgba(29, 78, 216, 0.09);
 
-  --ui-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.07);
-  --ui-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.09);
-  --ui-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.13);
+  --ui-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --ui-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --ui-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 
   color-scheme: light;
 }
@@ -127,217 +160,8 @@
   --ui-fs-md: 14.5px;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   PRIMITIVES — les classes que consomment les écrans
-   ═══════════════════════════════════════════════════════════════════ */
-
-.ui-root {
-  background: var(--ui-bg-app);
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-fs-base);
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'tnum';
+:root[data-density='compact'] {
+  --pad-cozy: 0.5rem;
+  --pad-comfy: 0.75rem;
+  --pad-spacious: 1rem;
 }
-
-/* Les chiffres d'un outil de données s'alignent toujours. */
-.ui-num,
-.ui-table td,
-.ui-table th {
-  font-variant-numeric: tabular-nums;
-}
-
-.ui-panel {
-  background: var(--ui-bg-panel);
-  border: 1px solid var(--ui-border);
-  border-radius: var(--ui-radius);
-}
-
-.ui-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-gap-2);
-  height: var(--ui-row-h);
-  padding: 0 var(--ui-pad-x);
-  border-bottom: 1px solid var(--ui-border);
-  font-size: var(--ui-fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--ui-text-muted);
-}
-
-/* ── Contrôles ── */
-.ui-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: var(--ui-control-h);
-  padding: 0 10px;
-  border-radius: var(--ui-radius-sm);
-  border: 1px solid var(--ui-border);
-  background: var(--ui-bg-raised);
-  color: var(--ui-text-secondary);
-  font-size: var(--ui-fs-sm);
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-}
-
-.ui-btn:hover:not(:disabled) {
-  background: var(--ui-bg-overlay);
-  border-color: var(--ui-border-strong);
-  color: var(--ui-text);
-}
-
-.ui-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.ui-btn-primary {
-  background: var(--ui-accent);
-  border-color: var(--ui-accent);
-  color: #04141a;
-}
-
-.ui-btn-primary:hover:not(:disabled) {
-  background: var(--ui-accent-hover);
-  border-color: var(--ui-accent-hover);
-  color: #04141a;
-}
-
-.ui-btn-ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--ui-text-muted);
-}
-
-.ui-btn-ghost:hover:not(:disabled) {
-  background: var(--ui-bg-raised);
-  color: var(--ui-text);
-}
-
-.ui-btn-icon {
-  width: var(--ui-control-h);
-  padding: 0;
-}
-
-.ui-input,
-.ui-select {
-  height: var(--ui-control-h);
-  padding: 0 8px;
-  border-radius: var(--ui-radius-sm);
-  border: 1px solid var(--ui-border);
-  background: var(--ui-bg-input);
-  color: var(--ui-text);
-  font-size: var(--ui-fs-sm);
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.12s ease;
-}
-
-.ui-input:focus,
-.ui-select:focus {
-  border-color: var(--ui-border-focus);
-}
-
-.ui-input::placeholder {
-  color: var(--ui-text-faint);
-}
-
-/* ── Étiquettes de statut & badges ── */
-.ui-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 6px;
-  border-radius: var(--ui-radius-sm);
-  border: 1px solid transparent;
-  font-size: var(--ui-fs-xs);
-  font-weight: 700;
-  line-height: 16px;
-  white-space: nowrap;
-}
-.ui-tag-neutral { background: var(--ui-bg-raised); color: var(--ui-text-muted); border-color: var(--ui-border); }
-.ui-tag-accent  { background: var(--ui-accent-soft); color: var(--ui-accent-text); border-color: var(--ui-accent-soft); }
-.ui-tag-success { background: var(--ui-success-soft); color: var(--ui-success); border-color: var(--ui-success-soft); }
-.ui-tag-warning { background: var(--ui-warning-soft); color: var(--ui-warning); border-color: var(--ui-warning-soft); }
-.ui-tag-danger  { background: var(--ui-danger-soft); color: var(--ui-danger); border-color: var(--ui-danger-soft); }
-.ui-tag-info    { background: var(--ui-info-soft); color: var(--ui-info); border-color: var(--ui-info-soft); }
-
-/* ── Tableaux de données ── */
-.ui-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--ui-fs-sm); }
-.ui-table th {
-  position: sticky; top: 0; z-index: 1; height: var(--ui-row-h); padding: 0 10px;
-  text-align: left; font-size: var(--ui-fs-xs); font-weight: 700; letter-spacing: 0.05em;
-  text-transform: uppercase; color: var(--ui-text-muted); background: var(--ui-bg-panel);
-  border-bottom: 1px solid var(--ui-border-strong); white-space: nowrap;
-}
-.ui-table td { height: var(--ui-row-h); padding: 0 10px; border-bottom: 1px solid var(--ui-border); color: var(--ui-text-secondary); }
-
-.ui-table tbody tr:hover td {
-  background: var(--ui-bg-raised);
-}
-
-.ui-table .ui-td-num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Utilitaires texte ── */
-.ui-t          { color: var(--ui-text); }
-.ui-t-secondary { color: var(--ui-text-secondary); }
-.ui-t-muted    { color: var(--ui-text-muted); }
-.ui-t-faint    { color: var(--ui-text-faint); }
-.ui-t-accent   { color: var(--ui-accent-text); }
-.ui-mono       { font-family: var(--ui-font-mono); font-size: var(--ui-fs-xs); }
-
-.ui-label {
-  font-size: var(--ui-fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--ui-text-faint);
-}
-
-.ui-sep {
-  width: 1px;
-  height: 18px;
-  background: var(--ui-border);
-  flex-shrink: 0;
-}
-
-/* Barre de défilement fine, comme dans un IDE. */
-.ui-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
-.ui-scroll::-webkit-scrollbar-track { background: transparent; }
-.ui-scroll::-webkit-scrollbar-thumb {
-  background: var(--ui-border-strong);
-  border-radius: 5px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-}
-.ui-scroll::-webkit-scrollbar-thumb:hover { background: var(--ui-text-faint); background-clip: content-box; }
-
-/* Anneau de focus visible au clavier uniquement. */
-.ui-focusable:focus-visible {
-  outline: 2px solid var(--ui-border-focus);
-  outline-offset: 1px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-root *,
-  .ui-root *::before,
-  .ui-root *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Statuts textuels utilises par les ecrans. */
-.ui-t-success { color: var(--ui-success); }
-.ui-t-warning { color: var(--ui-warning); }
-.ui-t-danger  { color: var(--ui-danger); }

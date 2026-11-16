@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   Network, Code2, Download, Loader2, Check, AlertTriangle, FileJson,
 } from 'lucide-react';
-import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
+import { apiFetch } from '../../lib/apiBase';
+import { requestCanvasCodeExport } from '../canvas/canvasCodeExport';
 import type { MethodologyResult } from './methodologyTypes';
 
 type Language = 'python' | 'r' | 'notebook';
@@ -30,15 +31,10 @@ export default function ResultActions({ datasetId, datasetName, result }: Props)
   const [message, setMessage] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
 
-  const headers = () => ({
-    'Content-Type': 'application/json',
-    'X-Client-Id': getAnonymousClientId(),
-  });
-
   const buildGraph = async () => {
-    const response = await fetch(`${API_V1_BASE}/datasets/${datasetId}/methodology/canvas`, {
+    const response = await apiFetch(`/datasets/${datasetId}/methodology/canvas`, {
       method: 'POST',
-      headers: headers(),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ result }),
     });
     const payload = await response.json();
@@ -71,21 +67,17 @@ export default function ResultActions({ datasetId, datasetName, result }: Props)
     setWarning(null);
     try {
       const graph = await buildGraph();
-      const response = await fetch(`${API_V1_BASE}/canvas/export_code`, {
-        method: 'POST',
-        headers: headers(),
-        body: JSON.stringify({
-          nodes: graph.nodes, edges: graph.edges,
-          language, dataset_name: datasetName ?? 'dataset.csv',
-        }),
+      const payload = await requestCanvasCodeExport({
+        nodes: graph.nodes,
+        edges: graph.edges,
+        language,
+        dataset_name: datasetName ?? 'dataset.csv',
       });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload?.error ?? `HTTP ${response.status}`);
 
       const spec = LANGUAGES.find(l => l.key === language)!;
       const content = language === 'notebook'
         ? JSON.stringify(payload.notebook_json, null, 2)
-        : payload.code;
+        : payload.code || '';
 
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);

@@ -59,10 +59,10 @@ export const PROBLEM_LABEL: Record<
   forecast: {
     label: 'Séries Temporelles & Économétrie',
     icon: Cpu,
-    color: 'text-purple-400',
-    bg: 'bg-purple-500/10',
-    border: 'border-purple-500/30',
-    gradient: 'from-purple-500/15 via-purple-500/5 to-transparent',
+    color: 'text-sky-400',
+    bg: 'bg-sky-500/10',
+    border: 'border-sky-500/30',
+    gradient: 'from-sky-500/15 via-sky-500/5 to-transparent',
   },
   exploration: {
     label: 'Exploration & Profilage Multivarié',

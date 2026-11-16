@@ -209,11 +209,22 @@ export default function ChartBuilder({ datasetId, capabilities, onBack }: Props)
               <label className="block text-xs font-medium text-muted mb-1.5 uppercase tracking-wider">
                 {isUnivariate ? 'Variable(s) numérique(s)' : 'Valeur(s) Y'} <span className="text-red-400">*</span>
               </label>
-              <div className="max-h-36 overflow-y-auto rounded-lg p-1.5 space-y-0.5 bg-white/[0.02] border border-white/8">
+              <div
+                className="max-h-36 overflow-y-auto rounded-[var(--ui-radius-sm)] p-1.5 space-y-0.5"
+                style={{ background: 'var(--ui-bg-sunken)', border: '1px solid var(--ui-border)' }}
+              >
                 {numericCols.map((c) => {
                   const checked = yCols.includes(c);
                   return (
-                    <label key={c} className={`flex items-center gap-2 text-xs cursor-pointer p-1.5 rounded transition-colors ${checked ? 'bg-accent-500/10 text-accent-200' : 'text-default hover:bg-white/5'}`}>
+                    <label
+                      key={c}
+                      className="flex items-center gap-2 text-xs cursor-pointer p-1.5 rounded transition-colors"
+                      style={{
+                        background: checked ? 'var(--ui-accent-soft)' : 'transparent',
+                        color: checked ? 'var(--ui-accent-text)' : 'var(--ui-text-secondary)',
+                        fontWeight: checked ? 600 : 400,
+                      }}
+                    >
                       <input type="checkbox" checked={checked} onChange={() => toggleYCol(c)} className="accent-accent-500 !w-3.5 !h-3.5" />
                       {c}
                     </label>

@@ -154,12 +154,17 @@ def stream_canvas_pipeline():
                 with results_lock:
                     results[node_id] = sanitized_res
 
+                node_result = (
+                    sanitized_res.get("result")
+                    if isinstance(sanitized_res, dict) and sanitized_res.get("result") is not None
+                    else sanitized_res
+                )
                 event_queue.put({
                     "type": "node_complete",
                     "node_id": node_id,
                     "status": result.get("status", "success"),
                     "message": result.get("message", "Exécution terminée"),
-                    "result": sanitized_res.get("result") if isinstance(sanitized_res, dict) else sanitized_res,
+                    "result": node_result,
                     "time": time.strftime("%H:%M:%S"),
                 })
 

@@ -40,7 +40,7 @@ export function CanvasSearchBar({
 
   return (
     <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 w-full max-w-md px-4">
-      <div className="bg-surface-900/95 border border-white/[0.12] rounded-2xl shadow-2xl backdrop-blur-xl p-3 space-y-2">
+      <div className="ui-panel shadow-2xl p-3 space-y-2">
         <div className="flex items-center gap-2 px-2">
           <Search size={16} className="text-surface-400 shrink-0" />
           <input

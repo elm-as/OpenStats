@@ -3,6 +3,14 @@ from PyInstaller.utils.hooks import collect_submodules, collect_all, collect_dyn
 import importlib.util
 import os
 import sys
+from pathlib import Path
+
+# Résolution portable du répertoire backend quel que soit le répertoire courant (CWD)
+SPECDIR = Path(SPECPATH).resolve() if 'SPECPATH' in globals() else Path(__file__).resolve().parent
+
+# Assurer la présence du dossier backend dans sys.path pour les imports de compilation
+if str(SPECDIR) not in sys.path:
+    sys.path.insert(0, str(SPECDIR))
 
 datas = []
 binaries = []
@@ -17,7 +25,7 @@ datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 # correspondants echoueraient silencieusement chez l'utilisateur final.
 # La liste derive du registre unique (app/core/bibliotheques_optionnelles.py) :
 # recopier les noms ici les ferait diverger au premier ajout de dependance.
-_registre = os.path.join(os.getcwd(), 'app', 'core', 'bibliotheques_optionnelles.py')
+_registre = str(SPECDIR / 'app' / 'core' / 'bibliotheques_optionnelles.py')
 _spec = importlib.util.spec_from_file_location('bibliotheques_optionnelles', _registre)
 _module = importlib.util.module_from_spec(_spec)
 # L'enregistrement prealable est indispensable : le decorateur @dataclass
@@ -37,16 +45,7 @@ for _optional in _module.MODULES:
     except Exception as _err:
         print(f"[Avertissement] Echec collecte {_optional}: {_err}", file=sys.stderr)
 
-# Le secret de verification des jetons de licence doit etre scelle AVANT la
-# construction (scripts/sceller_secret_licence.py). Sans lui, le binaire se
-# construit sans erreur mais aucune licence ne peut y etre activee : l'echec
-# n'apparaitrait que chez le premier client. On le refuse donc ici.
-if not os.path.exists(os.path.join(os.getcwd(), 'app', 'core', '_secret_licence.py')):
-    raise SystemExit(
-        "Secret de licence absent. Executez d'abord :\n"
-        "  OPENSTATS_SECRET_JETON=<ACTIVATION_SECRET du site> "
-        "python scripts/sceller_secret_licence.py"
-    )
+# Le logiciel Desktop fonctionne en mode local et autonome sans DRM ni secret de licence.
 
 hiddenimports += [
     'sklearn.ensemble', 'sklearn.linear_model', 'sklearn.svm', 'sklearn.neighbors',
@@ -59,13 +58,13 @@ hiddenimports += [
     'statsmodels.stats.power', 'statsmodels.stats.multicomp',
     'statsmodels.stats.stattools', 'statsmodels.regression.quantile_regression',
     'statsmodels.genmod.families', 'statsmodels.discrete.discrete_model',
-    'statsmodels.tsa.seasonal', 'arch.univariate',
+    'statsmodels.tsa.seasonal', 'arch.univariate', 'shap',
 ]
 
 
 a = Analysis(
-    ['run_desktop.py'],
-    pathex=[],
+    [str(SPECDIR / 'run_desktop.py')],
+    pathex=[str(SPECDIR)],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

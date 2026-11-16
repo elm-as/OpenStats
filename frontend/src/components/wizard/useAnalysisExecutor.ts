@@ -4,6 +4,7 @@ import {
   useRunTestMutation,
   useTrainModelsMutation,
   useRunStationarityMutation,
+  useRunAdvancedAnalysisMutation,
   type StationarityResult,
 } from '../../store/api';
 import type {
@@ -15,11 +16,21 @@ import type {
 } from '../../types';
 import type { WizardStep } from './WizardTypes';
 
+const ADVANCED_KEYS = new Set([
+  'survival',
+  'causal',
+  'panel',
+  'quantileRegression',
+  'powerAnalysis',
+  'equivalenceTest',
+]);
+
 export function useAnalysisExecutor(datasetId: string) {
   const [runAnalysis, { isLoading: analyzing }] = useRunAnalysisMutation();
   const [runTest, { isLoading: testing }] = useRunTestMutation();
   const [runStationarity, { isLoading: testingStationarity }] = useRunStationarityMutation();
   const [trainModels, { isLoading: training }] = useTrainModelsMutation();
+  const [runAdvancedAnalysis, { isLoading: runningAdvanced }] = useRunAdvancedAnalysisMutation();
 
   const [descriptiveStats, setDescriptiveStats] = useState<DescriptiveStats | null>(null);
   const [correlations, setCorrelations] = useState<CorrelationResult | null>(null);
@@ -27,6 +38,7 @@ export function useAnalysisExecutor(datasetId: string) {
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [stationarityResult, setStationarityResult] = useState<StationarityResult | null>(null);
   const [modelResults, setModelResults] = useState<ModelResults | null>(null);
+  const [advancedResult, setAdvancedResult] = useState<{ key: string; data: any } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const resetResults = () => {
@@ -37,6 +49,7 @@ export function useAnalysisExecutor(datasetId: string) {
     setDescriptiveStats(null);
     setCorrelations(null);
     setVif([]);
+    setAdvancedResult(null);
   };
 
   const executeAnalysis = async (
@@ -102,6 +115,13 @@ export function useAnalysisExecutor(datasetId: string) {
         setModelResults(res);
       } else if (analysis.key === 'timeseries' || analysis.key === 'timeseries_multivariate') {
         setWizardStep('results');
+      } else if (ADVANCED_KEYS.has(analysis.key)) {
+        const res = await runAdvancedAnalysis({
+          id: datasetId,
+          analysis_key: analysis.key,
+          params: config,
+        }).unwrap();
+        setAdvancedResult({ key: analysis.key, data: res.result });
       }
     } catch (err: any) {
       setError(err?.data?.error || err?.message || 'Erreur inconnue');
@@ -109,7 +129,7 @@ export function useAnalysisExecutor(datasetId: string) {
     }
   };
 
-  const isLoading = Boolean(analyzing || testing || training || testingStationarity);
+  const isLoading = Boolean(analyzing || testing || training || testingStationarity || runningAdvanced);
 
   return {
     descriptiveStats,
@@ -118,6 +138,7 @@ export function useAnalysisExecutor(datasetId: string) {
     testResult,
     stationarityResult,
     modelResults,
+    advancedResult,
     error,
     setError,
     resetResults,

@@ -97,9 +97,9 @@ export function MultivariateDiagnosticsTab({
   if (activeTab === 'diagnostics' && currentModel) {
     return (
       <div className="space-y-4">
-        <div className="card">
-          <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-indigo-500" />
+        <div className="ui-panel p-4">
+          <h4 className="font-semibold text-surface-100 mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-accent-400" />
             Diagnostics des Résidus
           </h4>
 

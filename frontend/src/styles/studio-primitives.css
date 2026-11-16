@@ -1,0 +1,212 @@
+/* ═══════════════════════════════════════════════════════════════════
+   STUDIO PRIMITIVES — classes consommées par les écrans (ELMAS.md §5)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ui-root {
+  background: var(--ui-bg-app);
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  font-size: var(--ui-fs-base);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'tnum';
+}
+
+/* Les chiffres d'un outil scientifique s'alignent toujours en largeur fixe. */
+.ui-num,
+.ui-table td,
+.ui-table th {
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-panel {
+  background: var(--ui-bg-panel);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+}
+
+.ui-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-gap-2);
+  height: var(--ui-row-h);
+  padding: 0 var(--ui-pad-x);
+  border-bottom: 1px solid var(--ui-border);
+  font-size: var(--ui-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ui-text-muted);
+}
+
+/* ── Contrôles ── */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--ui-control-h);
+  padding: 0 10px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-raised);
+  color: var(--ui-text-secondary);
+  font-size: var(--ui-fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.ui-btn:hover:not(:disabled) {
+  background: var(--ui-bg-overlay);
+  border-color: var(--ui-border-strong);
+  color: var(--ui-text);
+}
+
+.ui-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ui-btn-primary {
+  background: var(--ui-accent);
+  border-color: var(--ui-accent);
+  color: var(--ui-on-accent);
+}
+
+.ui-btn-primary:hover:not(:disabled) {
+  background: var(--ui-accent-hover);
+  border-color: var(--ui-accent-hover);
+  color: var(--ui-on-accent);
+}
+
+.ui-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ui-text-muted);
+}
+
+.ui-btn-ghost:hover:not(:disabled) {
+  background: var(--ui-bg-raised);
+  color: var(--ui-text);
+}
+
+.ui-btn-icon {
+  width: var(--ui-control-h);
+  padding: 0;
+}
+
+.ui-input,
+.ui-select {
+  height: var(--ui-control-h);
+  padding: 0 8px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-input);
+  color: var(--ui-text);
+  font-size: var(--ui-fs-sm);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.ui-input:focus,
+.ui-select:focus {
+  border-color: var(--ui-border-focus);
+}
+
+.ui-input::placeholder {
+  color: var(--ui-text-faint);
+}
+
+/* ── Étiquettes de statut & badges ── */
+.ui-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid transparent;
+  font-size: var(--ui-fs-xs);
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.ui-tag-neutral { background: var(--ui-bg-raised); color: var(--ui-text-muted); border-color: var(--ui-border); }
+.ui-tag-accent  { background: var(--ui-accent-soft); color: var(--ui-accent-text); border-color: var(--ui-accent-soft); }
+.ui-tag-success { background: var(--ui-success-soft); color: var(--ui-success); border-color: var(--ui-success-soft); }
+.ui-tag-warning { background: var(--ui-warning-soft); color: var(--ui-warning); border-color: var(--ui-warning-soft); }
+.ui-tag-danger  { background: var(--ui-danger-soft); color: var(--ui-danger); border-color: var(--ui-danger-soft); }
+.ui-tag-info    { background: var(--ui-info-soft); color: var(--ui-info); border-color: var(--ui-info-soft); }
+
+/* ── Tableaux de données ── */
+.ui-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--ui-fs-sm); }
+.ui-table th {
+  position: sticky; top: 0; z-index: 1; height: var(--ui-row-h); padding: 0 10px;
+  text-align: left; font-size: var(--ui-fs-xs); font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--ui-text-muted); background: var(--ui-bg-panel);
+  border-bottom: 1px solid var(--ui-border-strong); white-space: nowrap;
+}
+.ui-table td { height: var(--ui-row-h); padding: 0 10px; border-bottom: 1px solid var(--ui-border); color: var(--ui-text-secondary); }
+
+.ui-table tbody tr:hover td {
+  background: var(--ui-bg-raised);
+}
+
+.ui-table .ui-td-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Utilitaires texte ── */
+.ui-t           { color: var(--ui-text); }
+.ui-t-secondary { color: var(--ui-text-secondary); }
+.ui-t-muted     { color: var(--ui-text-muted); }
+.ui-t-faint     { color: var(--ui-text-faint); }
+.ui-t-accent    { color: var(--ui-accent-text); }
+.ui-t-success   { color: var(--ui-success); }
+.ui-t-warning   { color: var(--ui-warning); }
+.ui-t-danger    { color: var(--ui-danger); }
+.ui-mono        { font-family: var(--ui-font-mono); font-size: var(--ui-fs-xs); }
+
+.ui-label {
+  font-size: var(--ui-fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ui-text-faint);
+}
+
+.ui-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--ui-border);
+  flex-shrink: 0;
+}
+
+/* Barre de défilement fine, comme dans un IDE. */
+.ui-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.ui-scroll::-webkit-scrollbar-track { background: transparent; }
+.ui-scroll::-webkit-scrollbar-thumb {
+  background: var(--ui-border-strong);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.ui-scroll::-webkit-scrollbar-thumb:hover { background: var(--ui-text-faint); background-clip: content-box; }
+
+/* Anneau de focus visible au clavier uniquement. */
+.ui-focusable:focus-visible {
+  outline: 2px solid var(--ui-border-focus);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-root *,
+  .ui-root *::before,
+  .ui-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -319,6 +319,9 @@ def get_capabilities(dataset_id):
         "requires": "Compte utilisateur actif", "applicable_columns": all_cols_list,
     })
 
+    from app.api.v1.analysis.advanced_capabilities import build_advanced_capabilities
+    analyses.extend(build_advanced_capabilities(numeric_cols, categorical_cols, temporal_cols, binary_cols, all_cols_list))
+
     return jsonify({
         "dataset_id": dataset_id,
         "columns": {

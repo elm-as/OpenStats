@@ -20,17 +20,17 @@ export const CATEGORY_META: Record<
   string,
   { label: string; icon: typeof BarChart3; color: string; bg: string }
 > = {
-  descriptive: { label: 'Statistiques descriptives', icon: BarChart3, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200' },
-  correlation: { label: 'Corrélations', icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-200' },
-  diagnostic: { label: 'Diagnostics', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
-  hypothesis: { label: "Tests d'hypothèses", icon: GitCompare, color: 'text-purple-600', bg: 'bg-purple-50 border-purple-200' },
-  transformation: { label: 'Transformations', icon: Zap, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200' },
-  factorielle: { label: 'Analyse factorielle', icon: Layers, color: 'text-cyan-600', bg: 'bg-cyan-50 border-cyan-200' },
-  modeling: { label: 'Modélisation', icon: Brain, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
-  simulation: { label: 'Simulation', icon: Target, color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' },
-  timeseries: { label: 'Séries temporelles', icon: TrendingUp, color: 'text-teal-600', bg: 'bg-teal-50 border-teal-200' },
-  visualization: { label: 'Visualisation', icon: LineChartIcon, color: 'text-pink-600', bg: 'bg-pink-50 border-pink-200' },
-  extension: { label: 'Extensions IA', icon: Sparkles, color: 'text-accent-500', bg: 'bg-accent-500/10 border-accent-500/20' },
+  descriptive: { label: 'Statistiques descriptives', icon: BarChart3, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/25' },
+  correlation: { label: 'Corrélations', icon: TrendingUp, color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/25' },
+  diagnostic: { label: 'Diagnostics', icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/25' },
+  hypothesis: { label: "Tests d'hypothèses", icon: GitCompare, color: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/25' },
+  transformation: { label: 'Transformations', icon: Zap, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/25' },
+  factorielle: { label: 'Analyse factorielle', icon: Layers, color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/25' },
+  modeling: { label: 'Modélisation', icon: Brain, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/25' },
+  simulation: { label: 'Simulation', icon: Target, color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/25' },
+  timeseries: { label: 'Séries temporelles', icon: TrendingUp, color: 'text-teal-400', bg: 'bg-teal-500/10 border-teal-500/25' },
+  visualization: { label: 'Visualisation', icon: LineChartIcon, color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/25' },
+  extension: { label: 'Extensions IA', icon: Sparkles, color: 'text-accent-400', bg: 'bg-accent-500/10 border-accent-500/25' },
 };
 
 export const ICON_MAP: Record<string, typeof BarChart3> = {

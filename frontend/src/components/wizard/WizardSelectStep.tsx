@@ -20,8 +20,8 @@ export function WizardSelectStep({
     <>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Choisir une analyse</h2>
-          <p className="text-sm text-surface-400 mt-1">
+          <h2 className="text-xl font-bold" style={{ color: 'var(--ui-text)' }}>Choisir une analyse</h2>
+          <p className="text-sm ui-t-muted mt-1">
             Les analyses grisées ne sont pas applicables à vos données
           </p>
         </div>
@@ -70,9 +70,8 @@ export function WizardSelectStep({
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4
-                          className={`font-medium text-sm ${
-                            analysis.available ? 'text-gray-900' : 'text-surface-500'
-                          }`}
+                          className="font-medium text-sm"
+                          style={{ color: analysis.available ? 'var(--ui-text)' : 'var(--ui-text-faint)' }}
                         >
                           {analysis.label}
                         </h4>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { TrendingUp } from 'lucide-react';
 import { EmptyState } from './ResultAtoms';
-import { PlotlyChart } from '../viz/PlotlyBase';
+import { CorrelationHeatmap } from '../viz';
 
 export function CorrelationsTab({ result }: { result?: any }) {
   if (!result) return <EmptyState message="Pas de résultats de corrélation disponibles" />;
@@ -12,8 +12,8 @@ export function CorrelationsTab({ result }: { result?: any }) {
   return (
     <div className="space-y-4">
       <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-        <h3 className="text-lg font-semibold text-surface-50 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-indigo-400" />
+        <h3 className="text-lg font-semibold text-surface-100 mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-sky-400" />
           Matrice de corrélation
         </h3>
 
@@ -159,40 +159,8 @@ export function CorrelationsTab({ result }: { result?: any }) {
       </div>
 
       {cols.length > 1 && (
-        <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-          <h4 className="text-sm font-medium text-surface-200 mb-4">Heatmap</h4>
-          <PlotlyChart
-            data={[
-              {
-                z: cols.map(row => cols.map(col => matrix[row]?.[col] || 0)),
-                x: cols,
-                y: cols,
-                type: 'heatmap',
-                colorscale: [
-                  [0, '#2563eb'],
-                  [0.5, '#1e293b'],
-                  [1, '#f97316'],
-                ],
-                zmin: -1,
-                zmax: 1,
-                zmid: 0,
-                showscale: true,
-                hovertemplate: '<b>%{y} ↔ %{x}</b><br>r = %{z:.3f}<extra></extra>',
-                colorbar: {
-                  tickfont: { color: '#a3adc8' },
-                  outlinecolor: 'rgba(255,255,255,0.1)',
-                  outlinewidth: 1,
-                },
-              } as any,
-            ]}
-            layout={{
-              margin: { t: 20, r: 80, b: 80, l: 100 },
-              xaxis: { tickfont: { size: 10 }, tickangle: -45 },
-              yaxis: { tickfont: { size: 10 } },
-            }}
-            config={{ displayModeBar: false }}
-            height={400}
-          />
+        <div className="ui-panel p-4">
+          <CorrelationHeatmap matrix={matrix} height={420} cluster={false} title="Matrice de corrélation (Heatmap)" />
         </div>
       )}
     </div>

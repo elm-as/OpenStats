@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -23,6 +23,8 @@ export default function ScreePlot({
   height = 380,
   title,
 }: Props) {
+  const theme = useCurrentTheme();
+  const cumColor = theme === 'light' ? '#b45309' : '#fcd34d';
   const { traces, layout } = useMemo(() => {
     const x = values.map((_, i) => i + 1);
     const isRatio = mode === 'variance_ratio';
@@ -96,19 +98,20 @@ export default function ScreePlot({
       xaxis: { title: { text: 'Composante' }, dtick: 1 },
       yaxis: { title: { text: yLabel } },
       yaxis2: showCumulative ? {
-        title: { text: 'Cumulé (%)', font: { color: '#fcd34d' } },
+        title: { text: 'Cumulé (%)', font: { color: cumColor }, standoff: 10 },
         overlaying: 'y',
         side: 'right',
-        range: [0, 100],
+        range: [0, 105],
         showgrid: false,
-        tickfont: { color: '#fcd34d' },
+        tickfont: { color: cumColor },
       } as any : undefined,
+      margin: { l: 58, r: showCumulative ? 68 : 24, t: 40, b: 64 },
       shapes,
       legend: { orientation: 'h', y: -0.2 },
     };
 
     return { traces: traceList, layout: lay };
-  }, [values, showCumulative, showKaiser, mode, title]);
+  }, [values, showCumulative, showKaiser, mode, title, cumColor]);
 
   return <PlotlyChart data={traces} layout={layout} height={height} />;
 }

@@ -71,7 +71,7 @@ export default function WorkflowPage() {
             <span className="ui-tag ui-tag-accent">Module Ingestion</span>
             <span className="ui-tag ui-tag-neutral">DuckDB Engine</span>
           </div>
-          <h1 className="text-lg md:text-xl font-black text-white tracking-tight">
+          <h1 className="text-lg md:text-xl font-black text-surface-100 tracking-tight">
             {dataset ? `Fiche de Données : ${dataset.name}` : 'Ingestion & Profilage de Données'}
           </h1>
           <p className="text-xs text-muted mt-0.5">
@@ -143,7 +143,7 @@ export default function WorkflowPage() {
           {/* Bannière de lancement d'analyse */}
           <div className="ui-panel p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-l-4 border-l-emerald-500">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-white">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-surface-100">
                 Données Prêtes pour Analyse
               </h2>
               <p className="text-xs text-muted mt-0.5">

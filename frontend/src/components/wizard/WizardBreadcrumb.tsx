@@ -43,11 +43,11 @@ export function WizardBreadcrumb({
         <>
           <ChevronRight className="w-3 h-3 text-surface-500" />
           <span
-            className={`${
-              wizardStep === 'configure'
-                ? 'text-gray-900 font-medium'
-                : 'text-primary-600 hover:underline cursor-pointer'
-            }`}
+            className="font-medium"
+            style={{
+              color: wizardStep === 'configure' ? 'var(--ui-text)' : 'var(--ui-accent-text)',
+              cursor: wizardStep === 'configure' ? 'default' : 'pointer',
+            }}
           >
             {selectedAnalysis.label}
           </span>
@@ -55,8 +55,8 @@ export function WizardBreadcrumb({
       )}
       {wizardStep === 'results' && (
         <>
-          <ChevronRight className="w-3 h-3 text-surface-500" />
-          <span className="text-gray-900 font-medium">Résultats</span>
+          <ChevronRight className="w-3 h-3 ui-t-faint" />
+          <span className="font-medium" style={{ color: 'var(--ui-text)' }}>Résultats</span>
         </>
       )}
     </div>

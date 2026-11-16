@@ -57,6 +57,11 @@ BIBLIOTHEQUES: tuple[BibliothequeOptionnelle, ...] = (
         usage="Modele de prevision Prophet",
         consequence_si_absente="Prophet est retire du classement des previsions.",
     ),
+    BibliothequeOptionnelle(
+        module="shap",
+        usage="Explicabilité des modèles (SHAP values, TreeExplainer, LinearExplainer)",
+        consequence_si_absente="L'explicabilité SHAP est indisponible après l'entraînement des modèles.",
+    ),
 )
 
 MODULES = tuple(b.module for b in BIBLIOTHEQUES)

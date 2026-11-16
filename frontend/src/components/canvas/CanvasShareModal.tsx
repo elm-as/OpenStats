@@ -17,7 +17,7 @@ export function CanvasShareModal({ shareUrl, onClose, onCopy }: CanvasShareModal
           <Share2 className="text-accent-400" size={20} />
           Lien généré !
         </h3>
-        <button onClick={onClose} className="text-surface-400 hover:text-white">
+        <button onClick={onClose} className="text-surface-400 hover:text-surface-100">
           <XCircle size={20} />
         </button>
       </div>

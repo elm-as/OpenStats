@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PlotlyChart } from './PlotlyBase';
+import { PlotlyChart, useCurrentTheme } from './PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 interface Props {
@@ -30,12 +30,17 @@ export default function CorrelationHeatmap({
   title = 'Matrice de corrélation',
   showValues = true,
 }: Props) {
+  const theme = useCurrentTheme();
+  const isLight = theme === 'light';
   const { trace, layout } = useMemo(() => {
     let cols = Object.keys(matrix);
     if (cluster && cols.length > 2) cols = reorderByMeanCorrelation(matrix, cols);
 
     const z: number[][] = cols.map(r => cols.map(c => matrix[r]?.[c] ?? null as any));
     const text: string[][] = z.map(row => row.map(v => (typeof v === 'number' ? v.toFixed(2) : '')));
+    const fontColors = z.map(row =>
+      row.map(v => (typeof v === 'number' && Math.abs(v) > 0.5 ? '#ffffff' : '#0f172a'))
+    );
 
     const tr: Data = {
       x: cols,
@@ -49,27 +54,27 @@ export default function CorrelationHeatmap({
       zmid: 0,
       hovertemplate: '<b>%{y} ↔ %{x}</b><br>r = %{z:.3f}<extra></extra>',
       colorbar: {
-        title: { text: 'r', font: { color: '#c5ccdd' } },
-        tickfont: { color: '#a3adc8' },
-        outlinecolor: 'rgba(255,255,255,0.1)',
+        title: { text: 'r', font: { color: isLight ? '#0f172a' : '#c5ccdd' } },
+        tickfont: { color: isLight ? '#475569' : '#a3adc8' },
+        outlinecolor: isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)',
         outlinewidth: 1,
       },
       ...(showValues ? {
         text,
         texttemplate: '%{text}',
-        textfont: { size: 10, color: '#0c0f1a' },
+        textfont: { size: 10, color: fontColors as any },
       } : {}),
     } as Data;
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { tickangle: -45, side: 'bottom', automargin: true },
-      yaxis: { automargin: true },
+      xaxis: { tickangle: -45, side: 'bottom', automargin: true, showgrid: false },
+      yaxis: { automargin: true, autorange: 'reversed', showgrid: false },
       margin: { l: 100, r: 80, t: 50, b: 100 },
     };
 
     return { trace: tr, layout: lay };
-  }, [matrix, cluster, title, showValues]);
+  }, [matrix, cluster, title, showValues, isLight]);
 
   return <PlotlyChart data={[trace]} layout={layout} height={height} />;
 }

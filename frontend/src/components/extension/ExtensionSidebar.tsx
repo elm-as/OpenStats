@@ -25,51 +25,51 @@ export function ExtensionSidebar({
   onRunExtension,
 }: ExtensionSidebarProps) {
   return (
-    <div className="lg:col-span-4 space-y-6 overflow-y-auto max-h-[800px] pr-2 custom-scrollbar">
+    <div className="lg:col-span-4 space-y-5 overflow-y-auto max-h-[800px] pr-2 ui-scroll">
       {/* Template Library */}
-      <div className="card border-primary-500/20 bg-primary-500/5">
-        <div className="p-4 border-b border-primary-500/10 flex items-center gap-2">
-          <BookOpen className="w-5 h-5 text-primary-400" />
-          <h3 className="font-black text-white text-sm uppercase tracking-widest">
+      <div className="ui-panel border-accent-500/25">
+        <div className="p-3.5 border-b border-white/10 flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-accent-400" />
+          <h3 className="font-bold text-surface-100 text-xs uppercase tracking-wider">
             Bibliothèque de Modèles
           </h3>
         </div>
-        <div className="p-2 space-y-2">
+        <div className="p-2 space-y-1.5">
           {templates?.map((tpl, i) => (
             <button
               key={i}
               onClick={() => onApplyTemplate(tpl)}
-              className="w-full text-left p-3 rounded-xl hover:bg-primary-500/10 border border-transparent hover:border-primary-500/20 transition-all group"
+              className="w-full text-left p-2.5 rounded-lg hover:bg-accent-500/10 border border-transparent hover:border-accent-500/25 transition-colors group"
             >
-              <p className="text-xs font-bold text-white group-hover:text-primary-300 transition-colors">
+              <p className="text-xs font-bold text-surface-100 group-hover:text-accent-400 transition-colors">
                 {tpl.name}
               </p>
-              <p className="text-[10px] text-surface-500 mt-1 line-clamp-2">{tpl.description}</p>
+              <p className="text-[11px] text-surface-400 mt-0.5 line-clamp-2">{tpl.description}</p>
             </button>
           ))}
         </div>
       </div>
 
       {/* AI Assistant Card */}
-      <div className="card overflow-hidden border-accent-500/20 bg-accent-500/5">
-        <div className="p-4 border-b border-accent-500/10 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-accent-400" />
-          <h3 className="font-black text-white text-sm uppercase tracking-widest">
+      <div className="ui-panel overflow-hidden border-accent-500/25">
+        <div className="p-3.5 border-b border-white/10 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-accent-400" />
+          <h3 className="font-bold text-surface-100 text-xs uppercase tracking-wider">
             Générateur IA
           </h3>
         </div>
-        <div className="p-4 space-y-4">
+        <div className="p-3.5 space-y-3">
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             placeholder="Décrivez l'analyse souhaitée en français..."
-            className="w-full bg-surface-900 border border-white/10 rounded-xl p-3 text-sm text-white placeholder:text-surface-600 focus:ring-2 focus:ring-accent-500/50 transition-all"
+            className="ui-input w-full rounded-lg p-2.5 text-sm"
             rows={4}
           />
           <button
             onClick={onGenerate}
             disabled={isGenerating || !prompt}
-            className="btn-primary w-full py-3 text-xs"
+            className="ui-btn ui-btn-primary w-full py-2.5 text-xs justify-center"
           >
             {isGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -82,10 +82,10 @@ export function ExtensionSidebar({
       </div>
 
       {/* Saved Scripts */}
-      <div className="card">
-        <div className="p-4 border-b border-white/5 flex items-center gap-2">
-          <History className="w-5 h-5 text-surface-400" />
-          <h3 className="font-black text-white text-sm uppercase tracking-widest">
+      <div className="ui-panel">
+        <div className="p-3.5 border-b border-white/10 flex items-center gap-2">
+          <History className="w-4 h-4 text-surface-400" />
+          <h3 className="font-bold text-surface-100 text-xs uppercase tracking-wider">
             Mes Sauvegardes
           </h3>
         </div>
@@ -93,7 +93,7 @@ export function ExtensionSidebar({
           {extensions?.map(ext => (
             <div
               key={ext.id}
-              className="group flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors"
+              className="group flex items-center justify-between p-2.5 rounded-lg hover:bg-white/[0.04] transition-colors"
             >
               <button
                 onClick={() =>
@@ -105,8 +105,8 @@ export function ExtensionSidebar({
                 }
                 className="flex-1 text-left min-w-0"
               >
-                <p className="text-sm font-bold text-white truncate">{ext.name}</p>
-                <p className="text-[10px] text-surface-500 truncate">
+                <p className="text-sm font-semibold text-surface-100 truncate">{ext.name}</p>
+                <p className="text-[11px] text-surface-400 truncate">
                   {ext.description || 'Script sauvegardé'}
                 </p>
               </button>

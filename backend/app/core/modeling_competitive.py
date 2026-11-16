@@ -11,6 +11,20 @@ from app.core.modeling_registry import REGRESSION_MODELS, CLASSIFICATION_MODELS
 from app.core.modeling_trainers import train_single_model
 
 
+def _execute_with_timeout(task: Callable[[], dict], timeout_seconds: float) -> dict:
+    """Exécute `task` dans un ThreadPoolExecutor sans bloquer au exit en cas de timeout."""
+    executor = ThreadPoolExecutor(max_workers=1)
+    timed_out = False
+    try:
+        future = executor.submit(task)
+        return future.result(timeout=timeout_seconds)
+    except TimeoutError:
+        timed_out = True
+        raise
+    finally:
+        executor.shutdown(wait=not timed_out, cancel_futures=True)
+
+
 def train_competitive(
     data: dict,
     model_keys: list[str] | None = None,
@@ -49,16 +63,16 @@ def train_competitive(
 
         t_start = time.time()
         try:
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(
-                    train_single_model,
-                    key,
+            result = _execute_with_timeout(
+                lambda k=key: train_single_model(
+                    k,
                     data,
                     cv_folds,
                     is_competitive=True,
                     hyperparams=hyperparams,
-                )
-                result = future.result(timeout=timeout_per_model)
+                ),
+                timeout_per_model,
+            )
 
             t_elapsed = time.time() - t_start
             if "error" not in result:

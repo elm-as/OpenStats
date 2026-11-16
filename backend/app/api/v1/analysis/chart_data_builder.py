@@ -2,148 +2,31 @@
 Construction de données de visualisation et sérialisation pour les routes d'analyse.
 """
 
-import re
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 
-from app.core.profiling import normalize_date_text
-
-
-# ── Sérialisation JSON ────────────────────────────────────────────────
-
-def _sanitize_for_json(obj, _depth=0):
-    """Récursivement nettoie un objet pour le rendre JSON-sérialisable."""
-    if _depth > 12:
-        return str(obj)
-    if obj is None or isinstance(obj, (bool, str)):
-        return obj
-    if isinstance(obj, int):
-        return obj
-    if isinstance(obj, float):
-        return None if (np.isnan(obj) or np.isinf(obj)) else obj
-    if isinstance(obj, (np.integer,)):
-        return int(obj)
-    if isinstance(obj, (np.floating,)):
-        v = float(obj)
-        return None if (np.isnan(v) or np.isinf(v)) else v
-    import datetime as dt
-    if isinstance(obj, (dt.datetime, dt.date)):
-        return obj.isoformat()
-    if hasattr(obj, "to_dict"):
-        return _sanitize_for_json(obj.to_dict(), _depth + 1)
-    if hasattr(obj, "__dataclass_fields__"):
-        d = {}
-        for f in obj.__dataclass_fields__:
-            d[f] = getattr(obj, f)
-        return _sanitize_for_json(d, _depth + 1)
-    if isinstance(obj, np.ndarray):
-        return _sanitize_for_json(obj.tolist(), _depth + 1)
-    if isinstance(obj, dict):
-        return {k: _sanitize_for_json(v, _depth + 1) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
-        return [_sanitize_for_json(v, _depth + 1) for v in obj]
-    try:
-        import json
-        json.dumps(obj)
-        return obj
-    except (TypeError, ValueError):
-        return None
-
-
-# ── Construction de graphiques ────────────────────────────────────────
-
-def _parse_temporal_series(series: pd.Series) -> pd.Series:
-    parsed = pd.Series(pd.NaT, index=series.index, dtype="datetime64[ns]")
-    non_null = series.dropna()
-    if non_null.empty:
-        return parsed
-
-    numeric_vals = pd.to_numeric(non_null, errors="coerce")
-    if numeric_vals.notna().mean() > 0.9:
-        year_like = numeric_vals.dropna().between(1000, 3000)
-        if not year_like.empty and year_like.mean() > 0.9:
-            years = numeric_vals.round().astype("Int64").astype(str)
-            parsed.loc[non_null.index] = pd.to_datetime(years, format="%Y", errors="coerce")
-            return parsed
-
-    text_vals = non_null.astype(str).str.strip()
-    year_mask = text_vals.str.match(r"^\d{4}$")
-    if not year_mask.empty and year_mask.mean() > 0.9:
-        parsed.loc[text_vals.index] = pd.to_datetime(text_vals, format="%Y", errors="coerce")
-        return parsed
-
-    dm_pattern = r"^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$"
-    dm_extract = text_vals.str.extract(dm_pattern)
-    d_gt_12 = pd.to_numeric(dm_extract[0], errors="coerce") > 12
-    m_gt_12 = pd.to_numeric(dm_extract[1], errors="coerce") > 12
-    prefer_dayfirst = d_gt_12.sum() >= m_gt_12.sum()
-
-    normalized = text_vals.apply(normalize_date_text)
-    candidates: list[pd.Series] = [
-        pd.to_datetime(normalized, errors="coerce", format="mixed", dayfirst=prefer_dayfirst),
-        pd.to_datetime(text_vals, errors="coerce", format="mixed", dayfirst=prefer_dayfirst),
-        pd.to_datetime(normalized, errors="coerce", format="mixed", dayfirst=not prefer_dayfirst),
-        pd.to_datetime(text_vals, errors="coerce", format="mixed", dayfirst=not prefer_dayfirst),
-    ]
-    for fmt in ["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%m/%d/%Y", "%m/%Y", "%Y/%m"]:
-        candidates.extend([
-            pd.to_datetime(normalized, format=fmt, errors="coerce"),
-            pd.to_datetime(text_vals, format=fmt, errors="coerce"),
-        ])
-
-    best = pd.Series(pd.NaT, index=text_vals.index, dtype="datetime64[ns]")
-    for candidate in candidates:
-        best = best.fillna(candidate)
-    parsed.loc[text_vals.index] = best
-    return parsed
-
-
-def _bucket_temporal(x_series: pd.Series, granularity: str) -> "pd.Series | None":
-    parsed = _parse_temporal_series(x_series)
-    if parsed.notna().mean() < 0.6:
-        return None
-
-    g = granularity
-    if g == "auto":
-        n = len(parsed.dropna())
-        if n > 15000:
-            g = "year"
-        elif n > 1500:
-            g = "month"
-        else:
-            g = "day"
-
-    if g == "year":
-        return parsed.dt.strftime("%Y")
-    if g == "month":
-        return parsed.dt.strftime("%Y-%m")
-    if g == "day":
-        return parsed.dt.strftime("%Y-%m-%d")
-    return None
-
-
-def _safe_val(v):
-    if v is None or (isinstance(v, float) and (np.isnan(v) or np.isinf(v))):
-        return None
-    if isinstance(v, (np.integer, np.int64)):
-        return int(v)
-    if isinstance(v, (np.floating, np.float64)):
-        return round(float(v), 4)
-    return v
+from app.api.v1.analysis.chart_serialization import sanitize_for_json as _sanitize_for_json
+from app.api.v1.analysis.chart_temporal_parser import (
+    bucket_temporal as _bucket_temporal,
+    parse_temporal_series as _parse_temporal_series,
+    safe_val as _safe_val,
+)
 
 
 def build_chart_data(
     df: pd.DataFrame,
     chart_type: str,
-    x_col: "str | None",
+    x_col: str | None,
     y_cols: list[str],
-    group_col: "str | None",
+    group_col: str | None,
     aggregation: str,
     top_n: int,
-    time_granularity: "str | None" = None,
-    color_col: "str | None" = None,
-    size_col: "str | None" = None,
-    chart_title: "str | None" = None,
+    time_granularity: str | None = None,
+    color_col: str | None = None,
+    size_col: str | None = None,
+    chart_title: str | None = None,
     log_y: bool = False,
 ) -> dict:
     """Construit les données de graphique selon le type demandé."""
@@ -152,9 +35,6 @@ def build_chart_data(
         "median": "median", "min": "min", "max": "max",
     }
     agg_fn = agg_funcs.get(aggregation, "mean")
-    # « Aucune (donnees brutes) » est propose dans l'interface : sans ce test,
-    # la valeur tombait dans le defaut et les points etaient moyennes en
-    # silence, ce qui est l'inverse de ce que l'option annonce.
     sans_agregation = str(aggregation).strip().lower() in ("none", "aucune", "raw", "brut")
 
     aliases = {
@@ -165,7 +45,6 @@ def build_chart_data(
     }
     chart_type = aliases.get(chart_type, chart_type)
 
-    # Résolution automatique intelligente selon la nature des variables
     if chart_type == "auto":
         if not x_col or x_col not in df.columns:
             chart_type = "histogram" if len(y_cols) == 1 else "box"
@@ -227,22 +106,26 @@ def build_chart_data(
         if not x_col or len(y_cols) < 1:
             return {"error": f"x_col + au moins 1 y_col requis pour {chart_type}"}
         y_col = y_cols[0]
-        
+
         cols_to_keep = [x_col, y_col]
-        if color_col and color_col in df.columns: cols_to_keep.append(color_col)
-        if size_col and size_col in df.columns: cols_to_keep.append(size_col)
-        
+        if color_col and color_col in df.columns:
+            cols_to_keep.append(color_col)
+        if size_col and size_col in df.columns:
+            cols_to_keep.append(size_col)
+
         subset = df[cols_to_keep].dropna()
         if len(subset) > 1000:
             subset = subset.sample(n=1000, random_state=42)
-            
+
         data_points = []
         for _, row in subset.iterrows():
             pt = {"x": _safe_val(row[x_col]), "y": _safe_val(row[y_col])}
-            if color_col: pt["color"] = _safe_val(row[color_col])
-            if size_col: pt["size"] = _safe_val(row[size_col])
+            if color_col:
+                pt["color"] = _safe_val(row[color_col])
+            if size_col:
+                pt["size"] = _safe_val(row[size_col])
             data_points.append(pt)
-            
+
         return {**base_result, "data": data_points, "y_col": y_col, "color_col": color_col, "size_col": size_col}
 
     if chart_type == "heatmap":
@@ -250,27 +133,27 @@ def build_chart_data(
             return {"error": "x_col et y_cols[0] requis pour la Heatmap"}
         y_col = y_cols[0]
         z_col = color_col if color_col else None
-        
+
         if z_col and z_col in df.columns:
             pivot = df.pivot_table(index=y_col, columns=x_col, values=z_col, aggfunc=agg_fn).fillna(0)
         else:
             pivot = pd.crosstab(df[y_col], df[x_col]).fillna(0)
-            
+
         pivot = pivot.iloc[:50, :50]
-        
+
         return {
             **base_result,
             "y_col": y_col,
             "z_col": z_col,
             "x_labels": [str(c) for c in pivot.columns],
             "y_labels": [str(i) for i in pivot.index],
-            "z_values": pivot.values.tolist()
+            "z_values": pivot.values.tolist(),
         }
 
     if chart_type == "radar":
         if not x_col or len(y_cols) < 1:
             return {"error": "x_col (categories) et y_cols (mesures) requis pour Radar"}
-            
+
         grouped = df.groupby(x_col, sort=True)[y_cols].agg(agg_fn).head(top_n)
         records = []
         for idx, row in grouped.iterrows():
@@ -328,13 +211,14 @@ def build_chart_data(
             series_keys = y_cols
     else:
         cols_to_keep = [x_work_col] + y_cols
-        if g_col and g_col in df.columns: cols_to_keep.append(g_col)
-        
+        if g_col and g_col in df.columns:
+            cols_to_keep.append(g_col)
+
         subset = df_work[cols_to_keep].dropna().sort_values(x_work_col)
-        
+
         if len(subset) > 1000:
             subset = subset.iloc[::max(1, len(subset) // 1000)]
-            
+
         records = []
         for _, row in subset.iterrows():
             rec = {"x": _safe_val(row[x_work_col])}
@@ -343,7 +227,7 @@ def build_chart_data(
             if g_col:
                 rec["color"] = _safe_val(row[g_col])
             records.append(rec)
-        
+
         if g_col:
             series_keys = [y_cols[0]]
             return {**base_result, "data": records, "series": series_keys, "color_col": g_col}
@@ -351,3 +235,9 @@ def build_chart_data(
             series_keys = y_cols
 
     return {**base_result, "data": records, "series": series_keys}
+
+
+__all__ = [
+    "build_chart_data",
+    "_sanitize_for_json",
+]

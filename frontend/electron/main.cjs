@@ -1,13 +1,19 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const http = require('http');
 const fs = require('fs');
+const crypto = require('crypto');
+const { buildDesktopMenu } = require('./desktopMenu.cjs');
 
 let mainWindow = null;
 let splashWindow = null;
 let backendProcess = null;
 let backendPort = 5000;
+let backendExitCode = null;
+let backendErrorTail = '';
+const sessionToken = crypto.randomBytes(32).toString('hex');
+process.env.OPENSTATS_SESSION_TOKEN = sessionToken;
 
 function getFreePort() {
   return new Promise((resolve) => {
@@ -39,33 +45,60 @@ function createSplashScreen() {
 
 async function startBackend() {
   backendPort = await getFreePort();
+  backendExitCode = null;
+  backendErrorTail = '';
   process.env.OPENSTATS_API_PORT = backendPort.toString();
 
   const isPackaged = app.isPackaged;
-  let backendExecutable = null;
+  const spawnEnv = {
+    ...process.env,
+    OPENSTATS_SESSION_TOKEN: sessionToken,
+    OPENSTATS_WATCH_PARENT_STDIN: '1',
+    CORS_ORIGINS: '*',
+  };
+  delete spawnEnv.ELECTRON_RUN_AS_NODE;
 
   if (isPackaged) {
-    backendExecutable = path.join(
+    const prodExecutable = path.join(
       process.resourcesPath,
       'openstats-backend',
       'openstats-backend.exe'
     );
+    if (fs.existsSync(prodExecutable)) {
+      console.log(`[Electron] Démarrage du backend binaire packagé: ${prodExecutable}`);
+      backendProcess = spawn(prodExecutable, [backendPort.toString()], {
+        cwd: path.dirname(prodExecutable),
+        env: spawnEnv,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } else {
+      console.error(`[Electron] Binaire packagé introuvable: ${prodExecutable}`);
+    }
   } else {
-    const devBinary = path.join(__dirname, '../../backend/dist/openstats-backend/openstats-backend.exe');
-    const devScript = path.join(__dirname, '../../backend/run_desktop.py');
+    const backendDir = path.join(__dirname, '../../backend');
+    const devScript = path.join(backendDir, 'run_desktop.py');
+    const devBinary = path.join(backendDir, 'dist/openstats-backend/openstats-backend.exe');
 
-    if (fs.existsSync(devBinary)) {
-      backendExecutable = devBinary;
-    } else if (fs.existsSync(devScript)) {
-      backendProcess = spawn('python', [devScript, backendPort.toString()]);
+    if (fs.existsSync(devScript)) {
+      const pythonBin = process.env.PYTHON_PATH || 'python';
+      console.log(`[Electron] Démarrage du backend Python (dev): ${pythonBin} ${devScript}`);
+      backendProcess = spawn(pythonBin, [devScript, backendPort.toString()], {
+        cwd: backendDir,
+        env: spawnEnv,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+    } else if (fs.existsSync(devBinary)) {
+      console.log(`[Electron] Démarrage du backend binaire compilé (dev fallback): ${devBinary}`);
+      backendProcess = spawn(devBinary, [backendPort.toString()], {
+        cwd: path.dirname(devBinary),
+        env: spawnEnv,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
     }
   }
 
-  if (backendExecutable && fs.existsSync(backendExecutable)) {
-    console.log(`[Electron] Démarrage du backend binaire: ${backendExecutable}`);
-    backendProcess = spawn(backendExecutable, [backendPort.toString()]);
-  } else if (!backendProcess) {
-    console.log('[Electron] Aucun binaire backend trouvé, tentative d’utilisation du serveur existant sur 5000');
+  if (!backendProcess) {
+    console.log('[Electron] Aucun backend lancé, tentative d’utilisation du serveur existant sur 5000');
     backendPort = 5000;
     process.env.OPENSTATS_API_PORT = '5000';
   }
@@ -75,9 +108,12 @@ async function startBackend() {
       console.log(`[Backend stdout]: ${data}`);
     });
     backendProcess.stderr.on('data', (data) => {
-      console.error(`[Backend stderr]: ${data}`);
+      const text = data.toString();
+      backendErrorTail = (backendErrorTail + text).slice(-1500);
+      console.error(`[Backend stderr]: ${text}`);
     });
     backendProcess.on('exit', (code) => {
+      backendExitCode = code ?? 1;
       console.log(`[Backend] Processus fermé avec le code ${code}`);
     });
   }
@@ -85,26 +121,76 @@ async function startBackend() {
   pollBackendHealth(backendPort);
 }
 
+function updateSplashStatus(text) {
+  if (!splashWindow || splashWindow.isDestroyed()) return;
+  const script = `const el=document.getElementById('statusMessage');if(el)el.textContent=${JSON.stringify(text)};`;
+  splashWindow.webContents.executeJavaScript(script).catch(() => {});
+}
+
+function abortOnBackendFailure(reason) {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.close();
+    splashWindow = null;
+  }
+  const detail = backendErrorTail ? `\n\nDétail :\n${backendErrorTail.slice(-500)}` : '';
+  dialog.showErrorBox('OpenStats Desktop — Démarrage impossible', `${reason}${detail}`);
+  stopBackend();
+  app.quit();
+}
+
 function pollBackendHealth(port) {
   let attempts = 0;
-  const maxAttempts = 60; // 30 secondes max
+  const maxAttempts = 240; // Jusqu'à 120 s pour premier démarrage / antivirus Windows
+  let finished = false;
 
   const interval = setInterval(() => {
+    if (finished) return;
     attempts++;
-    http.get(`http://127.0.0.1:${port}/health`, (res) => {
-      if (res.statusCode === 200) {
+
+    if (backendExitCode !== null) {
+      finished = true;
+      clearInterval(interval);
+      abortOnBackendFailure(`Le moteur analytique Python s’est arrêté prématurément (code ${backendExitCode}).`);
+      return;
+    }
+
+    if (attempts % 4 === 0) {
+      updateSplashStatus(`Initialisation du moteur DuckDB & Python… (${Math.floor(attempts / 2)} s)`);
+    }
+
+    const req = http.get(`http://127.0.0.1:${port}/health`, (res) => {
+      if (!finished && res.statusCode === 200) {
+        finished = true;
         clearInterval(interval);
         console.log(`[Electron] Backend opérationnel sur le port ${port}`);
         createMainWindow(port);
       }
-    }).on('error', () => {
-      if (attempts >= maxAttempts) {
+      res.resume();
+    });
+
+    req.on('error', () => {
+      if (!finished && attempts >= maxAttempts) {
+        finished = true;
         clearInterval(interval);
         console.error('[Electron] Impossible de joindre le backend Python');
-        createMainWindow(port);
+        abortOnBackendFailure(`Délai dépassé : le backend local n'a pas répondu sur le port ${port} après 120 secondes.`);
       }
     });
   }, 500);
+}
+
+function loadDevOrFallback(url, fallbackPath) {
+  const probe = http.get(url, (res) => {
+    res.resume();
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.loadURL(url).catch(() => mainWindow.loadFile(fallbackPath));
+  });
+  probe.setTimeout(800, () => probe.destroy());
+  probe.on('error', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.loadFile(fallbackPath);
+    }
+  });
 }
 
 function createMainWindow(port) {
@@ -115,13 +201,16 @@ function createMainWindow(port) {
     minHeight: 700,
     show: false,
     title: 'OpenStats Desktop',
-    autoHideMenuBar: true,
+    icon: path.join(__dirname, 'icon.ico'),
+    autoHideMenuBar: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false
     }
   });
+
+  Menu.setApplicationMenu(buildDesktopMenu(mainWindow));
 
   const isPackaged = app.isPackaged;
   const pageLocale = path.join(__dirname, '../dist/index.html');
@@ -130,9 +219,11 @@ function createMainWindow(port) {
     mainWindow.loadFile(pageLocale);
   } else {
     const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:3000';
-    mainWindow.loadURL(devUrl).catch(() => {
-      mainWindow.loadFile(pageLocale);
-    });
+    if (devUrl.startsWith('file://')) {
+      mainWindow.loadURL(devUrl).catch(() => mainWindow.loadFile(pageLocale));
+    } else {
+      loadDevOrFallback(devUrl, pageLocale);
+    }
   }
 
   // Un echec de chargement laissait jusqu'ici une fenetre blanche muette :
@@ -168,22 +259,30 @@ function createMainWindow(port) {
   });
 }
 
+function stopBackend() {
+  if (!backendProcess || backendProcess.killed) return;
+  const proc = backendProcess;
+  backendProcess = null;
+  if (process.platform === 'win32' && proc.pid) {
+    // Sur Windows, PyInstaller/multiprocessing crée des sous-processus non tués par proc.kill()
+    execFile('taskkill', ['/pid', String(proc.pid), '/T', '/F'], () => {});
+    return;
+  }
+  proc.kill();
+}
+
 app.whenReady().then(async () => {
   createSplashScreen();
   await startBackend();
 });
 
 app.on('window-all-closed', () => {
-  if (backendProcess) {
-    backendProcess.kill();
-  }
+  stopBackend();
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
 app.on('will-quit', () => {
-  if (backendProcess) {
-    backendProcess.kill();
-  }
+  stopBackend();
 });

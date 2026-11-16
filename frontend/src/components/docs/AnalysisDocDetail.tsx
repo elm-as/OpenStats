@@ -18,56 +18,52 @@ interface AnalysisDocDetailProps {
 
 export const AnalysisDocDetail: React.FC<AnalysisDocDetailProps> = ({ analysis, onBack }) => {
   return (
-    <div className="bg-surface-900 border border-white/10 rounded-2xl p-6 md:p-8 md:px-12 space-y-12 shadow-2xl animate-fade-in relative overflow-y-auto max-h-[85vh] custom-scrollbar scroll-smooth">
-      {/* Background Subtle Gradient */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
-
+    <div className="ui-panel p-6 md:p-8 md:px-10 space-y-10 relative overflow-y-auto max-h-[85vh] ui-scroll scroll-smooth">
       {/* Header Bar */}
-      <div className="flex flex-col gap-4 pb-6 border-b border-white/10 -mx-6 px-6 pt-2 md:-mx-12 md:px-12">
-        <div className="space-y-3">
+      <div className="flex flex-col gap-3 pb-5 border-b border-white/10">
+        <div className="space-y-2.5">
           <div className="flex items-center gap-3">
             {onBack && (
               <button
                 onClick={onBack}
-                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted hover:text-white transition-colors"
+                className="ui-btn ui-btn-ghost p-2"
                 title="Retour à la liste"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
             )}
-            <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-accent-500/10 text-accent-400 border border-accent-500/20 shadow-sm shadow-accent-500/10">
+            <span className="ui-tag ui-tag-accent text-[11px] font-bold uppercase tracking-wider">
               {analysis.categoryLabel}
             </span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+          <h2 className="text-2xl font-bold text-surface-100 tracking-tight">
             {analysis.title}
           </h2>
-          <p className="text-sm text-muted leading-relaxed max-w-3xl">
+          <p className="text-sm text-surface-300 leading-relaxed max-w-3xl">
             {analysis.summary}
           </p>
         </div>
       </div>
 
       {/* ─── SECTION 1: PRESENTATION & ASSUMPTIONS ─── */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-          <Target className="w-5 h-5 text-accent-400" />
-          <h3 className="text-lg font-black text-white">Objectif Métier & Quand l'utiliser</h3>
+      <section className="space-y-5">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-2">
+          <Target className="w-4 h-4 text-accent-400" />
+          <h3 className="text-base font-bold text-surface-100">Objectif Métier & Quand l'utiliser</h3>
         </div>
-        <p className="text-sm text-surface-300 leading-relaxed max-w-4xl text-justify">
+        <p className="text-sm text-surface-300 leading-relaxed max-w-4xl">
           {analysis.useCase}
         </p>
 
-        <div className="mt-8 space-y-4">
-          <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-lg font-black text-white">Conditions & Hypothèses Préalables</h3>
+        <div className="mt-6 space-y-3">
+          <div className="flex items-center gap-2.5 border-b border-white/10 pb-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-base font-bold text-surface-100">Conditions & Hypothèses Préalables</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {analysis.assumptions.map((ass, i) => (
-              <div key={i} className="flex items-start gap-3 bg-white/[0.02] p-4 rounded-xl border border-white/5 text-sm text-surface-300 shadow-sm">
-                <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+              <div key={i} className="flex items-start gap-3 bg-surface-800/40 p-3.5 rounded-lg border border-white/10 text-sm text-surface-200">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/15 text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ui-num">
                   {i + 1}
                 </div>
                 <span className="leading-relaxed">{ass}</span>
@@ -78,10 +74,10 @@ export const AnalysisDocDetail: React.FC<AnalysisDocDetailProps> = ({ analysis, 
       </section>
 
       {/* ─── SECTION 2: MATHEMATICAL FORMULA ─── */}
-      <section className="space-y-6 pt-4">
-        <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-          <BookOpen className="w-5 h-5 text-amber-400" />
-          <h3 className="text-lg font-black text-white">Fondements Mathématiques</h3>
+      <section className="space-y-5 pt-2">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-2">
+          <BookOpen className="w-4 h-4 text-amber-400" />
+          <h3 className="text-base font-bold text-surface-100">Fondements Mathématiques</h3>
         </div>
         
         <FormulaCard
@@ -93,21 +89,21 @@ export const AnalysisDocDetail: React.FC<AnalysisDocDetailProps> = ({ analysis, 
       </section>
 
       {/* ─── SECTION 3: INTERPRETATION GUIDE ─── */}
-      <section className="space-y-6 pt-4">
-        <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-          <FileCheck className="w-5 h-5 text-accent-400" />
-          <h3 className="text-lg font-black text-white">Guide d'Interprétation des Résultats</h3>
+      <section className="space-y-5 pt-2">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-2">
+          <FileCheck className="w-4 h-4 text-accent-400" />
+          <h3 className="text-base font-bold text-surface-100">Guide d'Interprétation des Résultats</h3>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {analysis.interpretationGuide.map((item, idx) => (
-            <div key={idx} className="bg-white/[0.02] border border-white/5 rounded-xl p-5 space-y-3 shadow-sm hover:border-white/10 transition-colors">
-              <div className="flex items-center justify-between gap-3 flex-wrap border-b border-white/5 pb-3">
-                <span className="text-sm font-black text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">
+            <div key={idx} className="bg-surface-800/40 border border-white/10 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap border-b border-white/10 pb-2.5">
+                <span className="text-sm font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/25">
                   {item.metric}
                 </span>
                 {item.thresholds && (
-                  <span className="text-xs font-mono font-bold text-slate-300 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+                  <span className="text-xs font-mono ui-num font-semibold text-surface-200 bg-surface-800/60 px-2.5 py-1 rounded border border-white/10">
                     Seuil : {item.thresholds}
                   </span>
                 )}
@@ -117,8 +113,8 @@ export const AnalysisDocDetail: React.FC<AnalysisDocDetailProps> = ({ analysis, 
                 {item.description}
               </p>
 
-              <div className="mt-3 pt-3 flex items-start gap-2 text-sm font-bold text-emerald-400 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10">
-                <ChevronRight className="w-5 h-5 shrink-0 mt-0.5 text-emerald-500" />
+              <div className="mt-2 flex items-start gap-2 text-sm font-semibold text-emerald-400 bg-emerald-500/10 p-3 rounded-lg border border-emerald-500/20">
+                <ChevronRight className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
                 <span className="leading-relaxed">Règle de Décision : {item.decisionRule}</span>
               </div>
             </div>
@@ -127,19 +123,19 @@ export const AnalysisDocDetail: React.FC<AnalysisDocDetailProps> = ({ analysis, 
       </section>
 
       {/* ─── SECTION 4: PRACTICAL EXAMPLE ─── */}
-      <section className="space-y-6 pt-4 pb-8">
-        <div className="flex items-center gap-3 border-b border-white/5 pb-2">
-          <Zap className="w-5 h-5 text-amber-400" />
-          <h3 className="text-lg font-black text-white">Mise en Situation Réelle</h3>
+      <section className="space-y-5 pt-2 pb-4">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-2">
+          <Zap className="w-4 h-4 text-amber-400" />
+          <h3 className="text-base font-bold text-surface-100">Mise en Situation Réelle</h3>
         </div>
 
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 md:p-8 space-y-6 shadow-inner">
+        <div className="bg-surface-800/40 border border-white/10 rounded-xl p-5 md:p-6 space-y-5">
           <div className="space-y-2">
-            <span className="text-xs font-black uppercase tracking-wider text-muted flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-muted" />
+            <span className="text-xs font-bold uppercase tracking-wider text-surface-400 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-400" />
               Scénario d'étude
             </span>
-            <p className="text-sm text-surface-300 leading-relaxed bg-white/[0.02] p-4 rounded-xl border border-white/5 text-justify">
+            <p className="text-sm text-surface-200 leading-relaxed bg-surface-900/40 p-4 rounded-lg border border-white/10">
               {analysis.practicalExample.context}
             </p>
           </div>

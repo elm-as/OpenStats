@@ -131,6 +131,17 @@ export const analysisEndpoints = baseApi.injectEndpoints({
         body: { col },
       }),
     }),
+
+    runAdvancedAnalysis: builder.mutation<
+      { analysis_key: string; result: unknown },
+      { id: string; analysis_key: string; params: Record<string, string> }
+    >({
+      query: ({ id, analysis_key, params }) => ({
+        url: `/datasets/${id}/analysis/advanced`,
+        method: 'POST',
+        body: { analysis_key, params },
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -148,4 +159,5 @@ export const {
   useRunMCAMutation,
   useGetDiagnosticsQuery,
   useRunStationarityMutation,
+  useRunAdvancedAnalysisMutation,
 } = analysisEndpoints;

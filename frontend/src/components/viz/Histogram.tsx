@@ -81,10 +81,14 @@ export default function Histogram({
 
     if (showDensity) {
       norm.forEach((s, i) => {
-        const { x, y } = gaussianKDE(s.values);
-        // Mise à l'échelle de la densité pour matcher l'histogramme
-        const binWidth = (safeMax(s.values) - safeMin(s.values)) / bins || 1;
-        const scaled = y.map(v => v * s.values.length * binWidth);
+        const clean = s.values.filter(v => typeof v === 'number' && !Number.isNaN(v) && Number.isFinite(v));
+        if (clean.length < 2) return;
+        const { x, y } = gaussianKDE(clean);
+        // Aligner la densité sur les effectifs par classe réels de l'histogramme
+        const span = safeMax(clean) - safeMin(clean);
+        const effBins = Math.max(1, Math.min(bins, Math.ceil(Math.sqrt(clean.length))));
+        const binWidth = span > 0 ? span / effBins : 1;
+        const scaled = y.map(v => v * clean.length * binWidth);
         tr.push({
           x,
           y: scaled,

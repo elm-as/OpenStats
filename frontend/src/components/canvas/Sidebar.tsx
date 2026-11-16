@@ -150,13 +150,13 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 shrink-0 flex flex-col z-10 border-r border-white/[0.08] bg-surface-950/90 backdrop-blur-2xl overflow-hidden">
+    <aside className="w-64 shrink-0 flex flex-col z-10 border-r border-white/[0.08] bg-surface-950 overflow-hidden">
       {/* Header */}
-      <div className="p-4 pb-3 border-b border-white/[0.06]">
-        <h1 className="font-black text-base mb-1 bg-gradient-to-r from-accent-400 via-purple-400 to-pink-400 bg-clip-text text-transparent tracking-tight">
+      <div className="p-4 pb-3 border-b border-white/[0.08]">
+        <h1 className="font-bold text-sm mb-1 text-surface-100 tracking-tight">
           Canvas d'Analyse
         </h1>
-        <p className="text-[11px] text-surface-500 leading-snug">
+        <p className="text-[11px] text-surface-400 leading-snug">
           Glissez les blocs pour construire votre pipeline.
         </p>
       </div>

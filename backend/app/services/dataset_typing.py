@@ -27,9 +27,11 @@ class DatasetTypingMixin:
             cat_map = {
                 "continu": "numeric_cols", "numeric": "numeric_cols", "continuous": "numeric_cols",
                 "catégoriel_nominal": "categorical_cols", "categorical": "categorical_cols",
+                "catégoriel_ordinal": "categorical_cols", "ordinal": "categorical_cols",
                 "binaire": "binary_cols", "binary": "binary_cols",
                 "temporel": "temporal_cols", "temporal": "temporal_cols",
                 "discret": "discrete_cols", "discrete": "discrete_cols",
+                "identifiant": "id_cols", "id": "id_cols",
             }
             target_cat = cat_map.get(new_type)
             if target_cat:
@@ -41,28 +43,23 @@ class DatasetTypingMixin:
                     col_info["user_override"] = True
 
     def update_column_type(self, dataset_id: str, column: str, new_type: str) -> dict:
-        """Met à jour le type statistique d'une colonne dans le profil."""
-        VALID_TYPES = {"continu", "discret", "temporel", "catégoriel_nominal", "binaire"}
+        """Met à jour le type statistique d'une colonne dans le profil avec traçabilité."""
+        from app.core.statistical_types import CANONICAL_TYPES, canonical_statistical_type, safe_convert_series
+
         ds = db.session.get(Dataset, dataset_id)
         if ds is None:
             raise ValueError(f"Dataset {dataset_id} introuvable")
 
-        # Accepter aussi les équivalents anglais pour la flexibilité
-        type_alias = {
-            "continuous": "continu", "numeric": "continu",
-            "categorical": "catégoriel_nominal", "nominal": "catégoriel_nominal",
-            "binary": "binaire", "temporal": "temporel", "datetime": "temporel",
-            "discrete": "discret",
-        }
-        canonical_type = type_alias.get(new_type.lower(), new_type)
-        if canonical_type not in VALID_TYPES:
-            raise ValueError(f"Type invalide : {new_type}. Types valides : {', '.join(sorted(VALID_TYPES))}")
+        canonical_type = canonical_statistical_type(new_type)
+        if canonical_type not in CANONICAL_TYPES:
+            raise ValueError(
+                f"Type invalide : {new_type}. Types valides : {', '.join(sorted(CANONICAL_TYPES))}"
+            )
 
         profile = copy.deepcopy(ds.profile or {})
         dictionary = profile.get("dictionary", [])
-        entry = next((e for e in dictionary if e["nom_brut"] == column), None)
+        entry = next((e for e in dictionary if e.get("nom_brut") == column), None)
         if entry is None:
-            # Si pas de dictionary structuré dans le profil, créer une entrée
             entry = {"nom_brut": column, "type_statistique": "continu"}
             dictionary.append(entry)
             profile["dictionary"] = dictionary
@@ -77,39 +74,35 @@ class DatasetTypingMixin:
         flag_modified(ds, "profile")
         flag_modified(ds, "type_overrides")
 
+        report_dict = None
         if old_type != canonical_type:
-            try:
-                df = self.get_df(dataset_id, cleaned=True, respect_exclusions=False)
-                if df is not None and column in df.columns:
-                    if canonical_type == "temporel":
-                        df[column] = pd.to_datetime(df[column], errors="coerce")
-                    elif canonical_type == "continu":
-                        df[column] = pd.to_numeric(df[column], errors="coerce").astype(float)
-                    elif canonical_type == "discret":
-                        df[column] = pd.to_numeric(df[column], errors="coerce")
-                        df[column] = df[column].dropna().astype(int).reindex(df.index)
-                    elif canonical_type == "catégoriel_nominal":
-                        df[column] = df[column].astype(str).replace("nan", pd.NA)
-                    elif canonical_type == "binaire":
-                        df[column] = pd.to_numeric(df[column], errors="coerce")
-                        df[column] = df[column].dropna().astype(int).reindex(df.index)
+            df = self.get_df(dataset_id, cleaned=True, respect_exclusions=False)
+            if df is not None and column in df.columns:
+                converted_col, report = safe_convert_series(df[column], canonical_type, col_name=column)
+                report_dict = report.to_dict()
+                df[column] = converted_col
 
-                    version = max(v.version_number for v in ds.versions) if ds.versions else 2
-                    storage.save_dataframe(df, dataset_id, version)
-                    if hasattr(self, "_session_cache") and dataset_id in self._session_cache:
-                        self._invalidate_session_cache(dataset_id)
-            except Exception:
-                pass
+                version = max((v.version_number for v in ds.versions), default=2)
+                storage.save_dataframe(df, dataset_id, version)
+                if hasattr(self, "_session_cache") and dataset_id in self._session_cache:
+                    self._invalidate_session_cache(dataset_id)
 
-        self._audit(dataset_id, "type_change", {"column": column, "old_type": old_type, "new_type": canonical_type})
+        audit_data = {"column": column, "old_type": old_type, "new_type": canonical_type}
+        if report_dict:
+            audit_data["conversion_report"] = report_dict
+
+        self._audit(dataset_id, "type_change", audit_data)
         db.session.commit()
 
-        return {
+        result = {
             "column": column,
             "old_type": old_type,
             "new_type": canonical_type,
             "profile": ds.profile,
         }
+        if report_dict:
+            result["conversion_report"] = report_dict
+        return result
 
     def set_excluded_columns(self, dataset_id: str, columns: list[str]) -> dict:
         """Définit la liste des colonnes exclues."""

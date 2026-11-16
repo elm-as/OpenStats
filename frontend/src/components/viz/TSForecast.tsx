@@ -39,6 +39,7 @@ export default function TSForecast({
         fill: 'toself',
         fillcolor: 'rgba(245, 158, 11, 0.18)',
         line: { color: 'transparent' },
+        mode: 'lines',
         name: 'IC 95%',
         type: 'scatter',
         showlegend: true,
@@ -53,7 +54,7 @@ export default function TSForecast({
       type: 'scatter',
       mode: 'lines',
       name: 'Observé',
-      line: { color: '#22d3ee', width: 2 },
+      line: { color: '#0284c7', width: 2 },
       hovertemplate: '<b>%{x}</b><br>%{y:.3f}<extra>Observé</extra>',
     } as Data);
 
@@ -65,7 +66,7 @@ export default function TSForecast({
         type: 'scatter',
         mode: 'lines',
         name: 'Ajustement',
-        line: { color: '#a78bfa', width: 1.5, dash: 'dot' },
+        line: { color: '#059669', width: 1.5, dash: 'dot' },
         hovertemplate: '<b>%{x}</b><br>%{y:.3f}<extra>Ajusté</extra>',
       } as Data);
     }
@@ -77,8 +78,8 @@ export default function TSForecast({
       type: 'scatter',
       mode: 'lines+markers',
       name: 'Prévision',
-      line: { color: '#fcd34d', width: 2.5 },
-      marker: { size: 5, color: '#f59e0b' },
+      line: { color: '#d97706', width: 2.5 },
+      marker: { size: 5, color: '#d97706' },
       hovertemplate: '<b>%{x}</b><br>%{y:.3f}<extra>Prévision</extra>',
     } as Data);
 

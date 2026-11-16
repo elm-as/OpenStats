@@ -61,17 +61,17 @@ export function AutoPipelineConfigStage({
 
       {/* Feedback interactif intelligent */}
       {smartFeedback && (
-        <div className="p-3.5 rounded-xl bg-gradient-to-r from-accent-500/10 via-purple-500/10 to-transparent border border-accent-500/30 flex items-start gap-2.5 animate-fade-in">
+        <div className="ui-panel p-3.5 border-l-4 border-l-accent-500 flex items-start gap-2.5">
           <Zap className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" />
           <p className="text-xs text-surface-200 leading-relaxed">{smartFeedback}</p>
         </div>
       )}
 
       {/* 1. Sélection de la Variable Cible (Y) */}
-      <div className="p-5 rounded-2xl bg-surface-900/60 border border-white/10 shadow-xl space-y-4">
+      <div className="ui-panel p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-surface-100 flex items-center gap-2">
               <Target className="w-4 h-4 text-accent-400" />
               1. Sélectionner la Variable Cible (Y)
             </h3>
@@ -91,7 +91,7 @@ export function AutoPipelineConfigStage({
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2.5 pt-1">
+        <div className="flex flex-wrap gap-2 pt-1">
           {allColumns.map(col => {
             const isSelected = selectedTarget === col;
             const isTemp = profile.temporal_cols?.includes(col);
@@ -110,27 +110,27 @@ export function AutoPipelineConfigStage({
               : 'Catégoriel';
 
             const badgeColor = isTemp
-              ? 'bg-purple-500/20 text-purple-300'
+              ? 'bg-cyan-500/15 text-cyan-400'
               : isBin
-              ? 'bg-emerald-500/20 text-emerald-300'
+              ? 'bg-emerald-500/15 text-emerald-400'
               : isNum
-              ? 'bg-blue-500/20 text-blue-300'
+              ? 'bg-blue-500/15 text-blue-400'
               : isDisc
-              ? 'bg-indigo-500/20 text-indigo-300'
-              : 'bg-amber-500/20 text-amber-300';
+              ? 'bg-teal-500/15 text-teal-400'
+              : 'bg-amber-500/15 text-amber-400';
 
             return (
               <button
                 key={col}
                 onClick={() => onSelectTarget(isSelected ? null : col)}
-                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                className={`flex items-center gap-2.5 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors border ${
                   isSelected
-                    ? 'bg-accent-500/20 border-accent-500 text-accent-200 ring-2 ring-accent-500/20 shadow-lg shadow-accent-500/15 scale-[1.02]'
-                    : 'bg-white/[0.03] border-white/10 text-surface-300 hover:border-white/20 hover:bg-white/5'
+                    ? 'bg-accent-500/15 border-accent-500 text-surface-100 ring-1 ring-accent-500/30'
+                    : 'bg-white/[0.02] border-white/10 text-surface-300 hover:border-white/20 hover:bg-white/[0.05]'
                 }`}
               >
                 <span className="font-mono">{col}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-bold ${badgeColor}`}>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${badgeColor}`}>
                   {typeBadge}
                 </span>
                 {isSelected && <Check className="w-3.5 h-3.5 text-accent-400" />}
@@ -141,9 +141,9 @@ export function AutoPipelineConfigStage({
       </div>
 
       {/* 2. Mode d'Analyse */}
-      <div className="p-5 rounded-2xl bg-surface-900/60 border border-white/10 shadow-xl space-y-4">
+      <div className="ui-panel p-5 space-y-4">
         <div>
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <h3 className="text-sm font-bold text-surface-100 flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-accent-400" />
             2. Mode d'Analyse
           </h3>
@@ -154,21 +154,21 @@ export function AutoPipelineConfigStage({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5">
           {[
-            { id: 'auto', label: '🤖 Auto-Adapté', desc: 'Détection optimale automatique' },
-            { id: 'forecast', label: '⏱️ Séries Temporelles', desc: 'Stationnarité, ARIMA, VAR, Cointégration' },
-            { id: 'regression', label: '📈 Régression ML', desc: 'Modèles prédictifs & VIF' },
-            { id: 'classification', label: '🎯 Classification', desc: 'Arbres, LogReg, ROC & Confusion' },
-            { id: 'exploration', label: '🔍 Exploration Pure', desc: 'Statistiques, ACP & Clustering' },
+            { id: 'auto', label: 'Auto-Adapté', desc: 'Détection optimale automatique' },
+            { id: 'forecast', label: 'Séries Temporelles', desc: 'Stationnarité, ARIMA, VAR, Cointégration' },
+            { id: 'regression', label: 'Régression ML', desc: 'Modèles prédictifs & VIF' },
+            { id: 'classification', label: 'Classification', desc: 'Arbres, LogReg, ROC & Confusion' },
+            { id: 'exploration', label: 'Exploration Pure', desc: 'Statistiques, ACP & Clustering' },
           ].map(mode => {
             const isActive = selectedTaskType === mode.id;
             return (
               <button
                 key={mode.id}
                 onClick={() => onSelectTaskType(mode.id as any)}
-                className={`p-3.5 rounded-xl border text-left transition-all ${
+                className={`p-3 rounded-lg border text-left transition-colors ${
                   isActive
-                    ? 'bg-accent-500/15 border-accent-500 text-white ring-2 ring-accent-500/20 shadow-md'
-                    : 'bg-white/[0.02] border-white/10 text-surface-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-accent-500/15 border-accent-500 text-surface-100 ring-1 ring-accent-500/30'
+                    : 'bg-white/[0.02] border-white/10 text-surface-400 hover:text-surface-100 hover:bg-white/[0.04]'
                 }`}
               >
                 <p className="text-xs font-bold">{mode.label}</p>
@@ -180,10 +180,10 @@ export function AutoPipelineConfigStage({
       </div>
 
       {/* 3. Modules d'Analyses Activables */}
-      <div className="p-5 rounded-2xl bg-surface-900/60 border border-white/10 shadow-xl space-y-4">
+      <div className="ui-panel p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-surface-100 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-accent-400" />
               3. Modules d'Analyses Activables
             </h3>
@@ -195,26 +195,26 @@ export function AutoPipelineConfigStage({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onApplyPreset('recommended')}
-              className="px-3 py-1 rounded-lg bg-accent-500/10 hover:bg-accent-500/20 border border-accent-500/30 text-xs font-semibold text-accent-300 transition-all"
+              className="ui-btn text-xs text-accent-400 border-accent-500/30 bg-accent-500/10"
             >
-              ★ Recommandé
+              Recommandé
             </button>
             <button
               onClick={() => onApplyPreset('all')}
-              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-surface-300 transition-all"
+              className="ui-btn ui-btn-ghost text-xs"
             >
               Tout Cocher
             </button>
             <button
               onClick={() => onApplyPreset('minimal')}
-              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-surface-300 transition-all"
+              className="ui-btn ui-btn-ghost text-xs"
             >
               Minimal
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
           {availableAnalyses.map(analysis => {
             const isChecked = selectedAnalyses.has(analysis.key);
             const Icon = analysis.icon;
@@ -224,11 +224,11 @@ export function AutoPipelineConfigStage({
               <div
                 key={analysis.key}
                 onClick={() => onToggleAnalysis(analysis.key)}
-                className={`p-4 rounded-xl border cursor-pointer select-none transition-all flex items-start gap-3.5 ${
+                className={`p-3.5 rounded-lg border cursor-pointer select-none transition-colors flex items-start gap-3 ${
                   isChecked
                     ? isTemporalModule
-                      ? 'bg-purple-500/10 border-purple-500/40 text-white ring-1 ring-purple-500/20 shadow-lg shadow-purple-500/5'
-                      : 'bg-white/[0.04] border-accent-500/40 text-white ring-1 ring-accent-500/20 shadow-lg shadow-accent-500/5'
+                      ? 'bg-sky-500/10 border-sky-500/40 text-surface-100'
+                      : 'bg-accent-500/10 border-accent-500/40 text-surface-100'
                     : 'bg-white/[0.01] border-white/10 text-surface-400 hover:border-white/20 hover:bg-white/[0.03]'
                 }`}
               >
@@ -236,7 +236,7 @@ export function AutoPipelineConfigStage({
                   {isChecked ? (
                     <CheckSquare
                       className={`w-4 h-4 ${
-                        isTemporalModule ? 'text-purple-400' : 'text-accent-400'
+                        isTemporalModule ? 'text-sky-400' : 'text-accent-400'
                       }`}
                     />
                   ) : (
@@ -248,14 +248,14 @@ export function AutoPipelineConfigStage({
                   <div className="flex items-center gap-2">
                     <Icon
                       className={`w-4 h-4 ${
-                        isTemporalModule ? 'text-purple-400' : 'text-accent-400'
+                        isTemporalModule ? 'text-sky-400' : 'text-accent-400'
                       }`}
                     />
-                    <span className="text-xs font-bold text-white tracking-tight">
+                    <span className="text-xs font-bold text-surface-100 tracking-tight">
                       {analysis.label}
                     </span>
                     {analysis.badgeText && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-accent-500/20 text-accent-300 font-bold">
+                      <span className="ui-tag ui-tag-accent text-[9px]">
                         {analysis.badgeText}
                       </span>
                     )}
@@ -271,16 +271,16 @@ export function AutoPipelineConfigStage({
       </div>
 
       {/* Barre d'action et Synthèse dynamique */}
-      <div className="p-4 rounded-2xl bg-surface-900/90 border border-white/10 shadow-2xl backdrop-blur-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-xs text-surface-300">
-          <div className="flex items-center gap-1.5 font-bold text-white">
+      <div className="ui-panel p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 text-xs text-surface-300 ui-num">
+          <div className="flex items-center gap-1.5 font-bold text-surface-100">
             <Target className="w-3.5 h-3.5 text-accent-400" />
             <span>Cible :</span>
-            <span className="font-mono text-accent-300">{selectedTarget || 'Aucune (Exploration)'}</span>
+            <span className="font-mono text-accent-400">{selectedTarget || 'Aucune (Exploration)'}</span>
           </div>
           <span className="text-surface-600">•</span>
           <div className="text-surface-400">
-            <span className="font-bold text-white">{selectedAnalyses.size}</span> modules sélectionnés
+            <span className="font-bold text-surface-100">{selectedAnalyses.size}</span> modules sélectionnés
           </div>
           <span className="text-surface-600">•</span>
           <div className="text-surface-400">~{selectedAnalyses.size * 2 + 5}s estimées</div>
@@ -289,7 +289,7 @@ export function AutoPipelineConfigStage({
         <button
           onClick={onGeneratePipeline}
           disabled={isBuilding || selectedAnalyses.size === 0}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-accent-500 to-indigo-600 hover:from-accent-400 hover:to-indigo-500 text-surface-950 font-bold text-xs shadow-xl shadow-accent-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          className="ui-btn ui-btn-primary px-5 py-2.5 text-xs font-bold flex items-center justify-center gap-2"
         >
           {isBuilding ? (
             <>
@@ -298,7 +298,7 @@ export function AutoPipelineConfigStage({
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 fill-surface-950" />
+              <Sparkles className="w-4 h-4" />
               <span>Générer le Pipeline Personnalisé</span>
               <ChevronRight className="w-4 h-4" />
             </>

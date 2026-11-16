@@ -35,35 +35,35 @@ export default function AnalyzerResultsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero */}
-      <section className="relative rounded-2xl bg-surface-900 border border-white/5 shadow-sm">
-        <div className="relative z-10 px-6 py-6 md:px-8 md:py-8">
+      <section className="ui-panel">
+        <div className="px-6 py-5 md:px-8 md:py-6">
           <button
             onClick={() => navigate('/analyzer')}
-            className="mb-4 flex items-center gap-1.5 text-xs text-muted hover:text-accent-400 transition-colors"
+            className="mb-3 flex items-center gap-1.5 text-xs text-muted hover:text-accent-400 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Retour a l'analyseur
+            Retour à l'analyseur
           </button>
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-3">
-                <Sparkles className="w-3 h-3 text-emerald-400" />
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400">Analyse terminee</span>
-              </div>
-              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tighter leading-[1.1]">
-                Resultats de l'Analyseur
+              <span className="ui-tag bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider mb-2 inline-flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3" />
+                Analyse terminée
+              </span>
+              <h1 className="text-2xl font-bold text-surface-100 tracking-tight leading-tight">
+                Résultats de l'Analyseur
               </h1>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                <span className="text-[10px] font-semibold text-emerald-300 uppercase tracking-wider">
-                  {successCount}/{stepEntries.length} etapes reussies
+            <div className="flex items-center gap-2.5 ui-num">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25">
+                <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+                  {successCount}/{stepEntries.length} étapes réussies
                 </span>
               </div>
               {errorCount > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <span className="text-[10px] font-semibold text-red-300 uppercase tracking-wider">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/25">
+                  <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">
                     {errorCount} erreur{errorCount > 1 ? 's' : ''}
                   </span>
                 </div>

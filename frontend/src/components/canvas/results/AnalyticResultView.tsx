@@ -55,7 +55,7 @@ function formater(valeur: unknown): string {
 export const AnalyticResultView = ({
   resultData,
   titre,
-  couleur = '#8b5cf6',
+  couleur = '#0284c7',
 }: {
   resultData: any;
   titre: string;
@@ -76,10 +76,10 @@ export const AnalyticResultView = ({
     <div className="space-y-5">
       <Section title={titre} icon={FlaskConical} color={couleur}>
         {donnees.interpretation && (
-          <p className="text-xs text-surface-200 leading-relaxed mb-3">{donnees.interpretation}</p>
+          <p className="text-xs text-[var(--ui-text-primary)] leading-relaxed mb-3">{donnees.interpretation}</p>
         )}
         {scalaires.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
             {scalaires.map(([cle, valeur]) => (
               <KpiCard
                 key={cle}

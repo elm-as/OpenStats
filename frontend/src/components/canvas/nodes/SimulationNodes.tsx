@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { NodeProps, Node } from '@xyflow/react';
 import { PlayCircle } from 'lucide-react';
-import { API_V1_BASE, getAnonymousClientId } from '../../../lib/apiBase';
+import { apiFetch } from '../../../lib/apiBase';
 import { 
   CanvasNodeData, NodeShell, NodeLabel, NodeSelect, NodeNumberInput,
   useNodeUpdate, NodeToggle, NodeCollapsible, NodeSeedInput, useConnectedColumns
@@ -31,9 +31,7 @@ export function SimulationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     if (simType === 'prediction' && dsId) {
       const fetchRanges = async () => {
         try {
-          const response = await fetch(`${API_V1_BASE}/datasets/${dsId}/model/feature-ranges`, {
-            headers: { 'X-Client-Id': (() => { try { return getAnonymousClientId(); } catch { return ''; } })() },
-          });
+          const response = await apiFetch(`/datasets/${dsId}/model/feature-ranges`);
           if (response.ok) {
             const result = await response.json();
             setFeatureRanges(result.ranges || {});
@@ -87,12 +85,9 @@ export function SimulationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     }
 
     try {
-      const response = await fetch(`${API_V1_BASE}/datasets/${dsId}/model/predict`, {
+      const response = await apiFetch(`/datasets/${dsId}/model/predict`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Client-Id': (() => { try { return getAnonymousClientId(); } catch { return ''; } })(),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ features }),
       });
       if (!response.ok) {

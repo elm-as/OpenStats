@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { Node, Edge } from '@xyflow/react';
-import { API_V1_BASE, getAnonymousClientId } from '../../lib/apiBase';
+import { apiFetch } from '../../lib/apiBase';
 import { getNodeLabel, type NodeResult } from './canvasGraphConfig';
 
 interface UseCanvasPipelineProps {
@@ -60,17 +60,10 @@ export function useCanvasPipeline({
       const authEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true';
       const token = authEnabled ? localStorage.getItem('access_token') || '' : '';
 
-      const response = await fetch(`${API_V1_BASE}/canvas/stream_pipeline`, {
+      const response = await apiFetch('/canvas/stream_pipeline', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Client-Id': (() => {
-            try {
-              return getAnonymousClientId();
-            } catch {
-              return '';
-            }
-          })(),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(pipeline),

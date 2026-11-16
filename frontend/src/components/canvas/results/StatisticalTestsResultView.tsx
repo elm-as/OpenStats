@@ -8,6 +8,7 @@ import {
   Hash,
 } from 'lucide-react';
 import { Section, KpiCard, DataTable, fmt } from './ResultAtoms';
+import { PlotlyChart } from '../../viz/PlotlyBase';
 
 export const StatisticalTestsResultView = ({
   nodeType,
@@ -216,15 +217,15 @@ export const StatisticalTestsResultView = ({
 export const BootstrapResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-4">
-      <Section title={`Bootstrap (95% IC) sur '${resultData.column}'`} icon={TrendingUp} color="#a855f7">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard label="Estimation" value={resultData.point_estimate} color="#a855f7" />
+      <Section title={`Bootstrap (95% IC) sur '${resultData.column}'`} icon={TrendingUp} color="#06b6d4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
+          <KpiCard label="Estimation" value={resultData.point_estimate} color="#06b6d4" />
           <KpiCard label="Borne Inf (2.5%)" value={resultData.ci_lower} color="#3b82f6" />
           <KpiCard label="Borne Sup (97.5%)" value={resultData.ci_upper} color="#10b981" />
           <KpiCard label="Erreur Type (SE)" value={resultData.se} color="#f59e0b" />
         </div>
       </Section>
-      <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs text-purple-200">
+      <div className="p-3 bg-accent-500/10 border border-accent-500/25 rounded-lg text-xs text-surface-200">
         Intervalle de confiance à 95% obtenu par 1 000 tirages bootstrap non-paramétriques.
       </div>
     </div>
@@ -235,58 +236,112 @@ export const CausalResultView = ({ resultData }: { resultData: any }) => {
   const isPsm = resultData.method?.includes('PSM') || resultData.method?.includes('Propensity');
   const effect = resultData.att ?? resultData.att_estimate ?? resultData.coefficient;
   const lovePlot = resultData.love_plot || [];
+  const sortedLove = [...lovePlot].sort(
+    (a: any, b: any) => Math.abs(a.smd_before ?? 0) - Math.abs(b.smd_before ?? 0)
+  );
 
   return (
     <div className="space-y-4">
-      <Section title={`Inférence Causale (${resultData.method})`} icon={GitCompare} color="#06b6d4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard label="Traitement (X)" value={resultData.treatment_column} color="#06b6d4" />
-          <KpiCard label="Résultat (Y)" value={resultData.outcome_column} color="#8b5cf6" />
+      <Section title={`Inférence Causale (${resultData.method})`} icon={GitCompare} color="#0284c7">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
+          <KpiCard label="Traitement (X)" value={resultData.treatment_column} color="#0284c7" />
+          <KpiCard label="Résultat (Y)" value={resultData.outcome_column} color="#0d9488" />
           <KpiCard
             label={isPsm ? 'Effet Traitement (ATT)' : 'Effet Causal / Coef'}
             value={effect !== undefined ? Number(effect).toFixed(4) : '—'}
-            color="#10b981"
+            color="#059669"
           />
           <KpiCard
             label="p-value"
             value={resultData.p_value}
-            color={resultData.is_significant ? '#10b981' : '#f59e0b'}
+            color={resultData.is_significant ? '#059669' : '#d97706'}
           />
         </div>
       </Section>
 
       {isPsm && (
-        <div className="grid grid-cols-3 gap-3">
-          <KpiCard label="Paires Appariées (1:1)" value={resultData.n_matched_pairs} color="#3b82f6" />
-          <KpiCard label="Traités Totaux" value={resultData.n_treated_total} color="#8b5cf6" />
-          <KpiCard label="Témoins Totaux" value={resultData.n_control_total} color="#06b6d4" />
+        <div className="grid grid-cols-3 gap-3 ui-num">
+          <KpiCard label="Paires Appariées (1:1)" value={resultData.n_matched_pairs} color="#0284c7" />
+          <KpiCard label="Traités Totaux" value={resultData.n_treated_total} color="#0d9488" />
+          <KpiCard label="Témoins Totaux" value={resultData.n_control_total} color="#059669" />
         </div>
       )}
 
       {lovePlot.length > 0 && (
-        <Section title="Diagnostic de Balance des Covariables (Love Plot)" icon={GitCompare} color="#06b6d4">
+        <Section title="Diagnostic de Balance des Covariables (Love Plot)" icon={GitCompare} color="#0284c7">
+          <div className="mb-4">
+            <PlotlyChart
+              data={[
+                {
+                  type: 'scatter',
+                  mode: 'markers',
+                  name: '|SMD| Avant appariement',
+                  x: sortedLove.map((l: any) => Math.abs(Number(l.smd_before ?? 0))),
+                  y: sortedLove.map((l: any) => l.covariate),
+                  marker: { color: '#d97706', size: 9, symbol: 'circle-open', line: { width: 2 } },
+                },
+                {
+                  type: 'scatter',
+                  mode: 'markers',
+                  name: '|SMD| Après appariement',
+                  x: sortedLove.map((l: any) => Math.abs(Number(l.smd_after ?? 0))),
+                  y: sortedLove.map((l: any) => l.covariate),
+                  marker: { color: '#0284c7', size: 9, symbol: 'circle' },
+                },
+              ]}
+              layout={{
+                title: { text: 'Love Plot — Équilibre des covariables (|SMD|)', font: { size: 13 } },
+                xaxis: { title: { text: 'Différence moyenne standardisée absolue |SMD|' }, zeroline: true },
+                yaxis: { automargin: true },
+                legend: { orientation: 'h', y: -0.22 },
+                hovermode: 'y unified',
+                shapes: [
+                  {
+                    type: 'line',
+                    x0: 0.1,
+                    x1: 0.1,
+                    y0: -0.5,
+                    y1: Math.max(0.5, sortedLove.length - 0.5),
+                    line: { color: '#059669', width: 1.5, dash: 'dash' },
+                  },
+                ],
+                annotations: [
+                  {
+                    x: 0.1,
+                    y: 1.03,
+                    yref: 'paper',
+                    text: 'Seuil 0.1',
+                    showarrow: false,
+                    font: { size: 10, color: '#059669' },
+                  },
+                ],
+              }}
+              height={Math.max(250, sortedLove.length * 32 + 120)}
+            />
+          </div>
           <DataTable
             headers={['Covariable', 'SMD Avant (Non apparié)', 'SMD Après (Apparié)', 'Équilibre']}
             rows={lovePlot.map((l: any) => [
               l.covariate,
               l.smd_before?.toFixed(3) ?? '—',
               l.smd_after?.toFixed(3) ?? '—',
-              l.balanced ? ' Équilibré (|SMD| < 0.1)' : '⚠️ Déséquilibre persistant',
+              l.balanced ? 'Équilibré (|SMD| < 0.1)' : 'Déséquilibre persistant',
             ])}
           />
         </Section>
       )}
 
       <div
-        className={`p-3.5 rounded-xl border text-xs font-semibold ${
+        className="p-3.5 rounded-xl border text-xs font-semibold"
+        style={
           resultData.is_significant
-            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-            : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-        }`}
+            ? { background: 'var(--ui-success-soft)', borderColor: 'var(--ui-success)', color: 'var(--ui-success)' }
+            : { background: 'var(--ui-warning-soft)', borderColor: 'var(--ui-warning)', color: 'var(--ui-warning)' }
+        }
       >
         {resultData.is_significant
-          ? ' Effet causal statistiquement significatif du traitement (p < 0.05)'
-          : " Pas d'effet causal significatif identifié au seuil 5%."}
+          ? 'Effet causal statistiquement significatif du traitement (p < 0.05)'
+          : "Pas d'effet causal significatif identifié au seuil 5%."}
       </div>
     </div>
   );

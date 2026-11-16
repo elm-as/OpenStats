@@ -223,26 +223,14 @@ class DatasetManager(
             return None
 
         df = df.copy()
-        if ds:
-            type_overrides = ds.type_overrides or {}
-            for col, target_type in type_overrides.items():
-                if col in df.columns:
-                    try:
-                        if target_type in ("numeric", "continuous", "discrete"):
-                            df[col] = pd.to_numeric(df[col], errors="coerce")
-                        elif target_type in ("temporal", "datetime"):
-                            df[col] = pd.to_datetime(df[col], errors="coerce")
-                        elif target_type in ("categorical", "nominal", "ordinal", "text"):
-                            df[col] = df[col].astype(str)
-                        elif target_type == "binary":
-                            df[col] = df[col].astype(bool)
-                    except Exception:
-                        pass
+        if ds and ds.type_overrides:
+            from app.core.statistical_types import apply_type_overrides_to_dataframe
+            df, _ = apply_type_overrides_to_dataframe(df, ds.type_overrides)
 
-            if respect_exclusions and ds.excluded_columns:
-                cols_to_drop = [c for c in ds.excluded_columns if c in df.columns]
-                if cols_to_drop:
-                    df = df.drop(columns=cols_to_drop)
+        if ds and respect_exclusions and ds.excluded_columns:
+            cols_to_drop = [c for c in ds.excluded_columns if c in df.columns]
+            if cols_to_drop:
+                df = df.drop(columns=cols_to_drop)
 
         return df
 

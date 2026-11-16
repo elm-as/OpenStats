@@ -26,6 +26,8 @@ def _sf(val: Any) -> float | None:
 
 def _escape_col(col_name: str) -> str:
     """Échappe le nom de colonne pour l'injecter sans risque comme identifiant SQL."""
+    if "\x00" in col_name:
+        raise ValueError("Nom de colonne invalide contenant un caractère nul.")
     escaped = col_name.replace('"', '""')
     return f'"{escaped}"'
 
@@ -185,23 +187,25 @@ def compute_descriptive_stats_duckdb(parquet_path: str, columns_info: list[dict[
     Calcule les statistiques descriptives pour chaque variable via DuckDB.
     Garantit la fermeture de connexion et la sécurité SQL.
     """
-    if not os.path.exists(parquet_path):
-        raise FileNotFoundError(f"Fichier Parquet introuvable : '{parquet_path}'")
+    real_path = os.path.realpath(os.path.abspath(parquet_path))
+    if not os.path.isfile(real_path):
+        raise FileNotFoundError(f"Fichier Parquet introuvable ou invalide : '{parquet_path}'")
 
     results: dict[str, Any] = {}
     conn = duckdb.connect(database=":memory:")
 
     try:
-        escaped_path = parquet_path.replace("'", "''")
-        conn.execute(f"CREATE VIEW ds AS SELECT * FROM read_parquet('{escaped_path}')")
+        # Chargement sécurisé via l'API relationnelle DuckDB (pas d'interpolation de chaîne SQL)
+        rel = conn.read_parquet(real_path)
+        rel.create_view("ds")
         total_rows = conn.execute("SELECT count(*) FROM ds").fetchone()[0]
 
         for col_info in columns_info:
             col = col_info["name"]
             col_type = col_info["type"]
-            safe_col = _escape_col(col)
 
             try:
+                safe_col = _escape_col(col)
                 if col_type == "numeric":
                     stat = _compute_numeric_col(conn, safe_col, col, total_rows)
                 elif col_type in ("temporal", "date", "datetime"):

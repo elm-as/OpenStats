@@ -3,6 +3,7 @@ Routes API pour l'ingestion et le profilage des données.
 """
 
 import os
+import uuid
 from pathlib import Path
 from flask import request, jsonify, current_app
 from werkzeug.utils import secure_filename
@@ -60,7 +61,8 @@ def upload_dataset():
         filename = secure_filename(file.filename)
         upload_dir = current_app.config["UPLOAD_FOLDER"]
         os.makedirs(upload_dir, exist_ok=True)
-        filepath = os.path.join(upload_dir, filename)
+        unique_filename = f"{uuid.uuid4().hex[:12]}_{filename}" if filename else uuid.uuid4().hex[:12]
+        filepath = os.path.join(upload_dir, unique_filename)
         file.save(filepath)
 
         if not validate_file_magic(filepath, current_app.config["ALLOWED_EXTENSIONS"]):
@@ -148,7 +150,7 @@ def copy_dataset(dataset_id):
     new_name = data.get("new_name")
     
     try:
-        new_id = dataset_manager.copy_dataset(dataset_id, new_name)
+        new_id = dataset_manager.copy_dataset(dataset_id, new_name, user_id=g.current_user.id)
         new_ds = dataset_manager.get(new_id)
         return jsonify({
             "message": "Dataset copié avec succès",
@@ -171,10 +173,11 @@ def preview_dataset(dataset_id):
     if df is None:
         return jsonify({"error": "Dataset introuvable"}), 404
 
+    limit = max(1, min(n, 250))
     return jsonify({
         "columns": df.columns.tolist(),
         "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
-        "data": df.head(min(n, 200)).to_dict(orient="records"),
+        "data": dataset_manager.build_preview_records(df, limit=limit),
         "total_rows": len(df),
     })
 

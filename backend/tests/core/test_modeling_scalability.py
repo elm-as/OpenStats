@@ -71,3 +71,35 @@ class TestCompetitiveScalabilityAndStreaming:
         assert len(res["failed"]) == 1
         assert "Temps limite dépassé" in res["failed"][0]["error"]
         assert any("temps limite dépassé" in msg.lower() for msg, _ in logs)
+
+    def test_competitive_timeout_does_not_block_on_executor_exit(self, monkeypatch):
+        """Vérifie qu'un entraînement bloqué rend la main immédiatement sans attendre wait=True."""
+        import threading
+        import app.core.modeling_competitive as mc
+
+        release_worker = threading.Event()
+
+        def blocking_trainer(*args, **kwargs):
+            release_worker.wait(timeout=2.0)
+            return {"model_key": "random_forest", "metrics": {"f1_weighted": 0.5}}
+
+        monkeypatch.setattr(mc, "train_single_model", blocking_trainer)
+
+        df = pd.DataFrame({"x1": [0.1, 0.2, 0.8, 0.9, 0.3, 0.7], "target": [0, 0, 1, 1, 0, 1]})
+        data = prepare_data(df, target_col="target", test_size=0.33)
+
+        t0 = time.monotonic()
+        try:
+            res = mc.train_competitive(
+                data,
+                model_keys=["random_forest"],
+                timeout_per_model=0.05,
+            )
+        finally:
+            release_worker.set()
+
+        elapsed = time.monotonic() - t0
+        assert elapsed < 0.8, f"Le timeout a bloqué ThreadPoolExecutor.shutdown ({elapsed:.2f}s)"
+        assert len(res["failed"]) == 1
+        assert "Temps limite dépassé" in res["failed"][0]["error"]
+

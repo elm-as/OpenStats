@@ -248,6 +248,9 @@ def ingest_file(filepath: str, **kwargs) -> pd.DataFrame:
     if isinstance(df, dict):
         df = next(iter(df.values())) if df else pd.DataFrame()
 
+    if df.empty or len(df.columns) == 0:
+        raise ValueError("Le fichier ne contient aucune ligne de données exploitable.")
+
     # Sanitize column names: string conversion, strip, default naming for empty headers, deduplication
     cleaned_cols = []
     seen: dict[str, int] = {}

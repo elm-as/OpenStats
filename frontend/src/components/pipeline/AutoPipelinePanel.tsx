@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Loader2, CheckCircle2, ArrowLeft, Layers } from 'lucide-react';
 import ResultsWizard from '../wizard/ResultsWizard';
 import CodeViewerModal from '../canvas/CodeViewerModal';
+import { fetchPythonAndRCode } from '../canvas/canvasCodeExport';
 import { PipelineStepper } from './PipelineStepper';
 import { AutoPipelineConfigStage } from './AutoPipelineConfigStage';
 import { AutoPipelineRecipeStage } from './AutoPipelineRecipeStage';
@@ -63,39 +64,17 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
   const handleOpenCodeModal = async () => {
     setShowAutoCodeModal(true);
     try {
-      const pyRes = await fetch('/api/v1/canvas/export_code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodes: activeSteps.map((s, idx) => ({
-            id: `node_${idx}`,
-            type: s.operation,
-            data: s.params,
-          })),
-          edges: [],
-          dataset_name: datasetName || 'dataset.csv',
-          language: 'python',
-        }),
+      const { pythonCode, rCode: generatedR } = await fetchPythonAndRCode({
+        nodes: activeSteps.map((s, idx) => ({
+          id: `node_${idx}`,
+          type: s.operation,
+          data: s.params,
+        })),
+        edges: [],
+        dataset_name: datasetName || 'dataset.csv',
       });
-      const pyData = await pyRes.json();
-      if (pyData.code) setPyCode(pyData.code);
-
-      const rRes = await fetch('/api/v1/canvas/export_code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodes: activeSteps.map((s, idx) => ({
-            id: `node_${idx}`,
-            type: s.operation,
-            data: s.params,
-          })),
-          edges: [],
-          dataset_name: datasetName || 'dataset.csv',
-          language: 'r',
-        }),
-      });
-      const rData = await rRes.json();
-      if (rData.code) setRCode(rData.code);
+      if (pythonCode) setPyCode(pythonCode);
+      if (generatedR) setRCode(generatedR);
     } catch (err) {
       console.error(err);
     }
@@ -103,15 +82,12 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
 
   if (isDetecting) {
     return (
-      <div className="card backdrop-blur-xl bg-surface-900/60 border border-white/10 rounded-2xl flex flex-col items-center justify-center py-16 gap-5 animate-fade-in shadow-2xl">
-        <div className="relative">
-          <div className="absolute inset-0 bg-accent-500/30 blur-2xl rounded-full animate-pulse" />
-          <div className="w-14 h-14 rounded-2xl bg-accent-500/10 border border-accent-500/30 flex items-center justify-center relative z-10">
-            <Loader2 className="w-7 h-7 text-accent-400 animate-spin" />
-          </div>
+      <div className="ui-panel flex flex-col items-center justify-center py-14 gap-4">
+        <div className="w-12 h-12 rounded-xl bg-accent-500/10 border border-accent-500/30 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-accent-400 animate-spin" />
         </div>
         <div className="text-center max-w-sm">
-          <h4 className="text-base font-bold text-white tracking-tight">
+          <h4 className="text-base font-bold text-surface-100 tracking-tight">
             Analyse sémantique des variables...
           </h4>
           <p className="text-xs text-surface-400 mt-1.5 leading-relaxed">
@@ -184,11 +160,11 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
 
       {workflowStage === 'results' && executed && execution && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-surface-900/80 border border-white/10 shadow-xl">
-            <div className="flex items-center gap-2">
+          <div className="ui-panel flex items-center justify-between p-4">
+            <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
               <div>
-                <h3 className="text-sm font-bold text-white">Pipeline exécuté avec succès !</h3>
+                <h3 className="text-sm font-bold text-surface-100">Pipeline exécuté avec succès !</h3>
                 <p className="text-xs text-surface-400">
                   Toutes les étapes et calculs statistiques ont été réalisés.
                 </p>
@@ -198,7 +174,7 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setWorkflowStage('pipeline')}
-                className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-semibold text-surface-300 hover:text-white transition-all flex items-center gap-1.5"
+                className="ui-btn text-xs"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Modifier le pipeline</span>
@@ -206,7 +182,7 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
 
               <button
                 onClick={handleOpenCanvas}
-                className="px-3.5 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-xs font-semibold text-purple-300 transition-all flex items-center gap-1.5"
+                className="ui-btn ui-btn-primary text-xs"
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Explorer dans Canvas</span>

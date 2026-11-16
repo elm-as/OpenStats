@@ -35,6 +35,7 @@ import {
   useRunMCAMutation,
   useGetDiagnosticsQuery,
   useRunStationarityMutation,
+  useRunAdvancedAnalysisMutation,
 } from './endpoints/analysisEndpoints';
 import {
   modelingEndpoints,
@@ -159,6 +160,7 @@ export {
   useRunMonteCarloMutation,
   useRunStressTestMutation,
   useRunStationarityMutation,
+  useRunAdvancedAnalysisMutation,
   useGenerateExtensionMutation,
   useSaveExtensionMutation,
   useListExtensionsQuery,

@@ -25,7 +25,11 @@ import TransformPanel from '../transform/TransformPanel';
 import FactorAnalysisPanel from '../factorAnalysis/FactorAnalysisPanel';
 import SimulationPanel from '../scenarios/SimulationPanel';
 import ScenarioBuilder from '../scenarios/ScenarioBuilder';
-import ExtensionPanel from '../extension/ExtensionPanel';
+import { SurvivalResultView } from '../canvas/results/SurvivalResultView';
+import { CausalResultView } from '../canvas/results/StatisticalTestsResultView';
+import { PanelResultView } from '../canvas/results/PanelResultView';
+import { AnalyticResultView } from '../canvas/results/AnalyticResultView';
+const ExtensionPanel = React.lazy(() => import('../extension/ExtensionPanel'));
 
 interface WizardResultsStepProps {
   datasetId: string;
@@ -38,6 +42,7 @@ interface WizardResultsStepProps {
   testResult: TestResult | null;
   stationarityResult: StationarityResult | null;
   modelResults: ModelResults | null;
+  advancedResult?: { key: string; data: any } | null;
   isLoading: boolean;
   error: string | null;
   onReset: () => void;
@@ -55,6 +60,7 @@ export function WizardResultsStep({
   testResult,
   stationarityResult,
   modelResults,
+  advancedResult,
   isLoading,
   error,
   onReset,
@@ -64,11 +70,11 @@ export function WizardResultsStep({
     <>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
+          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
+            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
             {selectedAnalysis.label}
           </h2>
-          <p className="text-sm text-surface-400 mt-1">Résultats de l'analyse</p>
+          <p className="text-sm ui-t-muted mt-1">Résultats de l'analyse</p>
         </div>
         <button onClick={onReset} className="btn-secondary flex items-center gap-2 text-sm">
           <ArrowLeft className="w-4 h-4" /> Nouvelle analyse
@@ -78,14 +84,17 @@ export function WizardResultsStep({
       {isLoading && (
         <div className="card p-12 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full mx-auto" />
-          <p className="text-surface-400 mt-4">Calcul en cours...</p>
+          <p className="ui-t-muted mt-4">Calcul en cours...</p>
         </div>
       )}
 
       {error && !isLoading && (
-        <div className="card p-6 bg-red-50 border-red-200">
-          <p className="text-red-700">{error}</p>
-          <button onClick={onReset} className="mt-3 text-sm text-red-600 underline">
+        <div
+          className="card p-6"
+          style={{ background: 'var(--ui-danger-soft)', borderColor: 'var(--ui-danger)' }}
+        >
+          <p style={{ color: 'var(--ui-danger)' }}>{error}</p>
+          <button onClick={onReset} className="mt-3 text-sm underline" style={{ color: 'var(--ui-danger)' }}>
             Essayer une autre analyse
           </button>
         </div>
@@ -119,6 +128,24 @@ export function WizardResultsStep({
       {/* Model results */}
       {modelResults && selectedAnalysis.key.startsWith('modeling_') && (
         <ModelingResults results={modelResults} />
+      )}
+
+      {/* Advanced R / econometrics results (Survival, Causal, Panel, Quantiles, Power, TOST) */}
+      {advancedResult && advancedResult.key === selectedAnalysis.key && (
+        <>
+          {advancedResult.key === 'survival' && <SurvivalResultView resultData={advancedResult.data} />}
+          {advancedResult.key === 'causal' && <CausalResultView resultData={advancedResult.data} />}
+          {advancedResult.key === 'panel' && <PanelResultView resultData={advancedResult.data} />}
+          {advancedResult.key === 'quantileRegression' && (
+            <AnalyticResultView resultData={advancedResult.data} titre="Régression quantile" couleur="#0284c7" />
+          )}
+          {advancedResult.key === 'powerAnalysis' && (
+            <AnalyticResultView resultData={advancedResult.data} titre="Puissance statistique" couleur="#d97706" />
+          )}
+          {advancedResult.key === 'equivalenceTest' && (
+            <AnalyticResultView resultData={advancedResult.data} titre="Test d'équivalence (TOST)" couleur="#059669" />
+          )}
+        </>
       )}
 
       {/* Time series (univarié) */}
@@ -170,7 +197,18 @@ export function WizardResultsStep({
       )}
 
       {/* Extensions IA */}
-      {selectedAnalysis.key === 'user_extension' && <ExtensionPanel datasetId={datasetId} />}
+      {selectedAnalysis.key === 'user_extension' && (
+        <React.Suspense
+          fallback={
+            <div className="card p-12 text-center">
+              <div className="animate-spin w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full mx-auto" />
+              <p className="text-surface-400 mt-4">Chargement du studio d'extension...</p>
+            </div>
+          }
+        >
+          <ExtensionPanel datasetId={datasetId} />
+        </React.Suspense>
+      )}
 
       {/* Chart builder */}
       {selectedAnalysis.key === 'chart_builder' && capabilities && (

@@ -112,39 +112,35 @@ export const HierarchicalClusteringResultView: React.FC<HierarchicalClusteringRe
       {/* Dendrogramme Plotly */}
       {dendroTraces.length > 0 && (
         <Section title="Dendrogramme & Ligne de Coupure" icon={Layers} color="#0ea5e9">
-          <div className="bg-surface-900/60 rounded-xl border border-white/[0.06] p-2 overflow-hidden">
-            <PlotlyChart
-              data={dendroTraces}
-              layout={{
-                title: { text: 'Dendrogramme des liaisons hiérarchiques' },
-                xaxis: { title: { text: 'Observations / Groupes' }, showticklabels: false, gridcolor: '#1f2937' },
-                yaxis: { title: { text: 'Distance de liaison' }, gridcolor: '#1f2937' },
-                height: 380,
-                margin: { l: 50, r: 20, t: 40, b: 40 },
-                showlegend: true,
-              }}
-              className="w-full"
-            />
-          </div>
+          <PlotlyChart
+            data={dendroTraces}
+            layout={{
+              title: { text: 'Dendrogramme des liaisons hiérarchiques' },
+              xaxis: { title: { text: 'Observations / Groupes' }, showticklabels: false },
+              yaxis: { title: { text: 'Distance de liaison' } },
+              height: 380,
+              margin: { l: 50, r: 20, t: 40, b: 40 },
+              showlegend: true,
+            }}
+            className="w-full"
+          />
         </Section>
       )}
 
       {/* Projection 2D PCA */}
       {scatterTraces.length > 0 && (
-        <Section title="Projection 2D des Clusters (ACP)" icon={Layers} color="#8b5cf6">
-          <div className="bg-surface-900/60 rounded-xl border border-white/[0.06] p-2 overflow-hidden">
-            <PlotlyChart
-              data={scatterTraces}
-              layout={{
-                title: { text: 'Répartition spatiale des clusters' },
-                xaxis: { title: { text: `Axe 1 (${varExplained[0]}% var)` }, gridcolor: '#1f2937' },
-                yaxis: { title: { text: `Axe 2 (${varExplained[1]}% var)` }, gridcolor: '#1f2937' },
-                height: 360,
-                margin: { l: 50, r: 20, t: 40, b: 40 },
-              }}
-              className="w-full"
-            />
-          </div>
+        <Section title="Projection 2D des Clusters (ACP)" icon={Layers} color="#0284c7">
+          <PlotlyChart
+            data={scatterTraces}
+            layout={{
+              title: { text: 'Répartition spatiale des clusters' },
+              xaxis: { title: { text: `Axe 1 (${varExplained[0]}% var)` } },
+              yaxis: { title: { text: `Axe 2 (${varExplained[1]}% var)` } },
+              height: 360,
+              margin: { l: 50, r: 20, t: 40, b: 40 },
+            }}
+            className="w-full"
+          />
         </Section>
       )}
 

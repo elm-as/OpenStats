@@ -245,6 +245,7 @@ export interface ConfigField {
   label: string;
   type: 'select' | 'multiselect';
   options: string[];
+  optional?: boolean;
 }
 
 export interface DataCapabilities {

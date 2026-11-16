@@ -42,8 +42,8 @@ export function WizardConfigureStep({
     <>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{selectedAnalysis.label}</h2>
-          <p className="text-sm text-surface-400 mt-1">{selectedAnalysis.description}</p>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--ui-text)' }}>{selectedAnalysis.label}</h2>
+          <p className="text-sm ui-t-muted mt-1">{selectedAnalysis.description}</p>
         </div>
         <button onClick={onBack} className="btn-secondary flex items-center gap-2 text-sm">
           <ArrowLeft className="w-4 h-4" /> Retour
@@ -51,18 +51,18 @@ export function WizardConfigureStep({
       </div>
 
       <div className="card">
-        <h3 className="font-semibold text-gray-900 mb-4">Configuration</h3>
+        <h3 className="font-semibold mb-4" style={{ color: 'var(--ui-text)' }}>Configuration</h3>
 
         {/* Hypothesis / standard test config fields */}
         {selectedAnalysis.config_fields && selectedAnalysis.config_fields.length > 0 && (
           <div className="space-y-4">
             {selectedAnalysis.config_fields.map(field => (
               <div key={field.key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ui-text-secondary)' }}>{field.label}</label>
                 {field.type === 'multiselect' ? (
-                  <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                  <div className="rounded-[var(--ui-radius-sm)] p-3 max-h-48 overflow-y-auto space-y-1" style={{ border: '1px solid var(--ui-border)' }}>
                     {field.options.length === 0 && (
-                      <p className="text-xs text-surface-500">Aucune option disponible</p>
+                      <p className="text-xs ui-t-muted">Aucune option disponible</p>
                     )}
                     {field.options.map(opt => {
                       const selected = (configValues[field.key] || '').split(',').filter(Boolean);
@@ -70,7 +70,8 @@ export function WizardConfigureStep({
                       return (
                         <label
                           key={opt}
-                          className="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded hover:bg-surface-900"
+                          className="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded hover:bg-white/5"
+                          style={{ color: 'var(--ui-text)' }}
                         >
                           <input
                             type="checkbox"
@@ -81,7 +82,7 @@ export function WizardConfigureStep({
                                 : selected.filter(s => s !== opt);
                               setConfigValues({ ...configValues, [field.key]: next.join(',') });
                             }}
-                            className="rounded border-gray-300 text-primary-600"
+                            className="rounded text-primary-600"
                           />
                           {opt}
                         </label>
@@ -97,7 +98,7 @@ export function WizardConfigureStep({
                   <select
                     value={configValues[field.key] || ''}
                     onChange={e => setConfigValues({ ...configValues, [field.key]: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full"
                     title={field.key}
                   >
                     <option value="">Sélectionner...</option>
@@ -126,28 +127,28 @@ export function WizardConfigureStep({
           )}
 
         {/* Modeling config */}
-        {selectedAnalysis.category === 'modeling' && (
+        {selectedAnalysis.key.startsWith('modeling_') && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ui-text-secondary)' }}>
                 Variable cible (Y)
               </label>
               {candidateTargets.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-1.5">
-                  <span className="text-xs text-surface-400 self-center">Suggestions IA :</span>
+                  <span className="text-xs ui-t-muted self-center">Suggestions IA :</span>
                   {candidateTargets.slice(0, 5).map(c => (
                     <button
                       key={c.column}
                       type="button"
                       onClick={() => setConfigValues({ ...configValues, target_column: c.column })}
-                      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      className={`ui-tag ${
                         configValues.target_column === c.column
-                          ? 'bg-primary-600 text-white border-primary-600'
-                          : 'bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100'
+                          ? 'ui-tag-accent font-semibold'
+                          : 'ui-tag-neutral hover:opacity-80'
                       }`}
                     >
                       {c.column}
-                      <span className="ml-1 opacity-60">{c.type}</span>
+                      <span className="ml-1 opacity-70">{c.type}</span>
                     </button>
                   ))}
                 </div>
@@ -155,7 +156,7 @@ export function WizardConfigureStep({
               <select
                 value={configValues.target_column || ''}
                 onChange={e => setConfigValues({ ...configValues, target_column: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full"
                 title="Variable cible"
               >
                 <option value="">Sélectionner la variable à prédire...</option>
@@ -176,33 +177,34 @@ export function WizardConfigureStep({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ui-text-secondary)' }}>
                 Stratégie de scission train / test
               </label>
               <select
                 value={configValues.split_strategy || 'auto'}
                 onChange={e => setConfigValues({ ...configValues, split_strategy: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full"
                 title="Stratégie de scission"
               >
                 <option value="auto">Automatique (temporelle si index temporel détecté)</option>
                 <option value="time">Scission temporelle (out-of-time, données chronologiques)</option>
                 <option value="random">Scission aléatoire (cross-section standard / shuffle)</option>
               </select>
-              <p className="text-xs text-surface-400 mt-1">
+              <p className="text-xs ui-t-muted mt-1">
                 En présence d'une forte tendance ou d'une série sans retards explicatifs, la scission aléatoire permet d'évaluer la représentativité globale sans biais de dérive temporelle.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--ui-text-secondary)' }}>
                 Algorithmes (vide = tous)
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {getModelsForType(selectedAnalysis.key).map(m => (
                   <label
                     key={m.key}
-                    className="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded hover:bg-surface-900"
+                    className="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded hover:bg-white/5"
+                    style={{ color: 'var(--ui-text)' }}
                   >
                     <input
                       type="checkbox"
@@ -211,7 +213,7 @@ export function WizardConfigureStep({
                         if (e.target.checked) setSelectedModels([...selectedModels, m.key]);
                         else setSelectedModels(selectedModels.filter(k => k !== m.key));
                       }}
-                      className="rounded border-gray-300 text-primary-600"
+                      className="rounded text-primary-600"
                     />
                     {m.label}
                   </label>
@@ -222,7 +224,10 @@ export function WizardConfigureStep({
         )}
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div
+            className="mt-4 p-3 rounded-[var(--ui-radius-sm)] text-sm"
+            style={{ background: 'var(--ui-danger-soft)', border: '1px solid var(--ui-danger)', color: 'var(--ui-danger)' }}
+          >
             {error}
           </div>
         )}

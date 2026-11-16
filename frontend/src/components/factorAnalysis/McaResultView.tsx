@@ -1,21 +1,13 @@
 import type { MCAResult } from '../../types';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ScreePlot } from '../viz';
-import Plot from 'react-plotly.js';
-import { DARK_TEMPLATE, DEFAULT_CONFIG } from '../viz/PlotlyBase';
+import { PlotlyChart, DEFAULT_CONFIG, SCI_COLORS } from '../viz/PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
 const COLORS = [
-  '#06b6d4',
-  '#8b5cf6',
+  ...SCI_COLORS,
+  '#0284c7',
   '#f59e0b',
-  '#10b981',
-  '#ef4444',
-  '#3b82f6',
-  '#ec4899',
-  '#14b8a6',
-  '#f97316',
-  '#6366f1',
 ];
 
 interface MCAResultViewProps {
@@ -53,8 +45,8 @@ export function MCAResultView({
     <div className="space-y-4">
       <div className="card">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-gray-900">Résumé ACM</h4>
-          <span className="text-sm text-gray-500">
+          <h4 className="font-semibold text-[var(--ui-text-primary)]">Résumé ACM</h4>
+          <span className="text-sm ui-num text-[var(--ui-text-muted)]">
             {result.n_observations} obs. — {result.n_modalities} modalités —{' '}
             {result.n_variables} var.
           </span>
@@ -68,7 +60,7 @@ export function MCAResultView({
       </div>
 
       <div className="card">
-        <h5 className="text-sm font-medium text-gray-700 mb-2">
+        <h5 className="text-sm font-medium text-[var(--ui-text-secondary)] mb-2">
           Nuage des modalités ({dim1} vs {dim2})
         </h5>
         <MCAModalityMap
@@ -82,16 +74,16 @@ export function MCAResultView({
 
       {result.eta2 && (
         <div className="card">
-          <h5 className="text-sm font-medium text-gray-700 mb-2">
+          <h5 className="text-sm font-medium text-[var(--ui-text-secondary)] mb-2">
             Rapport de corrélation η²
           </h5>
           <div className="overflow-x-auto">
             <table className="min-w-full text-xs">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-3 py-1 text-left">Variable</th>
+                <tr className="bg-[var(--ui-bg-elevated)] text-[var(--ui-text-secondary)]">
+                  <th className="px-3 py-1.5 text-left">Variable</th>
                   {result.component_labels.slice(0, 5).map((c: string) => (
-                    <th key={c} className="px-3 py-1 text-right">
+                    <th key={c} className="px-3 py-1.5 text-right ui-num">
                       {c}
                     </th>
                   ))}
@@ -99,12 +91,12 @@ export function MCAResultView({
               </thead>
               <tbody>
                 {result.variables.map((v: string) => (
-                  <tr key={v} className="border-t">
+                  <tr key={v} className="border-t border-[var(--ui-border-subtle)]">
                     <td className="px-3 py-1" style={{ color: varColorMap[v] }}>
                       {v}
                     </td>
                     {result.component_labels.slice(0, 5).map((c: string) => (
-                      <td key={c} className="px-3 py-1 text-right">
+                      <td key={c} className="px-3 py-1 text-right ui-num text-[var(--ui-text-primary)]">
                         {result.eta2[c]?.[v]?.toFixed(3)}
                       </td>
                     ))}
@@ -119,7 +111,7 @@ export function MCAResultView({
       <div className="card">
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700"
+          className="flex items-center gap-2 text-sm font-medium text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
         >
           {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           Détails des contributions
@@ -128,11 +120,11 @@ export function MCAResultView({
           <div className="mt-3 overflow-x-auto">
             <table className="min-w-full text-xs">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-3 py-1 text-left">Variable</th>
-                  <th className="px-3 py-1 text-left">Modalité</th>
+                <tr className="bg-[var(--ui-bg-elevated)] text-[var(--ui-text-secondary)]">
+                  <th className="px-3 py-1.5 text-left">Variable</th>
+                  <th className="px-3 py-1.5 text-left">Modalité</th>
                   {result.component_labels.slice(0, 5).map((c: string) => (
-                    <th key={c} className="px-3 py-1 text-right">
+                    <th key={c} className="px-3 py-1.5 text-right ui-num">
                       Contrib% {c}
                     </th>
                   ))}
@@ -140,13 +132,13 @@ export function MCAResultView({
               </thead>
               <tbody>
                 {result.modality_info.map((info: any) => (
-                  <tr key={info.full} className="border-t">
+                  <tr key={info.full} className="border-t border-[var(--ui-border-subtle)]">
                     <td className="px-3 py-1" style={{ color: varColorMap[info.variable] }}>
                       {info.variable}
                     </td>
-                    <td className="px-3 py-1">{info.modality}</td>
+                    <td className="px-3 py-1 text-[var(--ui-text-primary)]">{info.modality}</td>
                     {result.component_labels.slice(0, 5).map((c: string) => (
-                      <td key={c} className="px-3 py-1 text-right">
+                      <td key={c} className="px-3 py-1 text-right ui-num text-[var(--ui-text-primary)]">
                         {result.modality_contrib[info.full]?.[c]?.toFixed(1)}
                       </td>
                     ))}
@@ -188,7 +180,7 @@ function MCAModalityMap({
       marker: {
         size: 10,
         color: varColorMap[v],
-        line: { color: 'rgba(255,255,255,0.2)', width: 1 },
+        line: { color: 'rgba(148,163,184,0.35)', width: 1 },
       },
       hovertemplate:
         '<b>%{text}</b><br>Variable: ' +
@@ -201,30 +193,17 @@ function MCAModalityMap({
     } as Data;
   });
   const layout: Partial<Layout> = {
-    ...DARK_TEMPLATE,
     autosize: true,
     xaxis: {
-      ...DARK_TEMPLATE.xaxis,
-      title: { text: dim1, font: { color: '#dfe3ee' } },
+      title: { text: dim1 },
       zeroline: true,
-      zerolinecolor: 'rgba(255,255,255,0.15)',
     },
     yaxis: {
-      ...DARK_TEMPLATE.yaxis,
-      title: { text: dim2, font: { color: '#dfe3ee' } },
+      title: { text: dim2 },
       zeroline: true,
-      zerolinecolor: 'rgba(255,255,255,0.15)',
     },
     legend: { orientation: 'h', y: -0.15 },
     margin: { l: 60, r: 20, t: 10, b: 60 },
   };
-  return (
-    <Plot
-      data={traces}
-      layout={layout}
-      config={DEFAULT_CONFIG}
-      style={{ width: '100%', height: 440 }}
-      useResizeHandler
-    />
-  );
+  return <PlotlyChart data={traces} layout={layout} config={DEFAULT_CONFIG} height={440} />;
 }
