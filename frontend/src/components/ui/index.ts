@@ -11,4 +11,4 @@ export type { ToastVariant, ToastOptions, ToastItem } from './Toast';
 export { Spinner, LoadingOverlay } from './Spinner';
 export { Tabs, TabList, Tab, TabPanel } from './Tabs';
 export { Skeleton, SkeletonText, SkeletonChart } from './Skeleton';
-export { Tooltip } from './Tooltip';
+export { Tooltip, HelpTip } from './Tooltip';

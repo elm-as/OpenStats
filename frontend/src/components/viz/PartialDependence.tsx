@@ -57,10 +57,10 @@ export default function PartialDependence({
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: features[0]?.name || 'Variable' } },
-      yaxis: { title: { text: yLabel } },
+      xaxis: { title: { text: features[0]?.name || 'Variable' }, automargin: true },
+      yaxis: { title: { text: yLabel }, automargin: true },
       showlegend: features.length > 1,
-      legend: { orientation: 'h', y: -0.15 },
+      legend: { orientation: 'h', y: -0.22, x: 0.5, xanchor: 'center' },
     };
 
     return { traces: tr, layout: lay };

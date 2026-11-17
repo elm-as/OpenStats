@@ -24,10 +24,12 @@ import { useCanvasWorkspace } from './useCanvasWorkspace';
 import { CanvasActionToolbar } from './CanvasActionToolbar';
 import { CanvasPipelineResultsPanel } from './CanvasPipelineResultsPanel';
 import { CanvasShareModal } from './CanvasShareModal';
+import { useCurrentTheme } from '../viz/PlotlyBase';
 
 export { nodeTypes, edgeTypes };
 
 function DnDFlow() {
+  const isLight = useCurrentTheme() === 'light';
   const [selectedResultNode, setSelectedResultNode] = useState<{
     id: string;
     type: string;
@@ -57,12 +59,12 @@ function DnDFlow() {
     },
   });
 
-  const history = useCanvasHistory(
-    graph.nodes,
-    graph.setNodes,
-    graph.edges,
-    graph.setEdges
-  );
+  const history = useCanvasHistory({
+    nodes: graph.nodes,
+    setNodes: graph.setNodes,
+    edges: graph.edges,
+    setEdges: graph.setEdges,
+  });
 
   const { computeAutoLayout } = useCanvasLayout();
 
@@ -129,90 +131,117 @@ function DnDFlow() {
   });
 
   return (
-    <div className="flex h-full min-h-0 w-full text-surface-50">
+    <div
+      className="flex h-full min-h-0 w-full"
+      style={{ background: 'var(--ui-bg-app)', color: 'var(--ui-text)' }}
+    >
       <Sidebar />
-      <div className="flex-1 h-full relative" ref={graph.reactFlowWrapper}>
-        <TemplateSelector onSelect={graph.loadTemplate} />
-
-        {/* Barre de recherche de nœuds */}
-        <CanvasSearchBar
-          nodes={graph.nodes}
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          onSelectNode={handleSelectSearchNode}
-        />
-
-        <ReactFlow
-          nodes={graph.nodes}
-          edges={graph.edges}
-          onNodesChange={graph.onNodesChange}
-          onEdgesChange={graph.onEdgesChange}
-          onConnect={params => {
-            history.takeSnapshot();
-            graph.onConnect(params);
-          }}
-          onEdgeDoubleClick={(_, edge) => {
-            history.takeSnapshot();
-            graph.setEdges(eds => eds.filter(e => e.id !== edge.id));
-          }}
-          onInit={graph.setReactFlowInstance}
-          onDrop={e => {
-            const file = e.dataTransfer.files?.[0];
-            if (file && (file.name.endsWith('.openstats') || file.name.endsWith('.json'))) {
-              e.preventDefault();
-              workspace.importWorkspaceFromFile(file);
-              return;
-            }
-            history.takeSnapshot();
-            graph.onDrop(e);
-          }}
-          onDragOver={graph.onDragOver}
-          nodeTypes={nodeTypes as any}
-          edgeTypes={edgeTypes as any}
-          fitView
-          snapToGrid={true}
-          snapGrid={[15, 15]}
-          className="bg-surface-950"
-          defaultEdgeOptions={{
-            type: 'animatedDataEdge',
-            style: { stroke: '#38bdf8', strokeWidth: 2, opacity: 0.5 },
+      <div className="flex-1 h-full flex flex-col min-w-0 relative" ref={graph.reactFlowWrapper}>
+        <div
+          className="ui-panel shrink-0 flex items-center justify-between gap-2 px-3 z-20"
+          style={{
+            minHeight: 40,
+            borderRadius: 0,
+            borderTop: 'none',
+            borderLeft: 'none',
+            borderRight: 'none',
+            background: 'var(--ui-bg-panel)',
           }}
         >
-          <Background color="#1e293b" gap={24} size={1.5} />
-          <Controls className="!bg-surface-800/90 !border !border-white/[0.08] !rounded-xl !shadow-2xl [&>button]:!bg-transparent [&>button]:!border-white/[0.06] [&>button]:!text-surface-300 [&>button:hover]:!bg-white/10 [&>button]:!rounded-lg" />
-          {showMiniMap && (
-            <MiniMap
-              nodeStrokeColor="#ffffff"
-              nodeColor="#0f172a"
-              maskColor="rgba(15,23,42,0.6)"
-              className="!bg-surface-900/95 !border !border-white/[0.1] !rounded-xl !shadow-lg overflow-hidden"
-              style={{ left: 68, bottom: 20 }}
-            />
-          )}
-        </ReactFlow>
+          <TemplateSelector onSelect={graph.loadTemplate} />
+          <CanvasActionToolbar
+            nodesCount={graph.nodes.length}
+            isRunning={pipeline.isRunning}
+            isSharing={exporter.isSharing}
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+            showMiniMap={showMiniMap}
+            onUndo={history.undo}
+            onRedo={history.redo}
+            onAutoLayout={handleAutoLayout}
+            onToggleMiniMap={() => setShowMiniMap(prev => !prev)}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            onExportWorkspace={() => workspace.exportWorkspace()}
+            onImportWorkspace={workspace.importWorkspaceFromFile}
+            onOpenGlobalCodeModal={exporter.handleOpenGlobalCodeModal}
+            onSaveTemplate={exporter.handleSaveTemplate}
+            onShare={exporter.handleShare}
+            onRun={pipeline.handleRun}
+          />
+        </div>
 
-        <CanvasActionToolbar
-          nodesCount={graph.nodes.length}
-          isRunning={pipeline.isRunning}
-          isSharing={exporter.isSharing}
-          canUndo={history.canUndo}
-          canRedo={history.canRedo}
-          showMiniMap={showMiniMap}
-          onUndo={history.undo}
-          onRedo={history.redo}
-          onAutoLayout={handleAutoLayout}
-          onToggleMiniMap={() => setShowMiniMap(prev => !prev)}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          onExportWorkspace={() => workspace.exportWorkspace()}
-          onImportWorkspace={workspace.importWorkspaceFromFile}
-          onOpenGlobalCodeModal={exporter.handleOpenGlobalCodeModal}
-          onSaveTemplate={exporter.handleSaveTemplate}
-          onShare={exporter.handleShare}
-          onRun={pipeline.handleRun}
-        />
+        <div className="flex-1 min-h-0 relative">
+          <CanvasSearchBar
+            nodes={graph.nodes}
+            isOpen={isSearchOpen}
+            onClose={() => setIsSearchOpen(false)}
+            onSelectNode={handleSelectSearchNode}
+          />
+
+          <ReactFlow
+            nodes={graph.nodes}
+            edges={graph.edges}
+            onNodesChange={graph.onNodesChange}
+            onEdgesChange={graph.onEdgesChange}
+            onConnect={params => {
+              history.takeSnapshot();
+              graph.onConnect(params);
+            }}
+            onEdgeDoubleClick={(_, edge) => {
+              history.takeSnapshot();
+              graph.setEdges(eds => eds.filter(e => e.id !== edge.id));
+            }}
+            onInit={graph.setReactFlowInstance}
+            onDrop={e => {
+              const file = e.dataTransfer.files?.[0];
+              if (file && (file.name.endsWith('.openstats') || file.name.endsWith('.json'))) {
+                e.preventDefault();
+                workspace.importWorkspaceFromFile(file);
+                return;
+              }
+              history.takeSnapshot();
+              graph.onDrop(e);
+            }}
+            onDragOver={graph.onDragOver}
+            nodeTypes={nodeTypes as any}
+            edgeTypes={edgeTypes as any}
+            fitView
+            snapToGrid={true}
+            snapGrid={[15, 15]}
+            style={{ background: 'var(--ui-bg-app)' }}
+            defaultEdgeOptions={{
+              type: 'animatedDataEdge',
+              style: { stroke: isLight ? '#0284c7' : '#38bdf8', strokeWidth: 2, opacity: 0.65 },
+            }}
+          >
+            <Background color={isLight ? '#cbd5e1' : '#1e293b'} gap={24} size={1.2} />
+            <Controls
+              className="!rounded-[var(--ui-radius)] !shadow-sm"
+              style={{
+                background: 'var(--ui-bg-panel)',
+                border: '1px solid var(--ui-border-strong)',
+              }}
+            />
+            {showMiniMap && (
+              <MiniMap
+                nodeStrokeColor={isLight ? '#64748b' : '#94a3b8'}
+                nodeColor={isLight ? '#ffffff' : '#1e293b'}
+                maskColor={isLight ? 'rgba(241,245,249,0.72)' : 'rgba(15,23,42,0.6)'}
+                className="!rounded-[var(--ui-radius)] overflow-hidden"
+                style={{
+                  left: 56,
+                  bottom: 16,
+                  background: 'var(--ui-bg-panel)',
+                  border: '1px solid var(--ui-border-strong)',
+                }}
+              />
+            )}
+          </ReactFlow>
+        </div>
 
         <CanvasShareModal
           shareUrl={exporter.shareUrl}
+          copied={exporter.copied}
           onClose={() => exporter.setShareUrl(null)}
           onCopy={exporter.copyToClipboard}
         />

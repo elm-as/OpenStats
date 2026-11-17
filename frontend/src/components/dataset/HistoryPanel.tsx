@@ -53,114 +53,99 @@ export default function HistoryPanel({ datasetId }: Props) {
   const [restoreVersion, { isLoading: restoring }] = useRestoreVersionMutation();
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { key: 'history', label: 'Analyses', icon: <Activity size={16} />, count: history?.length },
-    { key: 'versions', label: 'Versions', icon: <GitBranch size={16} />, count: versions?.length },
-    { key: 'audit', label: 'Audit', icon: <FileText size={16} />, count: audit?.length },
+    { key: 'history', label: 'Analyses', icon: <Activity size={14} />, count: history?.length },
+    { key: 'versions', label: 'Versions', icon: <GitBranch size={14} />, count: versions?.length },
+    { key: 'audit', label: 'Audit', icon: <FileText size={14} />, count: audit?.length },
   ];
 
   return (
-    <div className="card shadow-sm border border-white/5 !p-6">
-      <h3 className="text-lg font-semibold text-strong mb-4 flex items-center gap-2">
-        <Clock size={20} className="text-accent-400" />
-        Historique & Traçabilité
-      </h3>
+    <div className="ui-panel overflow-hidden">
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <Clock size={14} style={{ color: 'var(--ui-accent)' }} />
+          Historique &amp; traçabilité
+        </span>
+      </header>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-4 bg-white/[0.02] border border-white/5 rounded-lg p-1">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              tab === t.key
-                ? 'bg-accent-500/10 text-accent-300 shadow-sm border border-accent-500/20'
-                : 'text-muted hover:text-default'
-            }`}
-          >
-            {t.icon}
-            {t.label}
-            {t.count != null && (
-              <span className="ml-1 bg-white/10 text-default text-xs px-1.5 py-0.5 rounded-full">
-                {t.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      <div className="p-3 space-y-3">
+        <div
+          className="flex gap-1 p-1 rounded-[var(--ui-radius-sm)]"
+          style={{ background: 'var(--ui-bg-sunken)', border: '1px solid var(--ui-border)' }}
+        >
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`ui-btn flex-1 justify-center text-xs ${tab === t.key ? 'ui-btn-primary' : 'ui-btn-ghost'}`}
+            >
+              {t.icon}
+              {t.label}
+              {t.count != null && <span className="ui-tag ui-num">{t.count}</span>}
+            </button>
+          ))}
+        </div>
 
-      {/* Content */}
-      <div className="max-h-[500px] overflow-y-auto">
-        {tab === 'history' && (
-          <HistoryTab entries={history ?? []} expandedId={expandedId} onToggle={setExpandedId} />
-        )}
-        {tab === 'versions' && (
-          <VersionsTab
-            versions={versions ?? []}
-            onRestore={(v) => restoreVersion({ id: datasetId, versionNumber: v })}
-            restoring={restoring}
-          />
-        )}
-        {tab === 'audit' && <AuditTab entries={audit ?? []} />}
+        <div className="max-h-[500px] overflow-y-auto ui-scroll">
+          {tab === 'history' && (
+            <HistoryTab entries={history ?? []} expandedId={expandedId} onToggle={setExpandedId} />
+          )}
+          {tab === 'versions' && (
+            <VersionsTab
+              versions={versions ?? []}
+              onRestore={v => restoreVersion({ id: datasetId, versionNumber: v })}
+              restoring={restoring}
+            />
+          )}
+          {tab === 'audit' && <AuditTab entries={audit ?? []} />}
+        </div>
       </div>
     </div>
   );
 }
 
-function HistoryTab({
-  entries, expandedId, onToggle,
-}: {
+function HistoryTab(props: {
   entries: AnalysisHistoryEntry[];
   expandedId: string | null;
   onToggle: (id: string | null) => void;
 }) {
-  if (entries.length === 0) {
-    return <EmptyState message="Aucune analyse exécutée." />;
-  }
+  if (props.entries.length === 0) return <EmptyState message="Aucune analyse exécutée." />;
 
   return (
-    <div className="space-y-2">
-      {entries.map(e => {
-        const expanded = expandedId === e.id;
+    <div className="space-y-1.5">
+      {props.entries.map(e => {
+        const expanded = props.expandedId === e.id;
         return (
-          <div key={e.id} className="border border-white/5 rounded-lg overflow-hidden bg-white/[0.01]">
+          <div key={e.id} className="ui-panel overflow-hidden">
             <button
-              onClick={() => onToggle(expanded ? null : e.id)}
-              className="w-full flex items-center gap-3 p-3 hover:bg-white/[0.02] text-left"
+              onClick={() => props.onToggle(expanded ? null : e.id)}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-white/[0.02]"
             >
               <StatusIcon status={e.status} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-strong truncate">
+                <p className="text-xs font-semibold truncate" style={{ color: 'var(--ui-text)' }}>
                   {ANALYSIS_LABELS[e.analysis_type] ?? e.analysis_type}
                 </p>
-                <p className="text-xs text-muted">
+                <p className="text-[11px] ui-t-muted ui-num">
                   {formatDate(e.created_at)}
                   {e.duration_ms != null && ` · ${formatDuration(e.duration_ms)}`}
                   {` · v${e.dataset_version}`}
                 </p>
               </div>
-              {expanded ? <ChevronDown size={16} className="text-faint" /> : <ChevronRight size={16} className="text-faint" />}
+              {expanded ? <ChevronDown size={14} className="ui-t-faint" /> : <ChevronRight size={14} className="ui-t-faint" />}
             </button>
             {expanded && (
-              <div className="px-3 pb-3 pt-1 border-t border-white/5 space-y-2">
+              <div className="px-3 pb-2.5 pt-2 space-y-2" style={{ borderTop: '1px solid var(--ui-border)' }}>
                 {e.parameters && Object.keys(e.parameters).length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-muted mb-1">Paramètres</p>
-                    <pre className="text-xs bg-white/[0.02] border border-white/5 text-default p-2 rounded overflow-x-auto">
-                      {JSON.stringify(e.parameters, null, 2)}
-                    </pre>
-                  </div>
+                  <pre className="text-[11px] p-2 rounded-[var(--ui-radius-sm)] overflow-x-auto ui-mono" style={{ background: 'var(--ui-bg-sunken)', border: '1px solid var(--ui-border)' }}>
+                    {JSON.stringify(e.parameters, null, 2)}
+                  </pre>
                 )}
                 {e.result_summary && (
-                  <div>
-                    <p className="text-xs font-medium text-muted mb-1">Résumé</p>
-                    <pre className="text-xs bg-white/[0.02] border border-white/5 text-default p-2 rounded overflow-x-auto">
-                      {JSON.stringify(e.result_summary, null, 2)}
-                    </pre>
-                  </div>
+                  <pre className="text-[11px] p-2 rounded-[var(--ui-radius-sm)] overflow-x-auto ui-mono" style={{ background: 'var(--ui-bg-sunken)', border: '1px solid var(--ui-border)' }}>
+                    {JSON.stringify(e.result_summary, null, 2)}
+                  </pre>
                 )}
-                {e.error_message && (
-                  <p className="text-xs text-red-500 mt-1">{e.error_message}</p>
-                )}
+                {e.error_message && <p className="text-xs ui-t-danger">{e.error_message}</p>}
               </div>
             )}
           </div>
@@ -170,49 +155,43 @@ function HistoryTab({
   );
 }
 
-function VersionsTab({
-  versions, onRestore, restoring,
-}: {
+function VersionsTab(props: {
   versions: DatasetVersion[];
   onRestore: (vn: number) => void;
   restoring: boolean;
 }) {
-  if (versions.length === 0) {
-    return <EmptyState message="Aucune version disponible." />;
-  }
+  if (props.versions.length === 0) return <EmptyState message="Aucune version disponible." />;
 
   return (
-    <div className="space-y-2">
-      {[...versions].reverse().map((v, i) => (
+    <div className="space-y-1.5">
+      {[...props.versions].reverse().map((v, i) => (
         <div
           key={v.id}
-          className={`flex items-center gap-3 p-3 rounded-lg border ${
-            i === 0 ? 'border-accent-500/30 bg-accent-500/5' : 'border-white/5 bg-white/[0.01]'
-          }`}
+          className="ui-panel flex items-center gap-3 px-3 py-2"
+          style={i === 0 ? { borderColor: 'var(--ui-accent)', background: 'var(--ui-accent-soft)' } : undefined}
         >
-          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-500/10 text-accent-400 flex items-center justify-center text-sm font-bold border border-accent-500/20">
-            {v.version_number}
-          </div>
+          <span className="ui-tag ui-tag-accent ui-num shrink-0 font-bold">v{v.version_number}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-strong">
-              {v.label === 'raw' ? 'Données brutes' :
-               v.label === 'cleaned' ? 'Nettoyé' :
-               v.label === 'transformed' ? 'Transformé' :
-               v.label === 'restored' ? 'Restauré' : v.label}
-              {i === 0 && <span className="ml-2 text-xs text-accent-400">(actuelle)</span>}
+            <p className="text-xs font-semibold" style={{ color: 'var(--ui-text)' }}>
+              {v.label === 'raw' ? 'Données brutes'
+                : v.label === 'cleaned' ? 'Nettoyé'
+                : v.label === 'transformed' ? 'Transformé'
+                : v.label === 'restored' ? 'Restauré'
+                : v.label}
+              {i === 0 && <span className="ml-1.5 ui-t-accent">(actuelle)</span>}
             </p>
-            <p className="text-xs text-muted">
-              {v.rows} × {v.columns} · {formatDate(v.created_at)}
+            <p className="text-[11px] ui-t-muted ui-num">
+              {v.rows.toLocaleString('fr-FR')} × {v.columns} · {formatDate(v.created_at)}
             </p>
-            {v.description && <p className="text-xs text-faint mt-0.5">{v.description}</p>}
+            {v.description && <p className="text-[11px] ui-t-faint mt-0.5">{v.description}</p>}
           </div>
           {i > 0 && (
             <button
-              onClick={() => onRestore(v.version_number)}
-              disabled={restoring}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-accent-300 bg-accent-500/10 hover:bg-accent-500/20 rounded-md transition-colors disabled:opacity-50 border border-accent-500/20"
+              onClick={() => props.onRestore(v.version_number)}
+              disabled={props.restoring}
+              className="ui-btn ui-focusable text-xs shrink-0"
             >
-              {restoring ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+              {props.restoring ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
               Restaurer
             </button>
           )}
@@ -223,57 +202,45 @@ function VersionsTab({
 }
 
 function AuditTab({ entries }: { entries: AuditLogEntry[] }) {
-  if (entries.length === 0) {
-    return <EmptyState message="Aucune action enregistrée." />;
-  }
+  if (entries.length === 0) return <EmptyState message="Aucune action enregistrée." />;
 
   return (
-    <div className="relative pl-6">
-      <div className="absolute left-2.5 top-0 bottom-0 w-px bg-white/10" />
-      <div className="space-y-3">
-        {entries.map(e => (
-          <div key={e.id} className="relative">
-            <div className="absolute -left-[14px] top-1.5 w-2.5 h-2.5 rounded-full bg-accent-500 border-2 border-surface-950" />
-            <div className="bg-white/[0.01] border border-white/5 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-strong">
-                  {ACTION_LABELS[e.action] ?? e.action}
-                </span>
-                {e.version_before != null && e.version_after != null && (
-                  <span className="text-xs text-muted">
-                    v{e.version_before} → v{e.version_after}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted mt-0.5">{formatDate(e.created_at)}</p>
-              {e.parameters && Object.keys(e.parameters).length > 0 && (
-                <div className="mt-1.5 text-xs text-muted">
-                  {Object.entries(e.parameters).map(([k, v]) => (
-                    <span key={k} className="inline-block mr-3">
-                      <span className="text-faint">{k}:</span>{' '}
-                      {typeof v === 'object' ? JSON.stringify(v) : String(v)}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+    <div className="space-y-1.5">
+      {entries.map(e => (
+        <div key={e.id} className="ui-panel px-3 py-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold" style={{ color: 'var(--ui-text)' }}>
+              {ACTION_LABELS[e.action] ?? e.action}
+            </span>
+            {e.version_before != null && e.version_after != null && (
+              <span className="ui-tag ui-num">v{e.version_before} → v{e.version_after}</span>
+            )}
+            <span className="ml-auto text-[11px] ui-t-muted ui-num">{formatDate(e.created_at)}</span>
           </div>
-        ))}
-      </div>
+          {e.parameters && Object.keys(e.parameters).length > 0 && (
+            <div className="mt-1 text-[11px] ui-t-muted flex flex-wrap gap-x-3 gap-y-0.5">
+              {Object.entries(e.parameters).map(([k, v]) => (
+                <span key={k}>
+                  <span className="ui-t-faint">{k}:</span>{' '}
+                  {typeof v === 'object' ? JSON.stringify(v) : String(v)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
 
 function StatusIcon({ status }: { status: string }) {
-  if (status === 'completed') return <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" />;
-  if (status === 'failed') return <XCircle size={18} className="text-red-500 flex-shrink-0" />;
-  return <Loader2 size={18} className="text-blue-500 animate-spin flex-shrink-0" />;
+  if (status === 'completed') return <CheckCircle2 size={15} className="shrink-0" style={{ color: 'var(--ui-success)' }} />;
+  if (status === 'failed') return <XCircle size={15} className="shrink-0" style={{ color: 'var(--ui-danger)' }} />;
+  return <Loader2 size={15} className="animate-spin shrink-0" style={{ color: 'var(--ui-accent)' }} />;
 }
 
 function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="text-center py-8 text-muted text-sm">{message}</div>
-  );
+  return <div className="text-center py-6 ui-t-muted text-xs">{message}</div>;
 }
 
 function formatDate(iso: string): string {

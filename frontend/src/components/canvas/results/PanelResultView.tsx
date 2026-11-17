@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid3x3, Scale, Layers } from 'lucide-react';
-import { Section, KpiCard, DataTable } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable } from './ResultAtoms';
 import { PlotlyChart } from '../../viz/PlotlyBase';
 
 /**
@@ -36,32 +36,28 @@ export const PanelResultView = ({ resultData }: { resultData: any }) => {
         icon={Grid3x3}
         color="#d97706"
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
-          <KpiCard label="Entités" value={resultData.n_entities} color="#d97706" />
-          <KpiCard label="Observations" value={resultData.n_observations} color="#0284c7" />
-          <KpiCard
-            label="Panel cylindré"
-            value={resultData.is_balanced ? 'oui' : 'non'}
-            color="#059669"
-          />
-          <KpiCard label="R² within" value={fe.r2_within} color="#0d9488" />
-        </div>
-        <p className="text-[11px] text-[var(--ui-text-muted)] mt-3 leading-relaxed">
-          Entité : <span className="text-[var(--ui-text-primary)] font-medium">{resultData.entity_column}</span> · Période :{' '}
-          <span className="text-[var(--ui-text-primary)] font-medium">{resultData.time_column}</span>
+        <SummaryStrip
+          items={[
+            { label: 'Entités', value: resultData.n_entities },
+            { label: 'Observations', value: resultData.n_observations },
+            { label: 'Panel cylindré', value: resultData.is_balanced ? 'oui' : 'non', tone: resultData.is_balanced ? 'success' : 'neutral' },
+            { label: 'R² within', value: fe.r2_within },
+          ]}
+        />
+        <p className="text-[11px] ui-t-muted mt-2.5 leading-relaxed">
+          Entité : <span className="font-medium text-[var(--ui-text)]">{resultData.entity_column}</span> · Période :{' '}
+          <span className="font-medium text-[var(--ui-text)]">{resultData.time_column}</span>
         </p>
       </Section>
 
       <Section title="Test de Hausman" icon={Scale} color="#0284c7">
-        <div className="grid grid-cols-3 gap-3 ui-num">
-          <KpiCard label="χ²" value={hausman.statistic} color="#0284c7" />
-          <KpiCard label="p-valeur" value={hausman.p_value} color="#dc2626" />
-          <KpiCard
-            label="Modèle retenu"
-            value={prefereFE ? 'Effets fixes' : 'Effets aléatoires'}
-            color="#059669"
-          />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'χ²', value: hausman.statistic },
+            { label: 'p-valeur', value: hausman.p_value },
+            { label: 'Modèle retenu', value: prefereFE ? 'Effets fixes' : 'Effets aléatoires', tone: 'success' },
+          ]}
+        />
         {hausman.conclusion && (
           <p className="text-[11px] text-[var(--ui-text-secondary)] mt-3 leading-relaxed">{hausman.conclusion}</p>
         )}

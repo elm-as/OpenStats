@@ -189,7 +189,7 @@ export function GrangerNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Causalité de Granger" hasInput badge="Temporal">
+    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Causalité de Granger" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Matrice de dépendances causales directionnelles entre séries temporelles.
       </div>
@@ -210,7 +210,7 @@ export function CointegrationNode({ id, data }: NodeProps<Node<CanvasNodeData>>)
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Test de Cointégration (Johansen)" hasInput badge="Temporal">
+    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Test de Cointégration (Johansen)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Détecte l'existence d'une relation d'équilibre à long terme entre plusieurs séries I(1).
       </div>
@@ -227,7 +227,7 @@ export function TSDecompositionNode({ id, data }: NodeProps<Node<CanvasNodeData>
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#f59e0b" icon={LineChart} title="Décomposition STL / Saisonnière" hasInput badge="Temporal">
+    <NodeShell id={id} data={data} color="#f59e0b" icon={LineChart} title="Décomposition STL / Saisonnière" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Isoler la tendance, la saisonnalité et le bruit résiduel d'une série temporelle.
       </div>
@@ -248,7 +248,7 @@ export function ChowTestNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Test de Rupture (Chow)" hasInput badge="Économétrie">
+    <NodeShell id={id} data={data} color="#f59e0b" icon={Shuffle} title="Test de Rupture (Chow)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Test d'instabilité structurelle des coefficients avant/après un choc ou une date clé.
       </div>

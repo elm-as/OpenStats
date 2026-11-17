@@ -3,10 +3,10 @@ import { useRunTimeSeriesMutation } from '../../store/api';
 import type { TimeSeriesResults, DataCapabilities } from '../../types';
 import {
   TrendingUp, Activity, ArrowLeft, Play, CheckCircle2,
-  AlertTriangle, BarChart3, Trophy,
+  AlertTriangle, Trophy,
 } from 'lucide-react';
 import { TSForecast, TSDecomposition, ACFPlot, QQPlot } from '../viz';
-import { Card, Badge, Button, Section, Stat, StatGrid } from '../ui';
+import { Card, Badge, Button, Section } from '../ui';
 
 interface Props {
   datasetId: string;
@@ -15,13 +15,8 @@ interface Props {
   onBack: () => void;
 }
 
-export default function TimeSeriesPanel({
-  datasetId,
-  capabilities: _caps,
-  configValues,
-  onBack,
-}: Props) {
-  void _caps;
+export default function TimeSeriesPanel(props: Props) {
+  const { datasetId, configValues, onBack } = props;
   const [runTimeSeries, { isLoading }] = useRunTimeSeriesMutation();
   const [results, setResults] = useState<TimeSeriesResults | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +56,7 @@ export default function TimeSeriesPanel({
       <div className="section">
         <div className="section-header">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-accent-400" />
+            <TrendingUp className="w-4 h-4 text-accent-400" />
             <h3 className="section-title">Séries temporelles</h3>
           </div>
           <Button variant="secondary" size="sm" onClick={onBack} icon={<ArrowLeft className="w-4 h-4" />}>
@@ -70,8 +65,8 @@ export default function TimeSeriesPanel({
         </div>
 
         <Card>
-          <p className="text-default text-sm mb-4">
-            Analyse de <code className="text-accent-300 text-xs">{valueCol}</code> en fonction de{' '}
+          <p className="text-default text-sm mb-4 ui-num">
+            Analyse de <code className="text-accent-300 text-xs">{valueCol}</code> selon{' '}
             <code className="text-accent-300 text-xs">{dateCol}</code> — horizon :{' '}
             <Badge variant="info">{forecastSteps} pas</Badge>
           </p>
@@ -90,9 +85,9 @@ export default function TimeSeriesPanel({
 
   if (isLoading) {
     return (
-      <Card className="text-center py-12">
-        <div className="animate-spin w-8 h-8 border-4 border-accent-500/30 border-t-accent-400 rounded-full mx-auto" />
-        <p className="text-muted mt-4 text-sm">Analyse en cours… (ajustement ARIMA/SARIMA)</p>
+      <Card className="text-center py-10">
+        <div className="animate-spin w-6 h-6 border-2 border-accent-500 border-t-transparent rounded-full mx-auto" />
+        <p className="text-muted mt-3 text-xs">Analyse en cours… (ajustement ARIMA/SARIMA)</p>
       </Card>
     );
   }
@@ -112,7 +107,7 @@ export default function TimeSeriesPanel({
     <div className="section">
       <div className="section-header">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <h3 className="section-title">Résultats — Séries temporelles</h3>
         </div>
         <Button variant="secondary" size="sm" onClick={onBack} icon={<ArrowLeft className="w-4 h-4" />}>
@@ -120,33 +115,21 @@ export default function TimeSeriesPanel({
         </Button>
       </div>
 
-      {/* Overview KPIs */}
-      <StatGrid>
-        <Stat
-          label="Observations"
-          value={results.n_observations.toLocaleString()}
-          icon={<BarChart3 className="w-3 h-3" />}
-        />
-        <Stat
-          label="Fréquence"
-          value={results.frequency}
-          icon={<Activity className="w-3 h-3" />}
-        />
-        <Stat
-          label="Saisonnalité"
-          value={String(results.seasonal_period)}
-          icon={<TrendingUp className="w-3 h-3" />}
-          hint={results.seasonal_period > 1 ? 'détectée' : 'aucune'}
-        />
-        <Stat
-          label="Stationnarité"
-          value={results.stationarity.is_stationary ? 'OK' : 'Non'}
-          iconColor={results.stationarity.is_stationary ? 'text-emerald-400' : 'text-amber-400'}
-          icon={results.stationarity.is_stationary
-            ? <CheckCircle2 className="w-3 h-3" />
-            : <AlertTriangle className="w-3 h-3" />}
-        />
-      </StatGrid>
+      {/* Overview strip */}
+      <div className="ui-panel px-4 py-2.5 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-xs ui-num">
+        <span><span className="ui-t-muted">Observations :</span> <strong>{results.n_observations.toLocaleString()}</strong></span>
+        <span><span className="ui-t-muted">Fréquence :</span> <strong>{results.frequency}</strong></span>
+        <span>
+          <span className="ui-t-muted">Saisonnalité :</span>{' '}
+          <strong>{results.seasonal_period}</strong> ({results.seasonal_period > 1 ? 'détectée' : 'aucune'})
+        </span>
+        <span>
+          <span className="ui-t-muted">Stationnarité :</span>{' '}
+          <strong className={results.stationarity.is_stationary ? 'text-emerald-400' : 'text-amber-400'}>
+            {results.stationarity.is_stationary ? 'OK' : 'Non'}
+          </strong>
+        </span>
+      </div>
 
       {/* Stationnarité détails */}
       <Section
@@ -156,28 +139,28 @@ export default function TimeSeriesPanel({
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {'adf' in results.stationarity && !('error' in (results.stationarity.adf as any)) && (
-            <Card variant="flat">
-              <p className="text-xs text-muted uppercase tracking-wider mb-2">ADF — H₀ : non-stationnaire</p>
-              <div className="num text-sm space-y-1">
+            <div className="ui-panel p-3.5">
+              <p className="text-xs text-muted uppercase tracking-wider mb-1.5">ADF — H₀ : non-stationnaire</p>
+              <div className="ui-num text-xs space-y-1">
                 <div className="text-default">stat = <span className="text-strong">{(results.stationarity.adf as any).statistic}</span></div>
-                <div>p = <span className={(results.stationarity.adf as any).p_value < 0.05 ? 'text-emerald-300 font-bold' : 'text-red-300'}>
+                <div>p = <span className={(results.stationarity.adf as any).p_value < 0.05 ? 'text-emerald-400 font-bold' : 'text-red-400'}>
                   {(results.stationarity.adf as any).p_value < 0.001 ? '< 0.001' : (results.stationarity.adf as any).p_value}
                 </span></div>
               </div>
-              <p className="text-xs text-muted mt-2">{(results.stationarity.adf as any).interpretation}</p>
-            </Card>
+              <p className="text-xs text-muted mt-1.5">{(results.stationarity.adf as any).interpretation}</p>
+            </div>
           )}
           {'kpss' in results.stationarity && !('error' in (results.stationarity.kpss as any)) && (
-            <Card variant="flat">
-              <p className="text-xs text-muted uppercase tracking-wider mb-2">KPSS — H₀ : stationnaire</p>
-              <div className="num text-sm space-y-1">
+            <div className="ui-panel p-3.5">
+              <p className="text-xs text-muted uppercase tracking-wider mb-1.5">KPSS — H₀ : stationnaire</p>
+              <div className="ui-num text-xs space-y-1">
                 <div className="text-default">stat = <span className="text-strong">{(results.stationarity.kpss as any).statistic}</span></div>
-                <div>p = <span className={(results.stationarity.kpss as any).p_value > 0.05 ? 'text-emerald-300 font-bold' : 'text-red-300'}>
+                <div>p = <span className={(results.stationarity.kpss as any).p_value > 0.05 ? 'text-emerald-400 font-bold' : 'text-red-400'}>
                   {(results.stationarity.kpss as any).p_value}
                 </span></div>
               </div>
-              <p className="text-xs text-muted mt-2">{(results.stationarity.kpss as any).interpretation}</p>
-            </Card>
+              <p className="text-xs text-muted mt-1.5">{(results.stationarity.kpss as any).interpretation}</p>
+            </div>
           )}
         </div>
       </Section>
@@ -217,29 +200,29 @@ export default function TimeSeriesPanel({
                 <button
                   key={r.key}
                   onClick={() => setSelectedModel(r.key)}
-                  className={`w-full text-left p-3 rounded-lg border transition-all focus-ring ${
+                  className={`w-full text-left px-3 py-2.5 rounded border transition-colors ${
                     active
-                      ? 'border-accent-500/40 bg-accent-500/10 shadow-[0_0_0_1px_rgba(6,182,212,0.15)]'
-                      : 'border-white/8 bg-white/[0.02] hover:bg-white/5 hover:border-white/15'
+                      ? 'border-accent-500/40 bg-accent-500/10'
+                      : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {i === 0 ? (
-                        <Trophy className="w-4 h-4 text-amber-400" />
+                        <Trophy className="w-3.5 h-3.5 text-amber-400" />
                       ) : (
-                        <span className="w-4 text-center text-xs text-muted font-mono">#{i + 1}</span>
+                        <span className="w-4 text-center text-xs text-muted ui-num">#{i + 1}</span>
                       )}
                       <span
-                        className="font-medium"
+                        className="font-medium text-xs"
                         style={{ color: active ? 'var(--ui-accent-text)' : 'var(--ui-text)' }}
                       >
                         {r.model}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs num">
-                      <span className="text-muted">AIC <span className="text-default ui-num">{r.aic != null ? r.aic.toFixed(1) : '—'}</span></span>
-                      {r.bic != null && <span className="text-muted">BIC <span className="text-default ui-num">{r.bic.toFixed(1)}</span></span>}
+                    <div className="flex items-center gap-3 text-xs ui-num">
+                      <span className="text-muted">AIC <span className="text-default">{r.aic != null ? r.aic.toFixed(1) : '—'}</span></span>
+                      {r.bic != null && <span className="text-muted">BIC <span className="text-default">{r.bic.toFixed(1)}</span></span>}
                     </div>
                   </div>
                 </button>
@@ -262,15 +245,13 @@ export default function TimeSeriesPanel({
           icon={<TrendingUp className="w-4 h-4 text-accent-400" />}
         >
           <Card>
-            {/* Chips */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4 ui-num">
               {currentModelResult.aic != null && <Badge variant="info">AIC {currentModelResult.aic.toFixed(2)}</Badge>}
               {currentModelResult.bic != null && <Badge variant="info">BIC {currentModelResult.bic.toFixed(2)}</Badge>}
               {currentModelResult.residuals_mean != null && <Badge variant="neutral">Résidus μ {currentModelResult.residuals_mean.toFixed(4)}</Badge>}
               {currentModelResult.residuals_std != null && <Badge variant="neutral">Résidus σ {currentModelResult.residuals_std.toFixed(4)}</Badge>}
             </div>
 
-            {/* Plotly forecast */}
             {currentModelResult.history && currentModelResult.forecast && (
               <TSForecast
                 history={{
@@ -302,12 +283,11 @@ export default function TimeSeriesPanel({
             )}
           </Card>
 
-          {/* Diagnostics résidus */}
           {(currentModelResult as any).residuals && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
               {(currentModelResult as any).acf && (
                 <Card>
-                  <h4 className="text-strong mb-3">ACF des résidus</h4>
+                  <h4 className="text-strong mb-3 text-sm">ACF des résidus</h4>
                   <ACFPlot
                     values={(currentModelResult as any).acf}
                     sampleSize={results.n_observations}
@@ -316,7 +296,7 @@ export default function TimeSeriesPanel({
                 </Card>
               )}
               <Card>
-                <h4 className="text-strong mb-3">Q-Q plot des résidus</h4>
+                <h4 className="text-strong mb-3 text-sm">Q-Q plot des résidus</h4>
                 <QQPlot values={(currentModelResult as any).residuals} />
               </Card>
             </div>

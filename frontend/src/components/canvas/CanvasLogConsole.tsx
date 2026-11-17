@@ -15,11 +15,11 @@ interface CanvasLogConsoleProps {
   onClear: () => void;
 }
 
-export default function CanvasLogConsole({ logs, isRunning, onClear }: CanvasLogConsoleProps) {
+export default function CanvasLogConsole(props: CanvasLogConsoleProps) {
+  const { logs, isRunning, onClear } = props;
   const [isExpanded, setIsExpanded] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new logs
   useEffect(() => {
     if (scrollRef.current && isExpanded) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -29,57 +29,66 @@ export default function CanvasLogConsole({ logs, isRunning, onClear }: CanvasLog
   if (logs.length === 0 && !isRunning) return null;
 
   return (
-    <div className={`ui-panel fixed bottom-24 right-8 z-30 transition-all duration-300 w-[420px] md:w-[500px] shadow-2xl overflow-hidden ${isExpanded ? 'h-[240px]' : 'h-[44px]'}`}>
+    <div
+      className={`ui-panel fixed bottom-16 right-4 z-30 transition-all duration-200 w-[420px] md:w-[480px] overflow-hidden ${
+        isExpanded ? 'h-[230px]' : 'h-[40px]'
+      }`}
+    >
       {/* Header */}
-      <div 
+      <div
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between px-4 py-2.5 bg-white/[0.03] border-b border-white/[0.06] cursor-pointer select-none hover:bg-white/[0.05] transition-colors"
+        className="flex items-center justify-between px-3.5 py-2 border-b cursor-pointer select-none"
+        style={{ borderColor: 'var(--ui-border)', background: 'var(--ui-bg-sunken)' }}
       >
-        <div className="flex items-center gap-2.5 text-xs font-bold text-surface-200">
-          <Terminal size={15} className="text-accent-400" />
-          <span>Console de Logs Live</span>
+        <div className="flex items-center gap-2 text-xs font-bold text-[var(--ui-text)] ui-num">
+          <Terminal size={14} className="text-accent-400" />
+          <span>Logs d'exécution</span>
           {isRunning ? (
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-accent-400 bg-accent-500/10 px-2 py-0.5 rounded-full border border-accent-500/20">
+            <span className="flex items-center gap-1 text-[11px] font-semibold text-accent-400">
               <Loader2 size={11} className="animate-spin" /> En cours...
             </span>
           ) : (
-            <span className="text-[10px] text-surface-400 font-mono">({logs.length} logs)</span>
+            <span className="text-[10px] ui-t-muted">({logs.length})</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onClear();
             }}
-            className="p-1 text-surface-400 hover:text-surface-100 rounded-lg hover:bg-white/10 transition-colors"
+            className="ui-btn ui-btn-ghost p-1"
             title="Effacer la console"
           >
             <Trash2 size={13} />
           </button>
-          <button className="text-surface-400 hover:text-surface-100">
-            {isExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-          </button>
+          <span className="ui-t-muted">
+            {isExpanded ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+          </span>
         </div>
       </div>
 
       {/* Log Body */}
       {isExpanded && (
-        <div ref={scrollRef} className="p-3 h-[194px] overflow-y-auto space-y-1.5 font-mono text-[11px] leading-relaxed">
+        <div ref={scrollRef} className="p-3 h-[188px] overflow-y-auto space-y-1 font-mono text-[11px] leading-relaxed ui-num ui-scroll">
           {logs.length === 0 ? (
-            <div className="text-surface-500 text-center pt-8 text-xs italic">En attente des logs d'exécution...</div>
+            <div className="ui-t-muted text-center pt-8 text-xs italic">En attente des logs...</div>
           ) : (
             logs.map((log) => (
-              <div key={log.id} className="flex items-start gap-2 animate-in fade-in duration-150">
-                <span className="text-surface-500 shrink-0 text-[10px]">{log.time}</span>
-                {log.level === 'success' && <CheckCircle2 size={13} className="text-emerald-400 shrink-0 mt-0.5" />}
-                {log.level === 'error' && <XCircle size={13} className="text-rose-400 shrink-0 mt-0.5" />}
-                {log.level === 'info' && <Info size={13} className="text-accent-400 shrink-0 mt-0.5" />}
-                <span className={`${
-                  log.level === 'error' ? 'text-rose-300 font-semibold' :
-                  log.level === 'success' ? 'text-emerald-300' :
-                  'text-surface-200'
-                } break-all`}>
+              <div key={log.id} className="flex items-start gap-2">
+                <span className="ui-t-muted shrink-0 text-[10px]">{log.time}</span>
+                {log.level === 'success' && <CheckCircle2 size={12} className="text-emerald-400 shrink-0 mt-0.5" />}
+                {log.level === 'error' && <XCircle size={12} className="text-red-400 shrink-0 mt-0.5" />}
+                {log.level === 'info' && <Info size={12} className="text-accent-400 shrink-0 mt-0.5" />}
+                <span
+                  className={`break-all ${
+                    log.level === 'error'
+                      ? 'text-red-400 font-semibold'
+                      : log.level === 'success'
+                      ? 'text-emerald-400'
+                      : 'text-[var(--ui-text)]'
+                  }`}
+                >
                   {log.message}
                 </span>
               </div>

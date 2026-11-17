@@ -37,12 +37,8 @@ function formatCellValue(val: unknown, statType?: string): string {
  * Grille tableur haute densité inspirée des logiciels statistiques de bureau.
  * Affiche les observations avec index figé, en-têtes typés et chiffres tabulaires alignés.
  */
-export default function SpreadsheetWorkbench({
-  datasetId,
-  dictionary,
-  selectedColumn,
-  onSelectColumn,
-}: Props) {
+export default function SpreadsheetWorkbench(props: Props) {
+  const { datasetId, dictionary, selectedColumn } = props;
   const [cleaned, setCleaned] = useState(true);
   const [rowLimit, setRowLimit] = useState<number>(100);
 
@@ -105,11 +101,12 @@ export default function SpreadsheetWorkbench({
               {columns.map(col => {
                 const statType = typeMap[col];
                 const isSelected = selectedColumn === col;
+                const isNumericCol = statType === 'continu' || statType === 'discret';
                 return (
                   <th
                     key={col}
-                    onClick={() => onSelectColumn(isSelected ? '' : col)}
-                    className="cursor-pointer select-none transition-colors"
+                    onClick={() => props.onSelectColumn(isSelected ? '' : col)}
+                    className={`cursor-pointer select-none transition-colors ${isNumericCol ? 'ui-th-num' : ''}`}
                     style={{
                       minWidth: 120,
                       borderRight: '1px solid var(--ui-border)',
@@ -118,7 +115,7 @@ export default function SpreadsheetWorkbench({
                     }}
                     title={`${col} (${statType ?? preview.dtypes[col] ?? 'inconnu'})`}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className={`flex items-center justify-between gap-2 ${isNumericCol ? 'flex-row-reverse' : ''}`}>
                       <span className="truncate font-bold normal-case" style={{ fontSize: 'var(--ui-fs-sm)' }}>
                         {col}
                       </span>

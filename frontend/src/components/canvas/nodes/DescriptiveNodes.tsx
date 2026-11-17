@@ -4,7 +4,7 @@ import { CanvasNodeData, NodeShell, NodeLabel, NodeSelect, useNodeUpdate } from 
 
 export function DescriptiveNumericNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
-    <NodeShell id={id} data={data} color="#10b981" icon={BarChart2} title="Stats descriptives (numériques)" hasInput badge="Descriptif">
+    <NodeShell id={id} data={data} color="#10b981" icon={BarChart2} title="Stats descriptives (numériques)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Moyenne, médiane, écart-type, asymétrie (skewness), kurtosis, quartiles.
       </div>
@@ -14,7 +14,7 @@ export function DescriptiveNumericNode({ id, data }: NodeProps<Node<CanvasNodeDa
 
 export function DescriptiveCategoricalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
-    <NodeShell id={id} data={data} color="#14b8a6" icon={PieChart} title="Stats descriptives (catégorielles)" hasInput badge="Descriptif">
+    <NodeShell id={id} data={data} color="#14b8a6" icon={PieChart} title="Stats descriptives (catégorielles)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Mode, fréquences, cardinalité, distribution des modalités.
       </div>
@@ -39,7 +39,7 @@ export function CorrelationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 
 export function VIFNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
-    <NodeShell id={id} data={data} color="#f97316" icon={AlertTriangle} title="VIF (Multicolinéarité)" hasInput badge="Diagnostic">
+    <NodeShell id={id} data={data} color="#f97316" icon={AlertTriangle} title="VIF (Multicolinéarité)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Détection du Facteur d'Inflation de la Variance entre les variables explicatives. Seuil &gt; 5 = critique.
       </div>
@@ -50,7 +50,7 @@ export function VIFNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 export function BootstrapNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const handleChange = useNodeUpdate(id, data);
   return (
-    <NodeShell id={id} data={data} color="#a855f7" icon={TrendingUp} title="Bootstrap IC (0.95)" hasInput badge="Inférence">
+    <NodeShell id={id} data={data} color="#a855f7" icon={TrendingUp} title="Bootstrap IC (0.95)" hasInput>
       <div className="space-y-2">
         <div>
           <NodeLabel>Statistique</NodeLabel>
@@ -67,7 +67,7 @@ export function BootstrapNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 
 export function OutliersNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
-    <NodeShell id={id} data={data} color="#f97316" icon={AlertTriangle} title="Détection d'Anomalies" hasInput badge="Outliers">
+    <NodeShell id={id} data={data} color="#f97316" icon={AlertTriangle} title="Détection d'Anomalies" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Algorithme Isolation Forest pour identifier les observations aberrantes ou multidimensionnellement atypiques.
       </div>

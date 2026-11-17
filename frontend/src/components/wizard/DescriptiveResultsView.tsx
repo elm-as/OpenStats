@@ -70,18 +70,18 @@ export function DescriptiveResults({ stats, type }: { stats: DescriptiveStats; t
                   <td className="py-2 px-3 font-medium">{col}</td>
                   {isNumeric ? (
                     <>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{fmt(s.mean)}</td>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{fmt(s.median)}</td>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{fmt(s.std)}</td>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{fmt(s.skewness)}</td>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{fmt(s.kurtosis)}</td>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{(s.null_rate * 100).toFixed(1)}%</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{fmt(s.mean)}</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{fmt(s.median)}</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{fmt(s.std)}</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{fmt(s.skewness)}</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{fmt(s.kurtosis)}</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{(s.null_rate * 100).toFixed(1)}%</td>
                     </>
                   ) : (
                     <>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{s.cardinality ?? '—'}</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{s.cardinality ?? '—'}</td>
                       <td className="py-2 px-3 text-xs">{s.top_values ? Object.keys(s.top_values)[0] : '—'}</td>
-                      <td className="py-2 px-3 text-right ui-num text-xs">{(s.null_rate * 100).toFixed(1)}%</td>
+                      <td className="py-2 px-3 ui-td-num text-xs">{(s.null_rate * 100).toFixed(1)}%</td>
                       <td className="py-2 px-3 text-xs">
                         {s.top_values && (
                           <div className="flex flex-wrap gap-1">
@@ -108,7 +108,7 @@ export function DescriptiveResults({ stats, type }: { stats: DescriptiveStats; t
           data={[
             {
               x: entries.map(([, s]) => s.null_rate * 100),
-              y: entries.map(([col]) => (col.length > 25 ? col.slice(0, 25) + '…' : col)),
+              y: entries.map(([col]) => col),
               type: 'bar',
               orientation: 'h',
               showlegend: false,

@@ -41,13 +41,13 @@ export default function ROCCurve({ curves, height = 400, title = 'Courbe ROC' }:
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: 'Taux de faux positifs (FPR)' }, range: [0, 1] },
-      yaxis: { title: { text: 'Taux de vrais positifs (TPR)' }, range: [0, 1] },
+      xaxis: { title: { text: 'Taux de faux positifs (FPR)' }, range: [0, 1], automargin: true },
+      yaxis: { title: { text: 'Taux de vrais positifs (TPR)' }, range: [0, 1], automargin: true },
       legend: {
         x: 0.55,
         y: 0.15,
-        bgcolor: theme === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(20,24,54,0.6)',
-        bordercolor: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+        bgcolor: theme === 'light' ? 'rgba(255,255,255,0.88)' : 'rgba(21,26,36,0.82)',
+        bordercolor: theme === 'light' ? 'rgba(15,23,42,0.14)' : 'rgba(148,163,184,0.2)',
         borderwidth: 1,
       },
     };

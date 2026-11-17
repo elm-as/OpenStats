@@ -70,8 +70,19 @@ export default function ConfusionMatrix({
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: 'Prédit' }, side: 'bottom', showgrid: false },
-      yaxis: { title: { text: 'Réel' }, autorange: 'reversed', showgrid: false },
+      xaxis: {
+        title: { text: 'Prédit' },
+        side: 'bottom',
+        showgrid: false,
+        automargin: true,
+        tickangle: labels.length > 4 ? -30 : 0,
+      },
+      yaxis: {
+        title: { text: 'Réel' },
+        autorange: 'reversed',
+        showgrid: false,
+        automargin: true,
+      },
       margin: { l: 80, r: 60, t: 50, b: 60 },
     };
 

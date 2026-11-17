@@ -88,9 +88,9 @@ export default function TSForecast({
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: 'Temps' } },
-      yaxis: { title: { text: yLabel } },
-      legend: { orientation: 'h', y: -0.15 },
+      xaxis: { title: { text: 'Temps' }, automargin: true, tickangle: -20 },
+      yaxis: { title: { text: yLabel }, automargin: true },
+      legend: { orientation: 'h', y: -0.24, x: 0.5, xanchor: 'center' },
       shapes: separator ? [{
         type: 'line', xref: 'x', yref: 'paper',
         x0: separator, x1: separator, y0: 0, y1: 1,

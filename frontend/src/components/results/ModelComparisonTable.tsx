@@ -177,20 +177,20 @@ export function ModelComparisonTable({ ranking }: ModelComparisonTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto border border-white/10 rounded-lg">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-surface-700/70 text-surface-300 font-semibold border-b border-white/10">
+      <div className="overflow-x-auto rounded-[var(--ui-radius-sm)]" style={{ border: '1px solid var(--ui-border)' }}>
+        <table className="ui-table w-full text-left text-xs">
+          <thead>
             <tr>
-              <th className="p-3">Variable explicative</th>
+              <th className="p-2.5 text-left">Variable explicative</th>
               {linearModels.map((m, idx) => (
-                <th key={idx} className="p-3 text-right">
-                  <span className="text-cyan-300 block">({idx + 1})</span>
-                  <span className="text-surface-100 font-medium">{m.model_name}</span>
+                <th key={idx} className="ui-th-num p-2.5 text-right">
+                  <span className="ui-t-accent block">({idx + 1})</span>
+                  <span className="font-medium" style={{ color: 'var(--ui-text)' }}>{m.model_name}</span>
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5 font-mono text-surface-200">
+          <tbody className="ui-num">
             {allVars.map(v => (
               <React.Fragment key={v}>
                 <tr className="hover:bg-white/5">

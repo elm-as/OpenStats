@@ -39,8 +39,11 @@ export default function BoxPlot({
 
     const lay: Partial<Layout> = {
       title: title ? { text: title, font: { size: 14 } } : undefined,
-      [orientation === 'v' ? 'yaxis' : 'xaxis']: { title: { text: yLabel } },
-      [orientation === 'v' ? 'xaxis' : 'yaxis']: { tickangle: orientation === 'v' ? -20 : 0 },
+      [orientation === 'v' ? 'yaxis' : 'xaxis']: { title: { text: yLabel }, automargin: true },
+      [orientation === 'v' ? 'xaxis' : 'yaxis']: {
+        tickangle: orientation === 'v' ? -25 : 0,
+        automargin: true,
+      },
       showlegend: false,
     };
 

@@ -25,6 +25,19 @@ const ADVANCED_KEYS = new Set([
   'equivalenceTest',
 ]);
 
+export interface ExecuteAnalysisOptions {
+  analysis: AnalysisCapability;
+  config: Record<string, string>;
+  selectedModels: string[];
+  setWizardStep: (step: WizardStep) => void;
+}
+
+const TEST_TYPES: Record<string, string> = {
+  test_compare_means: 'compare_means',
+  test_correlation: 'correlation',
+  test_independence: 'independence',
+};
+
 export function useAnalysisExecutor(datasetId: string) {
   const [runAnalysis, { isLoading: analyzing }] = useRunAnalysisMutation();
   const [runTest, { isLoading: testing }] = useRunTestMutation();
@@ -52,80 +65,76 @@ export function useAnalysisExecutor(datasetId: string) {
     setAdvancedResult(null);
   };
 
-  const executeAnalysis = async (
-    analysis: AnalysisCapability,
-    config: Record<string, string>,
-    selectedModels: string[],
-    setWizardStep: (step: WizardStep) => void
-  ) => {
-    setError(null);
-    setWizardStep('results');
-
-    try {
-      if (analysis.key === 'descriptive_numeric' || analysis.key === 'descriptive_categorical') {
-        const result = await runAnalysis(datasetId).unwrap();
-        setDescriptiveStats(result.descriptive_stats as DescriptiveStats);
-        setCorrelations(null);
-        setVif([]);
-      } else if (analysis.key === 'correlation_pearson' || analysis.key === 'correlation_spearman') {
-        const result = await runAnalysis(datasetId).unwrap();
-        const method = analysis.key === 'correlation_pearson' ? 'pearson' : 'spearman';
-        setCorrelations((result.correlations as Record<string, CorrelationResult>)?.[method] || null);
-        setDescriptiveStats(null);
-        setVif([]);
-      } else if (analysis.key === 'vif') {
-        const result = await runAnalysis(datasetId).unwrap();
-        setVif(result.vif as typeof vif);
-        setDescriptiveStats(null);
-        setCorrelations(null);
-      } else if (analysis.key === 'test_compare_means') {
-        const result = await runTest({
-          id: datasetId,
-          config: { test_type: 'compare_means', group_col: config.group_col, value_col: config.value_col },
-        }).unwrap();
-        setTestResult(result);
-      } else if (analysis.key === 'test_correlation') {
-        const result = await runTest({
-          id: datasetId,
-          config: { test_type: 'correlation', col1: config.col1, col2: config.col2 },
-        }).unwrap();
-        setTestResult(result);
-      } else if (analysis.key === 'test_independence') {
-        const result = await runTest({
-          id: datasetId,
-          config: { test_type: 'independence', col1: config.col1, col2: config.col2 },
-        }).unwrap();
-        setTestResult(result);
-      } else if (analysis.key === 'test_stationarity') {
-        const result = await runStationarity({ id: datasetId, col: config.col }).unwrap();
-        setStationarityResult(result);
-        setTestResult(null);
-      } else if (analysis.key.startsWith('modeling_')) {
-        const targetCol = config.target_column;
-        if (!targetCol) {
-          setError('Variable cible requise');
-          return;
-        }
-        const res = await trainModels({
-          id: datasetId,
-          target_column: targetCol,
-          models: selectedModels.length > 0 ? selectedModels : undefined,
-          split_strategy: (config.split_strategy as any) || undefined,
-        }).unwrap();
-        setModelResults(res);
-      } else if (analysis.key === 'timeseries' || analysis.key === 'timeseries_multivariate') {
-        setWizardStep('results');
-      } else if (ADVANCED_KEYS.has(analysis.key)) {
-        const res = await runAdvancedAnalysis({
-          id: datasetId,
-          analysis_key: analysis.key,
-          params: config,
-        }).unwrap();
-        setAdvancedResult({ key: analysis.key, data: res.result });
+  const dispatchAnalysis = async (opts: ExecuteAnalysisOptions) => {
+    const { analysis, config, selectedModels, setWizardStep } = opts;
+    if (analysis.key === 'descriptive_numeric' || analysis.key === 'descriptive_categorical') {
+      const result = await runAnalysis(datasetId).unwrap();
+      setDescriptiveStats(result.descriptive_stats as DescriptiveStats);
+      setCorrelations(null);
+      setVif([]);
+      return;
+    }
+    if (analysis.key === 'correlation_pearson' || analysis.key === 'correlation_spearman') {
+      const result = await runAnalysis(datasetId).unwrap();
+      const method = analysis.key === 'correlation_pearson' ? 'pearson' : 'spearman';
+      setCorrelations((result.correlations as Record<string, CorrelationResult>)?.[method] || null);
+      setDescriptiveStats(null);
+      setVif([]);
+      return;
+    }
+    if (analysis.key === 'vif') {
+      const result = await runAnalysis(datasetId).unwrap();
+      setVif(result.vif as typeof vif);
+      setDescriptiveStats(null);
+      setCorrelations(null);
+      return;
+    }
+    if (TEST_TYPES[analysis.key]) {
+      const testType = TEST_TYPES[analysis.key];
+      const testConfig: Record<string, string> =
+        testType === 'compare_means'
+          ? { test_type: testType, group_col: config.group_col, value_col: config.value_col }
+          : { test_type: testType, col1: config.col1, col2: config.col2 };
+      setTestResult(await runTest({ id: datasetId, config: testConfig }).unwrap());
+      return;
+    }
+    if (analysis.key === 'test_stationarity') {
+      setStationarityResult(await runStationarity({ id: datasetId, col: config.col }).unwrap());
+      setTestResult(null);
+      return;
+    }
+    if (analysis.key.startsWith('modeling_')) {
+      if (!config.target_column) {
+        setError('Variable cible requise');
+        return;
       }
+      const res = await trainModels({
+        id: datasetId,
+        target_column: config.target_column,
+        models: selectedModels.length > 0 ? selectedModels : undefined,
+        split_strategy: (config.split_strategy as any) || undefined,
+      }).unwrap();
+      setModelResults(res);
+      return;
+    }
+    if (analysis.key === 'timeseries' || analysis.key === 'timeseries_multivariate') {
+      setWizardStep('results');
+      return;
+    }
+    if (ADVANCED_KEYS.has(analysis.key)) {
+      const res = await runAdvancedAnalysis({ id: datasetId, analysis_key: analysis.key, params: config }).unwrap();
+      setAdvancedResult({ key: analysis.key, data: res.result });
+    }
+  };
+
+  const executeAnalysis = async (opts: ExecuteAnalysisOptions) => {
+    setError(null);
+    opts.setWizardStep('results');
+    try {
+      await dispatchAnalysis(opts);
     } catch (err: any) {
       setError(err?.data?.error || err?.message || 'Erreur inconnue');
-      setWizardStep('results');
+      opts.setWizardStep('results');
     }
   };
 

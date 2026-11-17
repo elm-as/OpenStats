@@ -111,7 +111,7 @@ def stage_understand(df: pd.DataFrame) -> StageResult:
             kind,
             origin,
             f"{series.isna().mean():.1%}",
-            str(valid.nunique()),
+            int(valid.nunique()),
             str(_safe(example))[:26] if example is not None else "—",
         ])
 
@@ -172,7 +172,7 @@ def stage_quality(df: pd.DataFrame, target: str | None, is_timeseries: bool) -> 
                         [
                             i.title,
                             ", ".join(i.columns[:3]),
-                            f"{i.severity:.2f}",
+                            round(float(i.severity), 2),
                             "oui" if i.blocks_modeling else "non",
                         ]
                         for i in issues
@@ -208,7 +208,7 @@ def stage_univariate(df: pd.DataFrame) -> StageResult:
         kurt = float(sps.kurtosis(series)) if shaped else 0.0
         numeric_rows.append([
             col,
-            str(len(series)),
+            int(len(series)),
             _safe(series.mean()),
             _safe(series.std()),
             _safe(series.min()),
@@ -239,7 +239,7 @@ def stage_univariate(df: pd.DataFrame) -> StageResult:
         top = counts.index[0]
         categorical_rows.append([
             col,
-            str(counts.size),
+            int(counts.size),
             str(top)[:24],
             f"{counts.iloc[0] / counts.sum():.1%}",
         ])

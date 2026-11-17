@@ -91,11 +91,13 @@ function build(spec: ChartSpec): Built | null {
         }],
         layout: {
           showlegend: false,
-          margin: horizontal ? { l: 150, r: 16, t: 8, b: 36 } : { l: 46, r: 14, t: 10, b: 64 },
+          margin: horizontal ? { l: 180, r: 20, t: 10, b: 36 } : { l: 46, r: 14, t: 10, b: 64 },
           xaxis: horizontal ? {} : { tickangle: labels.length > 4 ? -30 : 0, automargin: true },
-          yaxis: horizontal ? { automargin: true, autorange: 'reversed' } : { title: { text: 'effectif' } },
+          yaxis: horizontal
+            ? { automargin: true, autorange: 'reversed', tickfont: { size: 11 } }
+            : { title: { text: 'effectif' } },
         },
-        height: horizontal ? Math.max(200, labels.length * 22 + 60) : 255,
+        height: horizontal ? Math.max(210, labels.length * 26 + 56) : 255,
       };
     }
 

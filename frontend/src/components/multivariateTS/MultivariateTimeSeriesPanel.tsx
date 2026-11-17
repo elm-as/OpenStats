@@ -49,7 +49,7 @@ export default function MultivariateTimeSeriesPanel({
     : [];
   const forecastSteps = parseInt(configValues.forecast_steps || '10', 10);
 
-  const mvRun = useMultivariateRun(datasetId, dateCol, valueCols, forecastSteps);
+  const mvRun = useMultivariateRun({ datasetId, dateCol, valueCols, forecastSteps });
 
   const perModelExploration = usePerModelExploration({
     datasetId,
@@ -147,12 +147,12 @@ export default function MultivariateTimeSeriesPanel({
 
   if (mvRun.isLoading) {
     return (
-      <div className="card p-12 text-center">
-        <div className="animate-spin w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full mx-auto" />
-        <p className="text-gray-600 mt-4 font-medium">
+      <div className="ui-panel p-10 text-center">
+        <div className="animate-spin w-7 h-7 border-2 border-accent-500 border-t-transparent rounded-full mx-auto" />
+        <p className="ui-t-secondary mt-3 text-sm font-medium">
           Estimation des modèles multivariés (VAR, VECM, ARDL, BVAR)…
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs ui-t-muted mt-1">
           Tests de stationnarité, cointégration et sélection optimale
         </p>
       </div>
@@ -167,15 +167,15 @@ export default function MultivariateTimeSeriesPanel({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="btn-secondary text-sm flex items-center gap-1.5">
-            <ArrowLeft className="w-4 h-4" /> Retour
+          <button onClick={onBack} className="ui-btn text-xs">
+            <ArrowLeft className="w-3.5 h-3.5" /> Retour
           </button>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary-600" />
+            <h3 className="text-base font-bold text-[var(--ui-text)] flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-accent-400" />
               Séries Temporelles Multivariées
             </h3>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs ui-t-muted ui-num">
               {mvRun.results.n_variables} variables • {mvRun.results.n_observations} observations •
               Horizon {forecastSteps}
             </p>
@@ -185,7 +185,7 @@ export default function MultivariateTimeSeriesPanel({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setExplorationMode('per_model')}
-            className="btn-secondary text-xs flex items-center gap-1.5"
+            className="ui-btn text-xs"
           >
             <Activity className="w-3.5 h-3.5 text-accent-400" />
             Mode exploration
@@ -193,17 +193,17 @@ export default function MultivariateTimeSeriesPanel({
           <button
             onClick={() => mvRun.handleRun()}
             disabled={mvRun.isLoading}
-            className="btn-secondary text-xs flex items-center gap-1.5"
+            className="ui-btn text-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${mvRun.isLoading ? 'animate-spin' : ''}`} />
             Recalculer
           </button>
           <div className="flex items-center gap-1 ml-2">
-            <span className="text-xs text-surface-400">Granularité:</span>
+            <span className="text-xs ui-t-muted">Granularité:</span>
             <select
               value={displayGranularity}
               onChange={e => setDisplayGranularity(e.target.value as any)}
-              className="text-xs"
+              className="ui-select text-xs"
             >
               <option value="auto">Auto</option>
               <option value="day">Jour</option>
@@ -215,7 +215,7 @@ export default function MultivariateTimeSeriesPanel({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200 pb-px overflow-x-auto">
+      <div className="flex gap-1 border-b pb-px overflow-x-auto" style={{ borderColor: 'var(--ui-border)' }}>
         {[
           { key: 'overview', label: "Vue d'ensemble", icon: TrendingUp },
           { key: 'granger', label: 'Causalité de Granger', icon: GitCompare },
@@ -226,17 +226,18 @@ export default function MultivariateTimeSeriesPanel({
           { key: 'diagnostics', label: 'Diagnostics Résidus', icon: CheckCircle2 },
         ].map(tab => {
           const Icon = tab.icon;
+          const active = activeTab === tab.key;
           return (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
-                activeTab === tab.key
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 whitespace-nowrap transition-colors ${
+                active
+                  ? 'border-accent-400 text-accent-400'
+                  : 'border-transparent ui-t-muted hover:text-[var(--ui-text)]'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               {tab.label}
             </button>
           );

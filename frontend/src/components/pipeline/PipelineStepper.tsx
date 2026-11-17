@@ -11,40 +11,35 @@ interface PipelineStepperProps {
   onGenerateIfNeeded: () => void;
 }
 
-export function PipelineStepper({
-  detectedProblem,
-  workflowStage,
-  setWorkflowStage,
-  activeStepsCount,
-  executed,
-  onGenerateIfNeeded,
-}: PipelineStepperProps) {
+export function PipelineStepper(props: PipelineStepperProps) {
+  const {
+    detectedProblem,
+    workflowStage,
+    setWorkflowStage,
+    activeStepsCount,
+    executed,
+    onGenerateIfNeeded,
+  } = props;
   const problemMeta = PROBLEM_LABEL[detectedProblem] ?? PROBLEM_LABEL.exploration;
   const ProblemIcon = problemMeta.icon;
 
   return (
-    <div className="ui-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
-      <div className="flex items-center gap-3.5">
-        <div className="w-10 h-10 rounded-lg bg-accent-500/10 border border-accent-500/30 flex items-center justify-center">
-          <ProblemIcon className="w-5 h-5 text-accent-400" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-surface-100 tracking-tight">
-              Pipeline Automatique & Économétrique
-            </h2>
-            <span className="ui-tag ui-tag-accent text-[10px] font-bold uppercase tracking-wider">
-              Interactif
-            </span>
-          </div>
-          <p className="text-xs text-surface-400 mt-0.5">
-            Configuration dynamique selon vos variables • Édition complète de chaque étape • Exécution & Canvas
-          </p>
-        </div>
+    <div className="ui-panel flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3">
+      <div className="flex items-center gap-2.5">
+        <ProblemIcon className="w-4 h-4 text-accent-400 shrink-0" />
+        <h2 className="text-sm font-bold text-surface-100 tracking-tight">
+          Pipeline Automatique &amp; Économétrique
+        </h2>
+        <span className="text-[11px] text-surface-400 hidden md:inline">
+          • {problemMeta.label}
+        </span>
       </div>
 
       {/* Stepper Tabs */}
-      <div className="flex items-center bg-surface-800/50 p-1 rounded-lg border border-white/10">
+      <div
+        className="flex items-center p-1 rounded border"
+        style={{ background: 'var(--ui-bg-sunken)', borderColor: 'var(--ui-border)' }}
+      >
         <button
           onClick={() => setWorkflowStage('configure')}
           className={`ui-btn text-xs font-semibold ${

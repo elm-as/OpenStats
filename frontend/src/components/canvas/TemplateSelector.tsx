@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Node, Edge } from '@xyflow/react';
 import { TEMPLATES, CanvasTemplate, getUserTemplates } from './templates';
-import { LayoutTemplate, X, ChevronRight, Sparkles, Trash2 } from 'lucide-react';
+import { LayoutTemplate, X, ChevronRight, Trash2 } from 'lucide-react';
 
 interface TemplateSelectorProps {
   onSelect: (nodes: Node[], edges: Edge[]) => void;
@@ -9,7 +9,6 @@ interface TemplateSelectorProps {
 
 export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [allTemplates, setAllTemplates] = useState<CanvasTemplate[]>(TEMPLATES);
 
   useEffect(() => {
@@ -22,7 +21,7 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
     onSelect(template.nodes, template.edges);
     setIsOpen(false);
   };
-  
+
   const handleDeleteCustom = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const existing = getUserTemplates().filter(t => t.id !== id);
@@ -32,99 +31,71 @@ export default function TemplateSelector({ onSelect }: TemplateSelectorProps) {
 
   return (
     <>
-      {/* Trigger Button */}
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className="ui-btn ui-panel absolute top-4 left-[calc(16rem+1rem)] z-30 px-3.5 py-2 font-semibold text-xs shadow-md flex items-center gap-2"
+        className="ui-btn ui-focusable text-xs"
       >
-        <LayoutTemplate size={15} className="text-accent-400" />
-        <span>Nouveau depuis un Template</span>
+        <LayoutTemplate size={14} style={{ color: 'var(--ui-accent-text)' }} />
+        <span>Modèles prédéfinis</span>
       </button>
 
-      {/* Modal Overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60" onClick={() => setIsOpen(false)} />
+
           <div
-            className="absolute inset-0 bg-black/70"
-            onClick={() => setIsOpen(false)}
-          />
-
-          {/* Modal */}
-          <div className="ui-panel relative z-10 w-[680px] max-h-[85vh] rounded-xl shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-accent-500/15 border border-accent-500/25 flex items-center justify-center">
-                  <Sparkles size={18} className="text-accent-400" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-surface-100 tracking-tight">
-                    Nouveau depuis un Template
-                  </h2>
-                  <p className="text-xs text-surface-400 mt-0.5">
-                    Choisissez un pipeline préconstruit pour démarrer rapidement.
-                  </p>
-                </div>
-              </div>
+            className="ui-panel relative z-10 w-[640px] max-h-[82vh] overflow-hidden flex flex-col"
+            style={{ background: 'var(--ui-bg-panel)', color: 'var(--ui-text)' }}
+          >
+            <header className="ui-panel-header">
+              <span className="flex items-center gap-2">
+                <LayoutTemplate size={14} style={{ color: 'var(--ui-accent-text)' }} />
+                Modèles de pipeline
+              </span>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-surface-400 hover:text-surface-100 p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+                className="ui-btn ui-btn-ghost ui-focusable"
+                style={{ height: 24, padding: '0 6px' }}
               >
-                <X size={18} />
+                <X size={14} />
               </button>
-            </div>
+            </header>
 
-            {/* Template List */}
-            <div className="p-5 space-y-2.5 overflow-y-auto max-h-[calc(85vh-92px)] ui-scroll">
-              {allTemplates.map((template) => (
+            <div className="p-3 space-y-2 overflow-y-auto ui-scroll">
+              {allTemplates.map(template => (
                 <div
                   key={template.id}
                   onClick={() => handleSelect(template)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSelect(template)}
-                  onMouseEnter={() => setHoveredId(template.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  className={`w-full text-left p-4 rounded-xl border transition-colors group relative cursor-pointer ${
-                    hoveredId === template.id
-                      ? 'border-accent-500/45 bg-accent-500/[0.06]'
-                      : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.14]'
-                  }`}
+                  onKeyDown={e => e.key === 'Enter' && handleSelect(template)}
+                  className="ui-panel p-3 cursor-pointer flex items-start gap-3 transition-colors hover:border-[var(--ui-accent)]"
+                  style={{ background: 'var(--ui-bg-sunken)' }}
                 >
-                  <div className="relative flex items-start gap-4">
-                    {/* Icon */}
-                    <div className="text-2xl shrink-0 mt-0.5">
-                      {template.icon}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-bold text-surface-100 text-sm">
-                          {template.name}
-                        </h3>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="text-xs text-surface-400 font-medium">
-                            Utiliser ce modèle
-                          </div>
-                          <ChevronRight size={16} className="text-accent-400" />
-                        </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-xs" style={{ color: 'var(--ui-text)' }}>
+                        {template.name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {template.id.startsWith('custom_') && (
+                          <button
+                            type="button"
+                            onClick={e => handleDeleteCustom(e, template.id)}
+                            className="p-1 rounded-[var(--ui-radius-sm)] text-red-500 hover:bg-red-500/10"
+                            title="Supprimer ce modèle"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                        <ChevronRight size={14} style={{ color: 'var(--ui-accent-text)' }} />
                       </div>
-                      <p className="text-xs text-surface-400 leading-relaxed pr-8">
-                        {template.description}
-                      </p>
                     </div>
-                    {/* Delete Custom Button */}
-                    {template.id.startsWith('custom_') && (
-                      <button
-                        onClick={(e) => handleDeleteCustom(e, template.id)}
-                        className="absolute top-4 right-4 p-2 text-surface-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-20"
-                        title="Supprimer ce modèle"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
+                    <p className="text-[11px] ui-t-muted mt-0.5 leading-snug">
+                      {template.description}
+                    </p>
                   </div>
                 </div>
               ))}

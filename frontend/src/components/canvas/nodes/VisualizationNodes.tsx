@@ -43,7 +43,7 @@ export function VisualizationNode({ id, data }: NodeProps<Node<CanvasNodeData>>)
       <div>
         <NodeLabel>Titre (optionnel)</NodeLabel>
         <input
-          className="w-full bg-[#0b1121] border border-gray-700 rounded-md px-2 py-1 text-xs text-gray-200 outline-none focus:border-cyan-500 transition-colors placeholder-gray-600"
+          className="ui-input w-full text-xs"
           name="title"
           placeholder="Titre du graphique..."
           value={(data.title as string) || ''}
@@ -151,9 +151,10 @@ export function VisualizationNode({ id, data }: NodeProps<Node<CanvasNodeData>>)
             } as any;
             handleChange(event);
           }}
-          className="rounded border-gray-600 bg-[#0b1121] text-cyan-500 focus:ring-cyan-500"
+          className="rounded border text-cyan-500 focus:ring-cyan-500"
+          style={{ borderColor: 'var(--ui-border-strong)', background: 'var(--ui-bg-sunken)' }}
         />
-        <label htmlFor={`logScale-${id}`} className="text-xs text-gray-400 cursor-pointer">
+        <label htmlFor={`logScale-${id}`} className="text-xs ui-t-secondary cursor-pointer">
           Echelle logarithmique (Axe Y)
         </label>
       </div>

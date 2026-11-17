@@ -4,7 +4,7 @@ Ce script :
 1. Vérifie la présence du binaire Python compilé (backend/dist/openstats-backend/).
 2. Compile le frontend React et génère le paquet décompressé Electron (electron-builder --dir).
 3. Détecte le compilateur Inno Setup (ISCC.exe) sur le poste.
-4. Produit l'exécutable d'installation final (frontend/release/OpenStats_Setup_v1.0.0.exe).
+4. Produit l'exécutable d'installation final (frontend/release/OpenStats_Setup_v1.0.0-rc.1.exe).
 """
 
 from __future__ import annotations

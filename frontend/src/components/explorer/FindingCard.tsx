@@ -4,6 +4,7 @@ import {
   Layers, Activity, AlertTriangle, Gauge, Waves, Sigma, Split, Copy, Check,
 } from 'lucide-react';
 import { factLabel, type Finding } from './explorerTypes';
+import { HelpTip } from '../ui/Tooltip';
 
 const KIND_ICONS: Record<string, typeof TrendingUp> = {
   association_lineaire: TrendingUp,
@@ -154,7 +155,13 @@ export default function FindingCard({ finding, rank }: { finding: Finding; rank:
             <Metric label={finding.effect_metric} value={finding.effect_size.toFixed(4)} />
             <Metric label="observations" value={finding.n.toLocaleString('fr-FR')} />
             {finding.p_value !== null && <Metric label="p-value" value={formatP(finding.p_value)} />}
-            {finding.q_value !== null && <Metric label="q-value (FDR)" value={String(finding.q_value)} />}
+            {finding.q_value !== null && (
+              <Metric
+                label="q-value (FDR)"
+                value={String(finding.q_value)}
+                hint="Probabilité ajustée (Benjamini-Hochberg) sur l'ensemble des tests exécutés."
+              />
+            )}
           </dl>
 
           <div className="flex items-center flex-wrap gap-1.5 mt-2.5">
@@ -179,10 +186,13 @@ export default function FindingCard({ finding, rank }: { finding: Finding; rank:
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div>
-      <dt className="ui-label" style={{ fontSize: '9.5px' }}>{label}</dt>
+      <dt className="ui-label flex items-center gap-1" style={{ fontSize: '9.5px' }}>
+        <span>{label}</span>
+        {hint && <HelpTip label={label} content={hint} />}
+      </dt>
       <dd className="ui-num" style={{ fontSize: 'var(--ui-fs-md)', fontWeight: 700, color: 'var(--ui-text)' }}>
         {value}
       </dd>

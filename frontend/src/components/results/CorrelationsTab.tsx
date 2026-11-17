@@ -10,35 +10,31 @@ export function CorrelationsTab({ result }: { result?: any }) {
   const cols = Object.keys(matrix);
 
   return (
-    <div className="space-y-4">
-      <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-        <h3 className="text-lg font-semibold text-surface-100 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-sky-400" />
-          Matrice de corrélation
-        </h3>
+    <div className="space-y-3">
+      <section className="ui-panel overflow-hidden">
+        <header className="ui-panel-header">
+          <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+            <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+            Matrice de corrélation
+          </span>
+          <span className="ui-num text-xs ui-t-muted">{cols.length} var.</span>
+        </header>
 
         {cols.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="ui-table w-full text-xs">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-2 pr-2 text-surface-300"></th>
+                <tr>
+                  <th className="text-left">Variable</th>
                   {cols.map(c => (
-                    <th
-                      key={c}
-                      className="text-right py-2 px-1 text-surface-300 text-xs uppercase max-w-[80px] truncate"
-                    >
-                      {c}
-                    </th>
+                    <th key={c} className="ui-th-num" title={c}>{c}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {cols.map(row => (
-                  <tr key={row} className="border-t border-white/5 hover:bg-white/5">
-                    <td className="py-2 pr-2 text-surface-200 text-xs font-medium truncate max-w-[80px]">
-                      {row}
-                    </td>
+                  <tr key={row}>
+                    <td className="font-semibold" style={{ color: 'var(--ui-text)' }}>{row}</td>
                     {cols.map(col => {
                       const val = matrix[row]?.[col];
                       const v = val !== undefined ? Number(val) : null;
@@ -48,24 +44,14 @@ export function CorrelationsTab({ result }: { result?: any }) {
                       return (
                         <td
                           key={col}
-                          className={`py-2 px-1 text-center font-mono text-xs ${
-                            isDiag ? 'text-surface-500' : abs > 0.7 ? 'font-semibold' : ''
-                          }`}
+                          className={`ui-td-num ${abs > 0.7 && !isDiag ? 'font-bold' : ''}`}
                           style={{
-                            backgroundColor: isDiag
-                              ? 'transparent'
-                              : v !== null
-                              ? v > 0
-                                ? `rgba(249,115,22,${abs * 0.25})`
-                                : `rgba(37,99,235,${abs * 0.25})`
-                              : 'transparent',
-                            color: isDiag
-                              ? '#6b7280'
-                              : v !== null
-                              ? v > 0
-                                ? '#fb923c'
-                                : '#60a5fa'
-                              : '#9ca3af',
+                            backgroundColor: isDiag || v === null
+                              ? undefined
+                              : v > 0
+                                ? `rgba(249,115,22,${abs * 0.22})`
+                                : `rgba(37,99,235,${abs * 0.22})`,
+                            color: isDiag ? 'var(--ui-text-faint)' : undefined,
                           }}
                         >
                           {v !== null ? v.toFixed(2) : '—'}
@@ -80,86 +66,50 @@ export function CorrelationsTab({ result }: { result?: any }) {
         ) : (
           <EmptyState message="Aucune variable numérique pour la corrélation" />
         )}
+      </section>
 
-        {result.significant_pairs && result.significant_pairs.length > 0 && (
-          <div className="mt-6">
-            <h4 className="text-sm font-medium text-surface-200 mb-3">
-              Corrélations significatives
-            </h4>
-            <div className="space-y-2">
-              {result.significant_pairs.slice(0, 10).map((pair: any, i: number) => (
-                <div key={i} className="flex items-center gap-3 p-2 bg-surface-700/50 rounded-lg">
-                  <div className="flex items-center gap-2 flex-1">
-                    <code className="text-xs bg-surface-600 px-2 py-1 rounded text-surface-200">
-                      {pair.var1}
-                    </code>
-                    <span className="text-surface-400">↔</span>
-                    <code className="text-xs bg-surface-600 px-2 py-1 rounded text-surface-200">
-                      {pair.var2}
-                    </code>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 bg-surface-700 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          pair.coefficient > 0 ? 'bg-emerald-500' : 'bg-red-500'
-                        }`}
-                        style={{ width: `${Math.abs(pair.coefficient) * 100}%` }}
-                      />
-                    </div>
-                    <span
-                      className={`text-xs font-mono font-bold ${
-                        pair.coefficient > 0 ? 'text-emerald-300' : 'text-red-300'
-                      }`}
-                    >
-                      r = {pair.coefficient > 0 ? `+${pair.coefficient.toFixed(3)}` : pair.coefficient.toFixed(3)}
-                    </span>
-                    {pair.p_value !== undefined && (
-                      <span className="text-[11px] font-mono text-surface-400">
-                        (p {pair.p_value < 0.001 ? '< 0.001' : `= ${pair.p_value.toFixed(3)}`})
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-surface-400">{pair.strength}</span>
-                </div>
-              ))}
-            </div>
+      {result.significant_pairs && result.significant_pairs.length > 0 && (
+        <section className="ui-panel overflow-hidden">
+          <header className="ui-panel-header">
+            <span style={{ color: 'var(--ui-text)' }}>Corrélations significatives</span>
+          </header>
+          <div className="overflow-x-auto">
+            <table className="ui-table w-full text-xs">
+              <thead>
+                <tr>
+                  <th className="text-left">Variable A</th>
+                  <th className="text-left">Variable B</th>
+                  <th className="ui-th-num">r</th>
+                  <th className="ui-th-num">p-value</th>
+                  <th className="text-left">Intensité</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.significant_pairs.slice(0, 12).map((pair: any, i: number) => (
+                  <tr key={i}>
+                    <td className="ui-mono">{pair.var1}</td>
+                    <td className="ui-mono">{pair.var2}</td>
+                    <td className="ui-td-num font-bold" style={{ color: pair.coefficient > 0 ? 'var(--ui-success)' : 'var(--ui-danger)' }}>
+                      {pair.coefficient > 0 ? `+${pair.coefficient.toFixed(3)}` : pair.coefficient.toFixed(3)}
+                    </td>
+                    <td className="ui-td-num">
+                      {pair.p_value !== undefined
+                        ? pair.p_value < 0.0001
+                          ? '< 0.0001'
+                          : pair.p_value.toFixed(4)
+                        : '—'}
+                    </td>
+                    <td className="ui-t-muted">{pair.strength}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-
-        {result.temporal_trends && result.temporal_trends.length > 0 && (
-          <div className="mt-6 border-t border-white/10 pt-4">
-            <h4 className="text-sm font-medium text-surface-200 mb-1 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-cyan-400" />
-              Tendances Temporelles (Évolution au fil du temps — non causale)
-            </h4>
-            <p className="text-xs text-surface-400 mb-3">
-              Corrélation de chaque indicateur avec l'index chronologique <code className="text-cyan-300 bg-surface-700 px-1 py-0.5 rounded">{result.temporal_trends[0]?.time_col}</code>.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {result.temporal_trends.map((t: any, i: number) => (
-                <div key={i} className="flex items-center justify-between p-2.5 bg-surface-700/40 rounded-lg border border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-surface-200">{t.variable}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                      t.direction === 'croissante' ? 'bg-emerald-500/20 text-emerald-300' :
-                      t.direction === 'décroissante' ? 'bg-rose-500/20 text-rose-300' : 'bg-surface-600 text-surface-300'
-                    }`}>
-                      {t.direction}
-                    </span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-cyan-300">
-                    r = {t.coefficient > 0 ? `+${t.coefficient.toFixed(3)}` : t.coefficient.toFixed(3)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+        </section>
+      )}
 
       {cols.length > 1 && (
-        <div className="ui-panel p-4">
+        <div className="ui-panel p-3">
           <CorrelationHeatmap matrix={matrix} height={420} cluster={false} title="Matrice de corrélation (Heatmap)" />
         </div>
       )}

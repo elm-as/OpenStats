@@ -31,7 +31,7 @@ export function ExtensionNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 
 export function InsightsNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
-    <NodeShell id={id} data={data} color="#a855f7" icon={Zap} title="Insights narratifs" hasInput badge="IA">
+    <NodeShell id={id} data={data} color="#a855f7" icon={Zap} title="Insights narratifs" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Transforme les résultats numériques en interprétations actionnables hiérarchisées par sévérité.
       </div>

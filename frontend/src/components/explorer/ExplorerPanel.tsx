@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Play, Square, Sparkles, RotateCcw, AlertCircle, Search } from 'lucide-react';
+import { Play, Square, Compass, RotateCcw, AlertCircle, Search } from 'lucide-react';
+import { HelpTip } from '../ui/Tooltip';
 import FindingCard from './FindingCard';
 import { CovariateRanking, HonestyPanel, ProbePlan, ReasoningTrace } from './ExplorerTrace';
 import { factLabel } from './explorerTypes';
@@ -72,7 +73,7 @@ export default function ExplorerPanel({ datasetId, datasetName }: Props) {
         style={{ gap: 'var(--ui-gap-3)', padding: '0 var(--ui-pad-x)', minHeight: 46 }}
       >
         <div className="flex items-center gap-2 shrink-0">
-          <Sparkles className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          <Compass className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
           <span style={{ fontSize: 'var(--ui-fs-md)', fontWeight: 700 }}>Explorateur</span>
         </div>
 
@@ -146,7 +147,7 @@ export default function ExplorerPanel({ datasetId, datasetName }: Props) {
           className="ui-panel flex items-center flex-wrap gap-1.5"
           style={{ padding: 'var(--ui-gap-2) var(--ui-pad-x)' }}
         >
-          <span className="ui-label shrink-0" style={{ marginRight: 4 }}>Ce que je sais</span>
+          <span className="ui-label shrink-0" style={{ marginRight: 4 }}>Faits établis</span>
           {facts.map(fact => (
             <span key={fact} className="ui-tag ui-tag-accent">{factLabel(fact)}</span>
           ))}
@@ -220,10 +221,10 @@ export default function ExplorerPanel({ datasetId, datasetName }: Props) {
                   <p style={{ fontSize: 'var(--ui-fs-md)', fontWeight: 700, marginBottom: 4 }}>
                     {started ? 'Aucune découverte retenue' : 'Prêt à explorer'}
                   </p>
-                  <p className="ui-t-muted" style={{ fontSize: 'var(--ui-fs-sm)', maxWidth: 420, lineHeight: 1.6 }}>
+                  <p className="ui-t-muted" style={{ fontSize: 'var(--ui-fs-sm)', maxWidth: 420 }}>
                     {started
-                      ? 'Les sondes applicables ont toutes été exécutées sans rien trouver qui dépasse le seuil d’intérêt. C’est un résultat en soi : le signal recherché n’est pas dans ces colonnes.'
-                      : `Choisissez une cible dans ${datasetName ?? 'ce dataset'}, puis lancez la recherche. Chaque analyse en déclenche d’autres selon ce qu’elle trouve.`}
+                      ? 'Aucune relation dépassant le seuil FDR n’a été retenue.'
+                      : `Sélectionnez une cible dans ${datasetName ?? 'ce jeu'} puis lancez la recherche.`}
                   </p>
                 </>
               )}
@@ -237,7 +238,18 @@ export default function ExplorerPanel({ datasetId, datasetName }: Props) {
             <ReasoningTrace trace={trace} running={running} />
           </Panel>
 
-          <Panel title="Variables informatives" badge="IM">
+          <Panel
+            title="Variables informatives"
+            badge={
+              <span className="inline-flex items-center gap-1">
+                <span>IM</span>
+                <HelpTip
+                  label="Information mutuelle"
+                  content="Information mutuelle (IM) : mesure la dépendance linéaire et non linéaire avec la cible."
+                />
+              </span>
+            }
+          >
             <CovariateRanking ranking={result?.covariate_ranking ?? capabilities?.covariate_ranking ?? []} />
           </Panel>
 
@@ -265,7 +277,7 @@ export default function ExplorerPanel({ datasetId, datasetName }: Props) {
   );
 }
 
-function Panel({ title, badge, children }: { title: string; badge?: string; children: React.ReactNode }) {
+function Panel({ title, badge, children }: { title: string; badge?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="ui-panel overflow-hidden">
       <header className="ui-panel-header">

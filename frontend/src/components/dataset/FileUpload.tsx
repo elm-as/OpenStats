@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useDropzone, type FileRejection } from 'react-dropzone';
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useUploadDatasetMutation } from '../../store/api';
 import { useAppDispatch } from '../../hooks';
 import { setCurrentDataset } from '../../store/slices/datasetSlice';
@@ -111,27 +111,19 @@ export default function FileUpload({ onUploaded }: Props) {
 
         {isLoading ? (
           <div className="space-y-2.5 py-3">
-            <div
-              className="w-7 h-7 mx-auto rounded-full animate-spin"
-              style={{ border: '2px solid var(--ui-border)', borderTopColor: 'var(--ui-accent)' }}
-            />
+            <Loader2 className="w-6 h-6 mx-auto animate-spin ui-t-accent" />
             <p className="text-sm font-bold ui-t">Ingestion et profilage en cours…</p>
             <p className="text-xs ui-t-muted">Conversion Parquet locale &amp; détection de types</p>
           </div>
         ) : uploadSuccess ? (
           <div className="space-y-2 py-3">
-            <CheckCircle2 className="w-8 h-8 mx-auto ui-t-success" />
+            <CheckCircle2 className="w-7 h-7 mx-auto ui-t-success" />
             <p className="text-sm font-bold ui-t">Jeu de données importé</p>
             <p className="text-xs ui-t-muted">Ouverture du poste de profilage…</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div
-              className="w-10 h-10 mx-auto rounded-[var(--ui-radius)] flex items-center justify-center"
-              style={{ background: isDragActive ? 'var(--ui-accent-soft)' : 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}
-            >
-              <Upload className={`w-4 h-4 ${isDragActive ? 'ui-t-accent' : 'ui-t-muted'}`} />
-            </div>
+          <div className="space-y-2.5">
+            <Upload className={`w-5 h-5 mx-auto ${isDragActive ? 'ui-t-accent' : 'ui-t-muted'}`} />
             <div>
               <p className="text-sm font-bold ui-t">
                 {isDragActive ? 'Relâchez le fichier ici' : 'Glissez un fichier ici ou cliquez pour parcourir'}

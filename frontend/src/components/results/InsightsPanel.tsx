@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
-  Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2, Lightbulb,
-  ChevronDown, RefreshCw, Filter,
+  AlertCircle, AlertTriangle, Info, CheckCircle2, Lightbulb,
+  ChevronDown, RefreshCw, Filter, Loader2, BarChart2,
 } from 'lucide-react';
 import { useGetInsightsQuery } from '../../store/api';
 
@@ -22,7 +22,7 @@ interface Insight {
 }
 
 const SEVERITY_META: Record<Severity, {
-  icon: typeof Sparkles;
+  icon: typeof Info;
   iconColor: string;
   ring: string;
   accent: string;
@@ -144,7 +144,7 @@ function InsightCard({ insight }: { insight: Insight }) {
         <div className="px-4 pb-4 pl-11 space-y-2 border-t border-white/10 pt-3">
           {insight.suggestion && (
             <div className="flex items-start gap-2">
-              <Sparkles className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-accent-400" />
+              <Lightbulb className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-accent-400" />
               <p className="text-sm text-surface-300 italic">
                 <span className="text-accent-400 font-medium not-italic">Recommandation : </span>
                 {renderRichText(insight.suggestion)}
@@ -202,18 +202,18 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
 
   if (isLoading) {
     return (
-      <div className="ui-panel p-4 flex items-center gap-3">
-        <Sparkles className="w-4 h-4 text-accent-400 animate-pulse" />
-        <span className="text-sm text-surface-400">Génération des insights…</span>
+      <div className="ui-panel p-3.5 flex items-center gap-2.5 text-xs text-surface-400">
+        <Loader2 className="w-4 h-4 text-accent-400 animate-spin" />
+        <span>Génération des insights…</span>
       </div>
     );
   }
 
   if (!data || insights.length === 0) {
     return (
-      <div className="ui-panel p-4 text-sm text-surface-400 flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-surface-400" />
-        Aucun insight disponible. Lancez une analyse pour générer des interprétations automatiques.
+      <div className="ui-panel p-3.5 text-xs text-surface-400 flex items-center gap-2">
+        <Info className="w-4 h-4 text-surface-400" />
+        Aucun insight disponible.
       </div>
     );
   }
@@ -222,14 +222,14 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
     <div className="ui-panel overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 flex items-center justify-between border-b border-white/10">
-        <button onClick={() => setOpen(!open)} className="flex items-center gap-3 group">
-          <Sparkles className="w-4 h-4 text-accent-400" />
+        <button onClick={() => setOpen(!open)} className="flex items-center gap-2.5 group">
+          <BarChart2 className="w-4 h-4 text-accent-400" />
           <div className="text-left">
             <h3 className="text-sm font-semibold text-surface-100 group-hover:text-accent-400 transition-colors">
               Interprétation automatique
             </h3>
             <p className="text-xs text-surface-400 ui-num">
-              {insights.length} insight{insights.length > 1 ? 's' : ''} généré{insights.length > 1 ? 's' : ''} par l'analyseur
+              {insights.length} insight{insights.length > 1 ? 's' : ''}
             </p>
           </div>
         </button>
@@ -312,9 +312,13 @@ export default function InsightsPanel({ datasetId, defaultOpen = true, initialLi
   );
 }
 
-function FilterBadge({ severity, count, active, onClick }: {
-  severity: Severity; count: number; active: boolean; onClick: () => void;
+function FilterBadge(props: {
+  severity: Severity;
+  count: number;
+  active: boolean;
+  onClick: () => void;
 }) {
+  const { severity, count, active, onClick } = props;
   const meta = SEVERITY_META[severity];
   return (
     <button

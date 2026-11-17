@@ -11,13 +11,73 @@ interface UseCanvasPipelineProps {
   setSelectedResultNode: (node: { id: string; type: string; title: string; result: any } | null) => void;
 }
 
-export function useCanvasPipeline({
-  nodes,
-  setNodes,
-  edges,
-  addLog,
-  setSelectedResultNode,
-}: UseCanvasPipelineProps) {
+interface SseDispatchContext {
+  data: any;
+  resolveNodeLabel: (id: string) => string;
+  addLog: UseCanvasPipelineProps['addLog'];
+  setNodes: UseCanvasPipelineProps['setNodes'];
+  setPipelineResults: React.Dispatch<React.SetStateAction<Record<string, NodeResult> | null>>;
+  setShowResults: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedResultNode: UseCanvasPipelineProps['setSelectedResultNode'];
+}
+
+function patchNodeData(
+  setNodes: UseCanvasPipelineProps['setNodes'],
+  nodeId: string,
+  buildPatch: (n: Node, allNodes: Node[]) => Record<string, any>
+) {
+  setNodes(nds => nds.map(n => (n.id === nodeId ? { ...n, data: { ...n.data, ...buildPatch(n, nds) } } : n)));
+}
+
+function handleSseEvent(ctx: SseDispatchContext) {
+  const { data, resolveNodeLabel, addLog, setNodes, setPipelineResults, setShowResults, setSelectedResultNode } = ctx;
+  const label = data.node_id ? resolveNodeLabel(data.node_id) : '';
+
+  if (data.type === 'node_start') {
+    addLog(`[${label}] Début d'exécution...`, 'info', data.node_id);
+    patchNodeData(setNodes, data.node_id, () => ({ runStatus: 'processing' }));
+    return;
+  }
+  if (data.type === 'node_log') {
+    addLog(`[${label}] ${data.message}`, 'info', data.node_id);
+    return;
+  }
+  if (data.type === 'node_complete') {
+    addLog(`[${label}] ${data.message}`, 'success', data.node_id);
+    setPipelineResults(prev => ({
+      ...prev,
+      [data.node_id]: { status: data.status, message: data.message, result: data.result },
+    }));
+    patchNodeData(setNodes, data.node_id, (n, nds) => ({
+      runStatus: data.status,
+      runResult: data.result,
+      runMessage: data.message,
+      onOpenResult: (targetId: string) => {
+        const targetNode = nds.find(tn => tn.id === targetId) || n;
+        setSelectedResultNode({
+          id: targetId,
+          type: targetNode.type || '',
+          title: resolveNodeLabel(targetId),
+          result: data.result,
+        });
+      },
+    }));
+    return;
+  }
+  if (data.type === 'node_error') {
+    addLog(`[${label}] Erreur : ${data.error}`, 'error', data.node_id);
+    setPipelineResults(prev => ({ ...prev, [data.node_id]: { status: 'error', error: data.error } }));
+    patchNodeData(setNodes, data.node_id, () => ({ runStatus: 'error', runError: data.error }));
+    return;
+  }
+  if (data.type === 'pipeline_complete') {
+    addLog('Pipeline exécuté avec succès', 'success');
+    setShowResults(true);
+  }
+}
+
+export function useCanvasPipeline(props: UseCanvasPipelineProps) {
+  const { nodes, setNodes, edges, addLog, setSelectedResultNode } = props;
   const [isRunning, setIsRunning] = useState(false);
   const [pipelineResults, setPipelineResults] = useState<Record<string, NodeResult> | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -30,12 +90,31 @@ export function useCanvasPipeline({
     [nodes]
   );
 
+  const dispatchChunks = (chunks: string[]) => {
+    for (const chunk of chunks) {
+      const line = chunk.trim();
+      if (!line.startsWith('data: ')) continue;
+      try {
+        handleSseEvent({
+          data: JSON.parse(line.slice(6)),
+          resolveNodeLabel,
+          addLog,
+          setNodes,
+          setPipelineResults,
+          setShowResults,
+          setSelectedResultNode,
+        });
+      } catch (err) {
+        console.error('SSE parse error:', err);
+      }
+    }
+  };
+
   const handleRun = async () => {
     if (nodes.length === 0) return;
     setIsRunning(true);
     setPipelineResults({});
     setShowResults(false);
-
     addLog('Démarrage du pipeline...', 'info');
 
     const pipeline = {
@@ -48,18 +127,11 @@ export function useCanvasPipeline({
       })),
       edges: edges.map(e => ({ source: e.source, target: e.target })),
     };
-
-    setNodes(nds =>
-      nds.map(n => ({
-        ...n,
-        data: { ...n.data, runStatus: 'processing' },
-      }))
-    );
+    setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, runStatus: 'processing' } })));
 
     try {
       const authEnabled = import.meta.env.VITE_AUTH_ENABLED === 'true';
       const token = authEnabled ? localStorage.getItem('access_token') || '' : '';
-
       const response = await apiFetch('/canvas/stream_pipeline', {
         method: 'POST',
         headers: {
@@ -68,7 +140,6 @@ export function useCanvasPipeline({
         },
         body: JSON.stringify(pipeline),
       });
-
       if (!response.ok || !response.body) {
         throw new Error(`Erreur serveur (${response.status})`);
       }
@@ -76,85 +147,13 @@ export function useCanvasPipeline({
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-
         const chunks = buffer.split('\n\n');
         buffer = chunks.pop() || '';
-
-        for (const chunk of chunks) {
-          const line = chunk.trim();
-          if (!line.startsWith('data: ')) continue;
-          try {
-            const data = JSON.parse(line.slice(6));
-
-            if (data.type === 'node_start') {
-              const label = resolveNodeLabel(data.node_id);
-              addLog(`[${label}] Début d'exécution...`, 'info', data.node_id);
-              setNodes(nds =>
-                nds.map(n =>
-                  n.id === data.node_id ? { ...n, data: { ...n.data, runStatus: 'processing' } } : n
-                )
-              );
-            } else if (data.type === 'node_log') {
-              const label = resolveNodeLabel(data.node_id);
-              addLog(`[${label}] ${data.message}`, 'info', data.node_id);
-            } else if (data.type === 'node_complete') {
-              const label = resolveNodeLabel(data.node_id);
-              addLog(`[${label}] ${data.message}`, 'success', data.node_id);
-
-              setPipelineResults(prev => ({
-                ...prev,
-                [data.node_id]: { status: data.status, message: data.message, result: data.result },
-              }));
-
-              setNodes(nds =>
-                nds.map(n => {
-                  if (n.id !== data.node_id) return n;
-                  return {
-                    ...n,
-                    data: {
-                      ...n.data,
-                      runStatus: data.status,
-                      runResult: data.result,
-                      runMessage: data.message,
-                      onOpenResult: (targetId: string) => {
-                        const targetNode = nds.find(tn => tn.id === targetId) || n;
-                        const type = targetNode.type || '';
-                        const title = resolveNodeLabel(targetId);
-                        setSelectedResultNode({ id: targetId, type, title, result: data.result });
-                      },
-                    },
-                  };
-                })
-              );
-            } else if (data.type === 'node_error') {
-              const label = resolveNodeLabel(data.node_id);
-              addLog(`[${label}] Erreur : ${data.error}`, 'error', data.node_id);
-
-              setPipelineResults(prev => ({
-                ...prev,
-                [data.node_id]: { status: 'error', error: data.error },
-              }));
-
-              setNodes(nds =>
-                nds.map(n =>
-                  n.id === data.node_id
-                    ? { ...n, data: { ...n.data, runStatus: 'error', runError: data.error } }
-                    : n
-                )
-              );
-            } else if (data.type === 'pipeline_complete') {
-              addLog('Pipeline exécuté avec succès !', 'success');
-              setShowResults(true);
-            }
-          } catch (err) {
-            console.error('SSE parse error:', err);
-          }
-        }
+        dispatchChunks(chunks);
       }
     } catch (e: any) {
       console.error('Pipeline streaming error:', e);
@@ -170,12 +169,7 @@ export function useCanvasPipeline({
   const resetResults = () => {
     setPipelineResults(null);
     setShowResults(false);
-    setNodes(nds =>
-      nds.map(n => ({
-        ...n,
-        data: { ...n.data, runStatus: 'idle' },
-      }))
-    );
+    setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, runStatus: 'idle' } })));
   };
 
   const summary = useMemo(() => {

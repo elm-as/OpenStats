@@ -2,15 +2,26 @@ import { useState, useMemo } from 'react';
 import { useBuildPipelineRecipeMutation } from '../../store/api';
 import type { EditableStep } from './PipelineTypes';
 
-export function usePipelineRecipe(
-  datasetId: string,
-  selectedTarget: string | null,
-  selectedTaskType: string,
-  selectedAnalyses: Set<string>,
-  availableAnalyses: Array<{ key: string; label: string; description: string }>,
-  profile: any,
-  setWorkflowStage: (stage: 'configure' | 'pipeline' | 'results') => void
-) {
+export interface UsePipelineRecipeOptions {
+  datasetId: string;
+  selectedTarget: string | null;
+  selectedTaskType: string;
+  selectedAnalyses: Set<string>;
+  availableAnalyses: Array<{ key: string; label: string; description: string }>;
+  profile: any;
+  setWorkflowStage: (stage: 'configure' | 'pipeline' | 'results') => void;
+}
+
+export function usePipelineRecipe(opts: UsePipelineRecipeOptions) {
+  const {
+    datasetId,
+    selectedTarget,
+    selectedTaskType,
+    selectedAnalyses,
+    availableAnalyses,
+    profile,
+    setWorkflowStage,
+  } = opts;
   const [buildRecipe, { isLoading: isBuilding }] = useBuildPipelineRecipeMutation();
   const [editableSteps, setEditableSteps] = useState<EditableStep[]>([]);
   const [pipelineTitle, setPipelineTitle] = useState<string>('Pipeline Personnalisé');

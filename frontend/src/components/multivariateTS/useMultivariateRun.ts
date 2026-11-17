@@ -2,12 +2,15 @@ import { useState, useMemo } from 'react';
 import { useRunMultivariateTimeSeriesMutation } from '../../store/api';
 import type { MultivariateTimeSeriesResults } from '../../types';
 
-export function useMultivariateRun(
-  datasetId: string,
-  dateCol: string,
-  valueCols: string[],
-  forecastSteps: number
-) {
+export interface UseMultivariateRunOptions {
+  datasetId: string;
+  dateCol: string;
+  valueCols: string[];
+  forecastSteps: number;
+}
+
+export function useMultivariateRun(opts: UseMultivariateRunOptions) {
+  const { datasetId, dateCol, valueCols, forecastSteps } = opts;
   const [runMVTS, { isLoading }] = useRunMultivariateTimeSeriesMutation();
   const [results, setResults] = useState<MultivariateTimeSeriesResults | null>(null);
   const [error, setError] = useState<string | null>(null);

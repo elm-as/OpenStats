@@ -3,17 +3,7 @@ import type { Data, Layout } from 'plotly.js';
 import { PlotlyChart, DEFAULT_CONFIG, useCurrentTheme } from '../viz/PlotlyBase';
 import { COLORS, FORECAST_COLORS } from './constants';
 
-export function PlotlyMultiForecast({
-  data,
-  forecastStart,
-  forecastEnd,
-  viewMode,
-  detailVar,
-  compareVars,
-  axisByVar,
-  dualAxis,
-  height,
-}: {
+export function PlotlyMultiForecast(props: {
   data: Record<string, unknown>[];
   forecastStart: string;
   forecastEnd: string;
@@ -24,6 +14,17 @@ export function PlotlyMultiForecast({
   dualAxis: boolean;
   height: number;
 }) {
+  const {
+    data,
+    forecastStart,
+    forecastEnd,
+    viewMode,
+    detailVar,
+    compareVars,
+    axisByVar,
+    dualAxis,
+    height,
+  } = props;
   const theme = useCurrentTheme();
   const isLight = theme === 'light';
   const accentColor = isLight ? '#0e7490' : '#67e8f9';

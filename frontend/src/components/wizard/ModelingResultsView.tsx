@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Target, Zap, AlertTriangle, Info } from 'lucide-react';
+import { Trophy, Target, Zap } from 'lucide-react';
 import type { ModelResults } from '../../types';
 import { FeatureImportance } from '../viz';
 import { fmtMetric } from './WizardTypes';
@@ -10,75 +10,38 @@ export function ModelingResults({ results }: { results: ModelResults }) {
     results.ranking.length > 0 &&
     (results.ranking[0].metrics.r2 as number) < 0;
 
-  const isTimeSplit = results.data_split?.strategy === 'time';
-
   return (
     <>
-      {isCriticalR2 && (
-        <div className="card border border-amber-500/30 bg-amber-500/5 p-4 mb-4 rounded-xl space-y-2">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-            <div className="text-sm space-y-1.5">
-              <h4 className="font-semibold text-amber-200">
-                Performance prédictive négative (R² &lt; 0) détectée
-              </h4>
-              <p className="text-muted leading-relaxed">
-                {isTimeSplit ? (
-                  <>
-                    L'évaluation est effectuée en <strong>scission temporelle (out-of-time)</strong>. La variable cible présente une tendance lourde ou un décalage de distribution entre la période passée (train) et la période future (test), alors que l'index temporel a été écarté pour éviter un ajustement fallacieux.
-                  </>
-                ) : (
-                  <>
-                    Les modèles prédictifs généralisent moins bien que la simple moyenne empirique. Les covariables explicatives actuelles ne suffisent pas à modéliser la variance de la cible.
-                  </>
-                )}
-              </p>
-              <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-amber-300">
-                <span className="font-medium flex items-center gap-1">
-                  <Info className="w-3.5 h-3.5" /> Recommandations économétriques :
-                </span>
-                <span className="bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  Créer des retards (Lags Y<sub>t-1</sub>) via le menu Nettoyage / Transformations
-                </span>
-                <span className="bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  Différencier la série si non-stationnaire (I(1))
-                </span>
-                <span className="bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                  Ou basculer en Scission Aléatoire (Random Split)
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="card">
-        <div className="flex items-center gap-2 mb-4">
-          <Trophy className="w-5 h-5 text-amber-500" />
-          <h3 className="font-semibold" style={{ color: 'var(--ui-text)' }}>
+      <div className="ui-panel overflow-hidden mb-3">
+        <header className="ui-panel-header">
+          <span className="flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
+            <Trophy className="w-4 h-4 text-amber-500" />
             Classement des modèles ({results.task_type})
-          </h3>
-        </div>
+          </span>
+          {isCriticalR2 && (
+            <span className="ui-tag ui-tag-warning">R² test négatif vs moyenne</span>
+          )}
+        </header>
         <div className="overflow-x-auto">
           <table className="ui-table w-full text-sm">
             <thead>
               <tr>
-                <th className="text-center py-2 px-3 w-12">#</th>
+                <th className="ui-th-num text-right py-2 px-3 w-12">#</th>
                 <th className="text-left py-2 px-3">Modèle</th>
                 {results.task_type === 'regression' ? (
                   <>
-                    <th className="text-right py-2 px-3">R²</th>
-                    <th className="text-right py-2 px-3">RMSE</th>
-                    <th className="text-right py-2 px-3">MAE</th>
+                    <th className="ui-th-num text-right py-2 px-3">R²</th>
+                    <th className="ui-th-num text-right py-2 px-3">RMSE</th>
+                    <th className="ui-th-num text-right py-2 px-3">MAE</th>
                   </>
                 ) : (
                   <>
-                    <th className="text-right py-2 px-3">Accuracy</th>
-                    <th className="text-right py-2 px-3">F1-Score</th>
-                    <th className="text-right py-2 px-3">AUC-ROC</th>
+                    <th className="ui-th-num text-right py-2 px-3">Accuracy</th>
+                    <th className="ui-th-num text-right py-2 px-3">F1-Score</th>
+                    <th className="ui-th-num text-right py-2 px-3">AUC-ROC</th>
                   </>
                 )}
-                <th className="text-right py-2 px-3">CV Score</th>
+                <th className="ui-th-num text-right py-2 px-3">CV Score</th>
               </tr>
             </thead>
             <tbody>
@@ -87,40 +50,40 @@ export function ModelingResults({ results }: { results: ModelResults }) {
                   key={r.model_key}
                   style={r.rank === 1 ? { background: 'var(--ui-accent-soft)' } : undefined}
                 >
-                  <td className="py-2.5 px-3 text-center">
+                  <td className="py-2 px-3 ui-td-num">
                     {r.rank === 1 ? (
-                      <Trophy className="w-4 h-4 text-amber-500 mx-auto" />
+                      <Trophy className="w-3.5 h-3.5 text-amber-500 inline-block" />
                     ) : (
                       r.rank
                     )}
                   </td>
-                  <td className="py-2.5 px-3 font-medium">{r.model_name}</td>
+                  <td className="py-2 px-3 font-medium">{r.model_name}</td>
                   {results.task_type === 'regression' ? (
                     <>
-                      <td className={`py-2.5 px-3 text-right font-mono text-xs ${(r.metrics.r2 as number) < 0 ? 'text-rose-400 font-semibold' : ''}`}>
+                      <td className={`py-2 px-3 ui-td-num text-xs ${(r.metrics.r2 as number) < 0 ? 'ui-t-danger font-semibold' : ''}`}>
                         {fmtMetric(r.metrics.r2 as number)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-xs">
+                      <td className="py-2 px-3 ui-td-num text-xs">
                         {fmtMetric(r.metrics.rmse as number)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-xs">
+                      <td className="py-2 px-3 ui-td-num text-xs">
                         {fmtMetric(r.metrics.mae as number)}
                       </td>
                     </>
                   ) : (
                     <>
-                      <td className="py-2.5 px-3 text-right font-mono text-xs">
+                      <td className="py-2 px-3 ui-td-num text-xs">
                         {fmtMetric(r.metrics.accuracy as number)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-xs">
+                      <td className="py-2 px-3 ui-td-num text-xs">
                         {fmtMetric(r.metrics.f1_weighted as number)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-xs">
+                      <td className="py-2 px-3 ui-td-num text-xs">
                         {fmtMetric(r.metrics.auc_roc as number)}
                       </td>
                     </>
                   )}
-                  <td className="py-2.5 px-3 text-right font-mono text-xs">
+                  <td className="py-2 px-3 ui-td-num text-xs">
                     {r.cv_scores?.mean != null ? (
                       <span title={(r.cv_scores as any)?.rmse_mean ? `CV RMSE: ${(r.cv_scores as any).rmse_mean}` : undefined}>
                         {r.cv_scores.mean.toFixed(4)}

@@ -35,11 +35,13 @@ function resolveRibbonPath(tab: RibbonTab, datasetId: string | null): string {
 }
 
 function isRibbonTabActive(key: string, pathname: string, search: string): boolean {
+  const inAnalyzer = pathname.startsWith('/analyzer');
+  const isStudioSub = inAnalyzer && search.includes('tab=') && !search.includes('tab=methodology');
   if (key === 'data') return pathname === '/';
   if (key === 'prep') return pathname.startsWith('/workflow');
   if (key === 'explorer') return pathname.startsWith('/explorer');
-  if (key === 'studio') return pathname.startsWith('/analyzer') && search.includes('tab=studio');
-  if (key === 'methodology') return pathname.startsWith('/analyzer') && !search.includes('tab=studio');
+  if (key === 'studio') return isStudioSub;
+  if (key === 'methodology') return inAnalyzer && !isStudioSub;
   if (key === 'canvas') return pathname.startsWith('/canvas');
   if (key === 'marketplace') return pathname.startsWith('/marketplace');
   return false;

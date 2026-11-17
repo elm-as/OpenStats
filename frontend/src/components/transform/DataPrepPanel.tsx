@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useCopyDatasetMutation, useCleanDatasetMutation, useGetDatasetQuery } from '../../store/api';
-import { Loader2, Copy, Trash2, Plus, Settings2, Check, AlertCircle, Wand2 } from 'lucide-react';
+import { useAppDispatch } from '../../hooks';
+import { setCurrentDataset } from '../../store/slices/datasetSlice';
+import { Loader2, Copy, Trash2, Settings2, AlertCircle, Wand2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Props {
@@ -34,30 +36,23 @@ export default function DataPrepPanel({ datasetId }: Props) {
   const [copyDataset, { isLoading: isCopying, error: copyError }] = useCopyDatasetMutation();
   const [cleanDataset, { isLoading: isCleaning, error: cleanError }] = useCleanDatasetMutation();
   const { data: datasetDetails } = useGetDatasetQuery(datasetId);
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleApply = async () => {
     if (pipeline.length === 0) return;
     try {
-      // 1. Copy dataset
-      const copyRes = await copyDataset({ 
-        id: datasetId, 
-        new_name: copyName.trim() || `${datasetDetails?.name || 'Dataset'}-cp` 
+      const copyRes = await copyDataset({
+        id: datasetId,
+        new_name: copyName.trim() || `${datasetDetails?.name || 'Dataset'}-cp`,
       }).unwrap();
-      
+
       const newDatasetId = copyRes.dataset.id;
-      
-      // 2. Apply cleaning pipeline to the new dataset
       const cleanPayload = pipeline.map(p => ({ step: p.step, config: p.config }));
       await cleanDataset({ id: newDatasetId, pipeline: cleanPayload }).unwrap();
-      
-      // Navigate to the new dataset
-      navigate('/analyzer', { replace: true });
-      // We might need to refresh the page or switch the selected dataset.
-      // Wait, the router doesn't know what dataset to load just by '/analyzer' if it auto-picks the first one.
-      // Let's just navigate to '/workflow' so the user sees the new dataset, or wait, does useListDatasetsQuery auto-update?
-      // It auto-updates because we invalidated 'Dataset' tags. The UI will pick the new one if we sort by date, or we can just stay and let the user select it from the sidebar/header.
-      window.location.reload(); // Quickest way to ensure everything re-mounts with the newest dataset if the UI picks the first.
+
+      dispatch(setCurrentDataset(newDatasetId));
+      navigate(`/workflow/${encodeURIComponent(newDatasetId)}/profile`, { replace: true });
     } catch (e) {
       console.error(e);
     }

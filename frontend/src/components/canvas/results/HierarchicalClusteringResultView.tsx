@@ -1,6 +1,6 @@
 import React from 'react';
 import { Radar, Layers, Hash, CheckCircle2, TrendingUp, AlertCircle } from 'lucide-react';
-import { Section, KpiCard, DataTable } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable } from './ResultAtoms';
 import { PlotlyChart } from '../../viz/PlotlyBase';
 
 
@@ -94,19 +94,20 @@ export const HierarchicalClusteringResultView: React.FC<HierarchicalClusteringRe
 
   return (
     <div className="space-y-6">
-      {/* KPIs & Qualité */}
+      {/* Synthèse & Qualité */}
       <Section title="Diagnostic du Clustering Hiérarchique" icon={Radar} color="#0ea5e9">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard label="Clusters (k)" value={k} icon={Radar} color="#0ea5e9" />
-          <KpiCard label="Méthode" value={resultData.method?.toUpperCase()} icon={Layers} color="#8b5cf6" />
-          <KpiCard
-            label="Score Silhouette"
-            value={sil !== null ? sil : 'N/A'}
-            icon={CheckCircle2}
-            color={sil !== null && sil > 0.4 ? '#10b981' : sil > 0.25 ? '#f59e0b' : '#ef4444'}
-          />
-          <KpiCard label="Seuil de Coupure" value={cutThreshold ?? 'Auto'} icon={TrendingUp} color="#3b82f6" />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Clusters (k)', value: k },
+            { label: 'Méthode', value: resultData.method?.toUpperCase() || '—' },
+            {
+              label: 'Score Silhouette',
+              value: sil !== null ? sil : 'N/A',
+              tone: sil !== null && sil > 0.4 ? 'success' : sil > 0.25 ? 'warning' : 'danger',
+            },
+            { label: 'Seuil de Coupure', value: cutThreshold ?? 'Auto' },
+          ]}
+        />
       </Section>
 
       {/* Dendrogramme Plotly */}
@@ -116,8 +117,8 @@ export const HierarchicalClusteringResultView: React.FC<HierarchicalClusteringRe
             data={dendroTraces}
             layout={{
               title: { text: 'Dendrogramme des liaisons hiérarchiques' },
-              xaxis: { title: { text: 'Observations / Groupes' }, showticklabels: false },
-              yaxis: { title: { text: 'Distance de liaison' } },
+              xaxis: { title: { text: 'Observations / Groupes' }, showticklabels: false, automargin: true },
+              yaxis: { title: { text: 'Distance de liaison' }, automargin: true },
               height: 380,
               margin: { l: 50, r: 20, t: 40, b: 40 },
               showlegend: true,
@@ -134,8 +135,8 @@ export const HierarchicalClusteringResultView: React.FC<HierarchicalClusteringRe
             data={scatterTraces}
             layout={{
               title: { text: 'Répartition spatiale des clusters' },
-              xaxis: { title: { text: `Axe 1 (${varExplained[0]}% var)` } },
-              yaxis: { title: { text: `Axe 2 (${varExplained[1]}% var)` } },
+              xaxis: { title: { text: `Axe 1 (${varExplained[0]}% var)` }, automargin: true },
+              yaxis: { title: { text: `Axe 2 (${varExplained[1]}% var)` }, automargin: true },
               height: 360,
               margin: { l: 50, r: 20, t: 40, b: 40 },
             }}

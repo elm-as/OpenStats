@@ -1,49 +1,49 @@
 import React from 'react';
 import { PALETTES } from './plotlyTheme';
 
-interface PlotlySettingsPanelProps {
+export interface PlotlyStyleValues {
   palette: string;
-  setPalette: (p: string) => void;
   showGrid: boolean;
-  setShowGrid: (g: boolean) => void;
   legendPos: 'right' | 'bottom' | 'none';
-  setLegendPos: (pos: 'right' | 'bottom' | 'none') => void;
   showLabels: boolean;
-  setShowLabels: (l: boolean) => void;
   pointSize: number;
-  setPointSize: (s: number) => void;
   lineWidth: number;
-  setLineWidth: (w: number) => void;
   opacity: number;
-  setOpacity: (o: number) => void;
   trendline: boolean;
+}
+
+export interface PlotlyStyleActions {
+  setPalette: (p: string) => void;
+  setShowGrid: (g: boolean) => void;
+  setLegendPos: (pos: 'right' | 'bottom' | 'none') => void;
+  setShowLabels: (l: boolean) => void;
+  setPointSize: (s: number) => void;
+  setLineWidth: (w: number) => void;
+  setOpacity: (o: number) => void;
   setTrendline: (t: boolean) => void;
   onResetDefaults?: () => void;
+}
+
+export interface PlotlyChartMeta {
   detectedChartType: string;
   isScatterNumeric: boolean;
 }
 
+interface PlotlySettingsPanelProps {
+  values: PlotlyStyleValues;
+  actions: PlotlyStyleActions;
+  meta: PlotlyChartMeta;
+}
+
 export function PlotlySettingsPanel({
-  palette,
-  setPalette,
-  showGrid,
-  setShowGrid,
-  legendPos,
-  setLegendPos,
-  showLabels,
-  setShowLabels,
-  pointSize,
-  setPointSize,
-  lineWidth,
-  setLineWidth,
-  opacity,
-  setOpacity,
-  trendline,
-  setTrendline,
-  onResetDefaults,
-  detectedChartType,
-  isScatterNumeric,
+  values,
+  actions,
+  meta,
 }: PlotlySettingsPanelProps) {
+  const { palette, showGrid, legendPos, showLabels, pointSize, lineWidth, opacity, trendline } = values;
+  const { setPalette, setShowGrid, setLegendPos, setShowLabels, setPointSize, setLineWidth, setOpacity, setTrendline, onResetDefaults } = actions;
+  const { detectedChartType, isScatterNumeric } = meta;
+
   return (
     <div
       className="rounded-[var(--ui-radius)] p-3.5 grid grid-cols-2 md:grid-cols-4 gap-4 animate-fadeIn"
@@ -77,7 +77,7 @@ export function PlotlySettingsPanel({
             type="checkbox"
             checked={showGrid}
             onChange={e => setShowGrid(e.target.checked)}
-            className="accent-accent-500"
+            className="accent-[var(--ui-accent)]"
           />
           Afficher les axes
         </label>
@@ -90,7 +90,7 @@ export function PlotlySettingsPanel({
         </label>
         <select
           value={legendPos}
-          onChange={e => setLegendPos(e.target.value as any)}
+          onChange={e => setLegendPos(e.target.value as 'right' | 'bottom' | 'none')}
           className="ui-select text-xs"
         >
           <option value="bottom">En bas</option>
@@ -109,7 +109,7 @@ export function PlotlySettingsPanel({
             type="checkbox"
             checked={showLabels}
             onChange={e => setShowLabels(e.target.checked)}
-            className="accent-accent-500"
+            className="accent-[var(--ui-accent)]"
           />
           Afficher sur le graphe
         </label>
@@ -118,9 +118,8 @@ export function PlotlySettingsPanel({
       {/* Sliders d'ajustements fins */}
       {detectedChartType !== 'pie' && detectedChartType !== 'heatmap' && (
         <>
-          {/* Taille Marqueurs */}
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-surface-400 uppercase font-semibold">
+            <label className="text-[10px] ui-t-muted uppercase font-semibold">
               Taille des marqueurs ({pointSize}px)
             </label>
             <input
@@ -129,13 +128,12 @@ export function PlotlySettingsPanel({
               max="14"
               value={pointSize}
               onChange={e => setPointSize(Number(e.target.value))}
-              className="w-full accent-accent-500 h-1 rounded-lg cursor-pointer"
+              className="w-full accent-[var(--ui-accent)] h-1 rounded-lg cursor-pointer"
             />
           </div>
 
-          {/* Épaisseur de ligne */}
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-surface-400 uppercase font-semibold">
+            <label className="text-[10px] ui-t-muted uppercase font-semibold">
               Épaisseur de trait ({lineWidth}px)
             </label>
             <input
@@ -144,13 +142,12 @@ export function PlotlySettingsPanel({
               max="6"
               value={lineWidth}
               onChange={e => setLineWidth(Number(e.target.value))}
-              className="w-full accent-accent-500 h-1 rounded-lg cursor-pointer"
+              className="w-full accent-[var(--ui-accent)] h-1 rounded-lg cursor-pointer"
             />
           </div>
 
-          {/* Opacité */}
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-surface-400 uppercase font-semibold">
+            <label className="text-[10px] ui-t-muted uppercase font-semibold">
               Opacité ({Math.round(opacity * 100)}%)
             </label>
             <input
@@ -159,11 +156,10 @@ export function PlotlySettingsPanel({
               max="100"
               value={opacity * 100}
               onChange={e => setOpacity(Number(e.target.value) / 100)}
-              className="w-full accent-accent-500 h-1 rounded-lg cursor-pointer"
+              className="w-full accent-[var(--ui-accent)] h-1 rounded-lg cursor-pointer"
             />
           </div>
 
-          {/* Droite de tendance */}
           {isScatterNumeric && (
             <div className="flex flex-col gap-1 justify-center">
               <label className="text-[10px] ui-t-muted uppercase font-semibold">
@@ -174,7 +170,7 @@ export function PlotlySettingsPanel({
                   type="checkbox"
                   checked={trendline}
                   onChange={e => setTrendline(e.target.checked)}
-                  className="accent-accent-500"
+                  className="accent-[var(--ui-accent)]"
                 />
                 Droite de régression (y = ax + b)
               </label>

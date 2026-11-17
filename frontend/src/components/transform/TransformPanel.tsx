@@ -9,7 +9,6 @@ import {
 import type { TransformRecommendation, TransformPreview } from '../../types';
 import {
   Wrench,
-  AlertTriangle,
   Check,
   Eye,
   ChevronDown,
@@ -17,6 +16,7 @@ import {
   RotateCcw,
   Zap,
   Calculator,
+  CheckCircle2,
 } from 'lucide-react';
 import ComputedVariableEditor from './ComputedVariableEditor';
 import {
@@ -31,6 +31,14 @@ interface Props {
   onTransformApplied?: () => void;
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  distribution: 'Distribution (asymétrie, normalité)',
+  outliers: 'Valeurs extrêmes',
+  scale: 'Échelles différentes',
+  correlation: 'Corrélation / Multicolinéarité',
+  timeseries: 'Séries temporelles',
+};
+
 export default function TransformPanel({ datasetId, onTransformApplied }: Props) {
   const { data: recsData, refetch: refetchRecs } = useGetTransformRecommendationsQuery(datasetId);
   const { data: catalogData } = useGetTransformCatalogQuery(datasetId);
@@ -39,7 +47,6 @@ export default function TransformPanel({ datasetId, onTransformApplied }: Props)
   const [applyTransforms, { isLoading: isApplying }] = useApplyTransformsMutation();
 
   const [preview, setPreview] = useState<TransformPreview | null>(null);
-  const [, setPreviewLoading] = useState(false);
   const [selectedTransforms, setSelectedTransforms] = useState<
     { column: string; transform: string; params?: Record<string, unknown> }[]
   >([]);
@@ -54,30 +61,19 @@ export default function TransformPanel({ datasetId, onTransformApplied }: Props)
   const catalog = catalogData?.transforms || [];
   const datasetCols = datasetInfo?.profile?.dtypes ? Object.keys(datasetInfo.profile.dtypes) : [];
 
-  // Grouper les recommandations par catégorie
   const grouped: Record<string, TransformRecommendation[]> = {};
   for (const r of recommendations) {
     if (!grouped[r.category]) grouped[r.category] = [];
     grouped[r.category].push(r);
   }
 
-  const categoryLabels: Record<string, string> = {
-    distribution: 'Distribution (asymétrie, normalité)',
-    outliers: 'Valeurs aberrantes',
-    scale: 'Échelles différentes',
-    correlation: 'Corrélation / Multicolinéarité',
-    timeseries: 'Séries temporelles',
-  };
-
   const handlePreview = async (column: string, transform: string) => {
-    setPreviewLoading(true);
     try {
       const result = await previewTransform({ id: datasetId, column, transform }).unwrap();
       setPreview(result);
     } catch {
       setPreview(null);
     }
-    setPreviewLoading(false);
   };
 
   const toggleSelected = (column: string, transform: string) => {
@@ -112,52 +108,45 @@ export default function TransformPanel({ datasetId, onTransformApplied }: Props)
   };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-primary-600" />
-            Transformations de données
-          </h3>
-          <div className="flex bg-gray-100 p-1 rounded-lg w-max">
+    <div className="space-y-3">
+      <div className="ui-panel px-3 py-1.5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Wrench className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          <span className="text-xs font-semibold" style={{ color: 'var(--ui-text)' }}>
+            Transformations
+          </span>
+          <span className="ui-sep" aria-hidden />
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setMode('transform')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                mode === 'transform'
-                  ? 'bg-white shadow-sm text-primary-700'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`ui-btn text-xs ${mode === 'transform' ? 'ui-btn-primary' : 'ui-btn-ghost'}`}
             >
-              Transformations
+              Recommandations &amp; transformations
             </button>
             <button
               onClick={() => setMode('compute')}
-              className={`px-3 py-1 text-xs font-medium rounded-md flex items-center gap-1 transition-colors ${
-                mode === 'compute'
-                  ? 'bg-accent-500/20 text-accent-400 border border-accent-500/30'
-                  : 'text-surface-400 hover:text-surface-200'
-              }`}
+              className={`ui-btn text-xs ${mode === 'compute' ? 'ui-btn-primary' : 'ui-btn-ghost'}`}
             >
               <Calculator className="w-3 h-3" />
-              Calculer
+              Variable calculée
             </button>
           </div>
         </div>
 
         {mode === 'transform' && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setManualMode(!manualMode)}
-              className="btn-secondary text-sm flex items-center gap-1"
+              className="ui-btn ui-focusable text-xs"
             >
-              <Zap className="w-4 h-4" />
+              <Zap className="w-3.5 h-3.5" />
               {manualMode ? 'Recommandations' : 'Mode manuel'}
             </button>
             <button
               onClick={() => refetchRecs()}
-              className="btn-secondary text-sm flex items-center gap-1"
+              className="ui-btn ui-btn-ghost ui-focusable text-xs"
             >
-              <RotateCcw className="w-4 h-4" /> Actualiser
+              <RotateCcw className="w-3.5 h-3.5" /> Actualiser
             </button>
           </div>
         )}
@@ -167,9 +156,7 @@ export default function TransformPanel({ datasetId, onTransformApplied }: Props)
         <ComputedVariableEditor
           datasetId={datasetId}
           columns={datasetCols}
-          onComputed={() => {
-            if (onTransformApplied) onTransformApplied();
-          }}
+          onComputed={() => onTransformApplied?.()}
         />
       )}
 
@@ -186,55 +173,48 @@ export default function TransformPanel({ datasetId, onTransformApplied }: Props)
           )}
 
           {manualMode && (
-            <div className="card">
-              <h4 className="font-semibold text-gray-900 mb-3">
-                Appliquer une transformation manuellement
-              </h4>
+            <div className="ui-panel p-3">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Colonne</label>
-                  <input
-                    type="text"
+                  <label className="ui-label block mb-1">Colonne</label>
+                  <select
                     value={manualCol}
                     onChange={e => setManualCol(e.target.value)}
-                    placeholder="Nom de la colonne"
-                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                  />
+                    className="ui-select w-full"
+                    title="Colonne"
+                  >
+                    <option value="">Choisir…</option>
+                    {datasetCols.map(col => <option key={col} value={col}>{col}</option>)}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Transformation</label>
+                  <label className="ui-label block mb-1">Transformation</label>
                   <select
                     value={manualTransform}
                     onChange={e => setManualTransform(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    className="ui-select w-full"
                     title="Transformation"
                   >
-                    <option value="">Choisir...</option>
+                    <option value="">Choisir…</option>
                     {catalog.map(c => (
-                      <option key={c.key} value={c.key}>
-                        {c.label}
-                      </option>
+                      <option key={c.key} value={c.key}>{c.label}</option>
                     ))}
                   </select>
                 </div>
                 <div className="flex items-end gap-2">
                   <button
-                    onClick={() =>
-                      manualCol && manualTransform && handlePreview(manualCol, manualTransform)
-                    }
+                    onClick={() => manualCol && manualTransform && handlePreview(manualCol, manualTransform)}
                     disabled={!manualCol || !manualTransform}
-                    className="btn-secondary text-sm flex items-center gap-1"
+                    className="ui-btn ui-focusable text-xs"
                   >
-                    <Eye className="w-4 h-4" /> Aperçu
+                    <Eye className="w-3.5 h-3.5" /> Aperçu
                   </button>
                   <button
-                    onClick={() =>
-                      manualCol && manualTransform && toggleSelected(manualCol, manualTransform)
-                    }
+                    onClick={() => manualCol && manualTransform && toggleSelected(manualCol, manualTransform)}
                     disabled={!manualCol || !manualTransform}
-                    className="btn-primary text-sm flex items-center gap-1"
+                    className="ui-btn ui-btn-primary ui-focusable text-xs"
                   >
-                    <Check className="w-4 h-4" /> Ajouter
+                    <Check className="w-3.5 h-3.5" /> Ajouter
                   </button>
                 </div>
               </div>
@@ -244,43 +224,33 @@ export default function TransformPanel({ datasetId, onTransformApplied }: Props)
           {preview && <PreviewCard preview={preview} catalog={catalog} />}
 
           {!manualMode && (
-            <div className="space-y-4">
+            <div className="space-y-2.5">
               {recommendations.length === 0 ? (
-                <div className="card text-center py-8 text-gray-500">
-                  <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  <p className="font-medium">Aucune transformation recommandée</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Vos données semblent propres et bien distribuées.
+                <div className="ui-panel p-6 text-center ui-t-muted text-xs flex flex-col items-center gap-1.5">
+                  <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--ui-success)' }} />
+                  <p className="font-semibold" style={{ color: 'var(--ui-text)' }}>
+                    Aucune transformation requise
                   </p>
                 </div>
               ) : (
                 Object.entries(grouped).map(([category, recs]) => {
                   const isExpanded = expandedCategory === category || expandedCategory === null;
                   return (
-                    <div key={category} className="card">
+                    <section key={category} className="ui-panel overflow-hidden">
                       <button
-                        onClick={() =>
-                          setExpandedCategory(expandedCategory === category ? '' : category)
-                        }
-                        className="w-full flex items-center justify-between text-left"
+                        onClick={() => setExpandedCategory(expandedCategory === category ? '' : category)}
+                        className="ui-panel-header w-full"
+                        style={{ border: 0, cursor: 'pointer' }}
                       >
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-gray-900">
-                            {categoryLabels[category] || category}
-                          </h4>
-                          <span className="badge text-xs bg-gray-100 text-gray-600">
-                            {recs.length}
-                          </span>
-                        </div>
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
-                        )}
+                        <span className="flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
+                          {CATEGORY_LABELS[category] || category}
+                          <span className="ui-tag ui-num">{recs.length}</span>
+                        </span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5 ui-t-faint" /> : <ChevronDown className="w-3.5 h-3.5 ui-t-faint" />}
                       </button>
 
                       {isExpanded && (
-                        <div className="mt-3 space-y-3">
+                        <div className="p-2.5 space-y-2" style={{ borderTop: '1px solid var(--ui-border)' }}>
                           {recs.map(rec => (
                             <RecommendationCard
                               key={`${rec.column}::${rec.issue}`}
@@ -293,7 +263,7 @@ export default function TransformPanel({ datasetId, onTransformApplied }: Props)
                           ))}
                         </div>
                       )}
-                    </div>
+                    </section>
                   );
                 })
               )}

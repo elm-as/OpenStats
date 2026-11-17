@@ -8,12 +8,15 @@ interface HistoryState {
 
 const MAX_HISTORY = 30;
 
-export function useCanvasHistory(
-  nodes: Node[],
-  setNodes: React.Dispatch<React.SetStateAction<Node[]>>,
-  edges: Edge[],
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>
-) {
+export interface UseCanvasHistoryOptions {
+  nodes: Node[];
+  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+  edges: Edge[];
+  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
+}
+
+export function useCanvasHistory(opts: UseCanvasHistoryOptions) {
+  const { nodes, setNodes, edges, setEdges } = opts;
   const [past, setPast] = useState<HistoryState[]>([]);
   const [future, setFuture] = useState<HistoryState[]>([]);
   const isPerformingAction = useRef(false);

@@ -6,7 +6,7 @@ import {
   Database,
   Layers,
 } from 'lucide-react';
-import { Section, KpiCard, Badge, RenderJson } from './ResultAtoms';
+import { Section, SummaryStrip, Badge, RenderJson } from './ResultAtoms';
 
 export const InsightsResultView = ({ resultData }: { resultData: any }) => {
   const insights = resultData.insights || [];
@@ -101,9 +101,13 @@ export const TransformResultView = ({ resultData }: { resultData: any }) => {
   const shape = resultData.shape || {};
   return (
     <Section title="Transformations appliquées" icon={CheckCircle2} color="#10b981">
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {shape.rows && <KpiCard label="Lignes après" value={shape.rows} icon={Database} color="#10b981" />}
-        {shape.columns && <KpiCard label="Colonnes après" value={shape.columns} icon={Layers} color="#8b5cf6" />}
+      <div className="mb-3">
+        <SummaryStrip
+          items={[
+            ...(shape.rows ? [{ label: 'Lignes après', value: shape.rows }] : []),
+            ...(shape.columns ? [{ label: 'Colonnes après', value: shape.columns }] : []),
+          ]}
+        />
       </div>
       <div className="space-y-1.5">
         {logs.map((log: string, idx: number) => (
@@ -123,16 +127,17 @@ export const TransformResultView = ({ resultData }: { resultData: any }) => {
 export const ComputeVariableResultView = ({ resultData }: { resultData: any }) => {
   return (
     <Section title="Variable calculée" icon={Layers} color="#8b5cf6">
-      <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard label="Variable créée" value={resultData.column || 'N/A'} icon={Layers} color="#8b5cf6" />
-          <KpiCard
-            label="Statut"
-            value={resultData.success ? 'Succès' : 'Échec'}
-            icon={CheckCircle2}
-            color={resultData.success ? '#10b981' : '#ef4444'}
-          />
-        </div>
+      <div className="ui-panel p-4 space-y-3">
+        <SummaryStrip
+          items={[
+            { label: 'Variable créée', value: resultData.column || 'N/A' },
+            {
+              label: 'Statut',
+              value: resultData.success ? 'Succès' : 'Échec',
+              tone: resultData.success ? 'success' : 'danger',
+            },
+          ]}
+        />
         {resultData.formula && (
           <div className="bg-black/20 p-3 rounded-lg border border-white/[0.06]">
             <div className="text-[10px] text-muted font-bold uppercase tracking-wider mb-1">

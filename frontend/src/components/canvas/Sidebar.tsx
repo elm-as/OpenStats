@@ -150,51 +150,41 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 shrink-0 flex flex-col z-10 border-r border-white/[0.08] bg-surface-950 overflow-hidden">
-      {/* Header */}
-      <div className="p-4 pb-3 border-b border-white/[0.08]">
-        <h1 className="font-bold text-sm mb-1 text-surface-100 tracking-tight">
-          Canvas d'Analyse
-        </h1>
-        <p className="text-[11px] text-surface-400 leading-snug">
-          Glissez les blocs pour construire votre pipeline.
-        </p>
+    <aside
+      className="w-56 shrink-0 flex flex-col z-10 overflow-hidden"
+      style={{
+        background: 'var(--ui-bg-panel)',
+        borderRight: '1px solid var(--ui-border)',
+        color: 'var(--ui-text)',
+      }}
+    >
+      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: '1px solid var(--ui-border)' }}>
+        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--ui-text)' }}>
+          Blocs du pipeline
+        </span>
       </div>
 
-      {/* Scrollable categories */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-3 space-y-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-2 py-2 space-y-3">
         {categories.map((cat) => (
           <div key={cat.title}>
-            <h3 className="text-[10px] uppercase text-surface-500 font-bold tracking-[0.15em] mb-2 px-1">
+            <h3 className="text-[10px] uppercase font-bold tracking-wider mb-1 px-1.5" style={{ color: 'var(--ui-text-faint)' }}>
               {cat.title}
             </h3>
-            <div className="space-y-1.5">
+            <div className="space-y-0.5">
               {cat.items.map((item) => (
                 <div
                   key={item.type}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-grab font-medium text-[12px] transition-all duration-200 border border-transparent hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.97]"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-[var(--ui-radius-sm)] cursor-grab text-[12px] font-medium transition-colors"
                   style={{
-                    background: `${item.color}10`,
-                    borderColor: `${item.color}20`,
+                    background: 'var(--ui-bg-sunken)',
+                    border: '1px solid var(--ui-border)',
+                    color: 'var(--ui-text-secondary)',
                   }}
                   onDragStart={(event) => onDragStart(event, item.type)}
                   draggable
                 >
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: `${item.color}20` }}
-                  >
-                    <item.icon size={14} style={{ color: item.color }} />
-                  </div>
-                  <span className="text-surface-200 truncate">{item.label}</span>
-                  {item.badge && (
-                    <span
-                      className="ml-auto text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded shrink-0"
-                      style={{ color: item.color, background: `${item.color}15` }}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
+                  <item.icon size={13} className="shrink-0" style={{ color: item.color }} />
+                  <span className="truncate">{item.label}</span>
                 </div>
               ))}
             </div>

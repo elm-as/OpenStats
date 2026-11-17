@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { DatasetProfile, ColumnProfile } from '../../types';
-import { Database, Hash, Calendar, Tag, ToggleLeft, Pencil, Check, X, Info, Layers, BarChart, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { Database, Hash, Calendar, Tag, ToggleLeft, Pencil, Check, X, Layers, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { useUpdateColumnTypeMutation, useSwitchDatasetSheetMutation } from '../../store/api';
 
 interface Props {
@@ -65,32 +65,7 @@ export default function DataProfile({ profile, datasetId }: Props) {
   };
 
   return (
-    <div className="space-y-10 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-6 bg-accent-500 rounded-full" />
-            <h2 className="text-2xl font-bold text-surface-100 tracking-tight">Profilage Sémantique</h2>
-          </div>
-          <p className="text-sm text-surface-400 max-w-lg">
-            Analyse structurelle et détection de types avancée. Le dictionnaire de données est injecté
-            comme contexte sémantique pour l'IA.
-          </p>
-        </div>
-
-        <div className="ui-panel flex items-center gap-3 p-1">
-          {[
-            { label: 'Lignes', value: profile.shape.rows.toLocaleString(), icon: Layers },
-            { label: 'Colonnes', value: profile.shape.columns, icon: BarChart },
-          ].map((stat) => (
-            <div key={stat.label} className="px-5 py-2.5 text-center">
-              <p className="text-xs font-semibold text-surface-400 uppercase tracking-wider">{stat.label}</p>
-              <p className="text-xl font-bold text-surface-100 ui-num">{stat.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
+    <div className="space-y-3 pb-6 animate-fade-in">
       {profile.excel_sheets && profile.excel_sheets.length > 0 && (
         <div className="ui-panel p-5 border-l-4 border-l-accent-500 space-y-3">
           <div className="flex items-center justify-between">
@@ -139,12 +114,12 @@ export default function DataProfile({ profile, datasetId }: Props) {
           <table className="w-full">
             <thead>
               <tr className="bg-white/[0.02]">
-                <th className="py-5 px-6">Variable</th>
-                <th className="py-5 px-6">Type Statistique</th>
-                <th className="py-5 px-6">Unité</th>
-                <th className="py-5 px-6 text-right">Nullité</th>
-                <th className="py-5 px-6 text-right">Cardinalité</th>
-                <th className="py-5 px-6 text-right">Distribution (Min/Max)</th>
+                <th className="py-2.5 px-4">Variable</th>
+                <th className="py-2.5 px-4">Type Statistique</th>
+                <th className="py-2.5 px-4">Unité</th>
+                <th className="py-2.5 px-4 text-right">Nullité</th>
+                <th className="py-2.5 px-4 text-right">Cardinalité</th>
+                <th className="py-2.5 px-4 text-right">Distribution (Min/Max)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.03]">
@@ -152,17 +127,17 @@ export default function DataProfile({ profile, datasetId }: Props) {
                 const Icon = TYPE_ICONS[col.type_statistique] || Database;
                 return (
                   <tr key={col.nom_brut} className="group hover:bg-white/[0.02] transition-colors">
-                    <td className="py-4 px-6">
+                    <td className="py-2.5 px-4">
                       <div className="font-bold text-surface-50 mb-0.5">{col.nom_brut}</div>
                       <div className="text-[10px] text-surface-500 font-black uppercase tracking-widest">{col.nom_lisible}</div>
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="py-2.5 px-4">
                       {editingCol === col.nom_brut ? (
                         <div className="flex items-center gap-2 animate-slide-up">
                           <select
                             value={selectedType}
                             onChange={(e) => setSelectedType(e.target.value)}
-                            className="!py-1.5 !px-3 !text-xs !w-40"
+                            className="!py-1 !px-2.5 !text-xs !w-40"
                             disabled={isUpdating}
                           >
                             {STAT_TYPES.map((t) => (
@@ -172,22 +147,22 @@ export default function DataProfile({ profile, datasetId }: Props) {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleConfirm(col.nom_brut)}
-                              className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"
+                              className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all"
                             >
                               <Check className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={handleCancel}
-                              className="p-2 rounded-lg bg-white/5 text-surface-400 hover:bg-white/10 transition-all"
+                              className="p-1.5 rounded-lg bg-white/5 text-surface-400 hover:bg-white/10 transition-all"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-3 group/edit">
-                          <div className={`p-2 rounded-xl ${TYPE_COLORS[col.type_statistique]?.replace('!bg-', 'bg-').replace('!text-', 'text-')} opacity-80`}>
-                            <Icon className="w-4 h-4" />
+                        <div className="flex items-center gap-2.5 group/edit">
+                          <div className={`p-1.5 rounded-lg ${TYPE_COLORS[col.type_statistique]?.replace('!bg-', 'bg-').replace('!text-', 'text-')} opacity-80`}>
+                            <Icon className="w-3.5 h-3.5" />
                           </div>
                           <span className={`badge ${TYPE_COLORS[col.type_statistique]}`}>
                             {col.type_statistique}
@@ -203,23 +178,23 @@ export default function DataProfile({ profile, datasetId }: Props) {
                         </div>
                       )}
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="py-2.5 px-4">
                       {col.unite_mesure ? (
-                        <span className="text-xs font-bold text-surface-300 px-2 py-1 rounded bg-white/5 border border-white/5">
+                        <span className="text-xs font-bold text-surface-300 px-2 py-0.5 rounded bg-white/5 border border-white/5">
                           {col.unite_mesure}
                         </span>
                       ) : (
                         <span className="text-surface-600 text-xs">—</span>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-right">
+                    <td className="py-2.5 px-4 text-right">
                       <NullityBadge rate={col.taux_nullite} />
                     </td>
-                    <td className="py-4 px-6 text-right">
-                      <span className="num text-sm text-surface-300 font-bold">{col.cardinalite}</span>
+                    <td className="py-2.5 px-4 text-right">
+                      <span className="ui-num text-sm text-surface-300 font-bold">{col.cardinalite}</span>
                     </td>
-                    <td className="py-4 px-6 text-right">
-                      <div className="flex items-center justify-end gap-3 text-xs num">
+                    <td className="py-2.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-3 text-xs ui-num">
                         <span className="text-surface-500">{col.stats.min != null ? Number(col.stats.min).toFixed(2) : '—'}</span>
                         <div className="w-12 h-1 bg-white/5 rounded-full relative">
                           <div className="absolute inset-0 bg-accent-500/20 rounded-full" />

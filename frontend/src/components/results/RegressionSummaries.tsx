@@ -1,16 +1,10 @@
 import React from 'react';
-import { Sparkles, Activity } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { PlotlyChart, useCurrentTheme } from '../viz/PlotlyBase';
 
-function CoefficientForestPlot({
-  coefficients,
-  title,
-}: {
-  coefficients: any[];
-  title: string;
-}) {
+function CoefficientForestPlot(props: { coefficients: any[]; title: string }) {
   const isLight = useCurrentTheme() === 'light';
-  const rows = coefficients
+  const rows = props.coefficients
     .filter(c => c.variable && !String(c.variable).includes('Constante') && !String(c.variable).includes('β₀'))
     .slice(0, 20)
     .reverse();
@@ -45,14 +39,12 @@ function CoefficientForestPlot({
               }
             : undefined,
           showlegend: false,
-          hovertemplate: hasCi
-            ? '<b>%{y}</b><br>β = %{x:.4f}<extra></extra>'
-            : '<b>%{y}</b><br>β = %{x:.4f}<extra></extra>',
+          hovertemplate: '<b>%{y}</b><br>β = %{x:.4f}<extra></extra>',
         } as any,
       ]}
       layout={{
-        title: { text: title, font: { size: 13 } },
-        xaxis: { title: { text: hasCi ? 'Coefficient estimé (IC 95%)' : 'Coefficient estimé' }, zeroline: true },
+        title: { text: props.title, font: { size: 13 } },
+        xaxis: { title: { text: hasCi ? 'Coefficient estimé (IC 95%)' : 'Coefficient estimé' }, zeroline: true, automargin: true },
         yaxis: { automargin: true },
         margin: { l: 150, r: 24, t: 36, b: 48 },
         showlegend: false,
@@ -78,85 +70,57 @@ export function LogitSummaryView({ logitSummary }: { logitSummary: any }) {
   if (!logitSummary || !logitSummary.odds_ratios) return null;
 
   return (
-    <div className="ui-panel p-4 space-y-4">
-      <h4 className="text-md font-semibold text-accent-400 flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-accent-400" />
-        Régression Logistique — Ratios de Cotes (Odds Ratios) & Significativités
-      </h4>
+    <section className="ui-panel overflow-hidden">
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <Activity className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          Régression logistique — Odds Ratios
+        </span>
+        <span className="flex items-center gap-3 text-xs ui-num ui-t-muted">
+          {logitSummary.pseudo_r2_mcfadden !== undefined && (
+            <span>Pseudo R² = <strong className="ui-t-accent">{(logitSummary.pseudo_r2_mcfadden * 100).toFixed(1)}%</strong></span>
+          )}
+          {logitSummary.log_likelihood !== undefined && <span>LL = {logitSummary.log_likelihood}</span>}
+          {logitSummary.n_observations !== undefined && <span>N = {logitSummary.n_observations}</span>}
+        </span>
+      </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 ui-num">
-        {logitSummary.pseudo_r2_mcfadden !== undefined && (
-          <div className="p-3 rounded-[var(--ui-radius-sm)]" style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}>
-            <span className="text-xs ui-t-muted block">Pseudo R² (McFadden)</span>
-            <span className="text-base font-mono font-bold text-accent-400">
-              {(logitSummary.pseudo_r2_mcfadden * 100).toFixed(1)}%
-            </span>
-          </div>
-        )}
-        {logitSummary.log_likelihood !== undefined && (
-          <div className="p-3 rounded-[var(--ui-radius-sm)]" style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}>
-            <span className="text-xs ui-t-muted block">Log-Vraisemblance</span>
-            <span className="text-base font-mono font-bold" style={{ color: 'var(--ui-text)' }}>
-              {logitSummary.log_likelihood}
-            </span>
-          </div>
-        )}
-        {logitSummary.n_observations !== undefined && (
-          <div className="p-3 rounded-[var(--ui-radius-sm)]" style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}>
-            <span className="text-xs ui-t-muted block">Échantillon (N)</span>
-            <span className="text-base font-mono font-bold text-accent-400">
-              {logitSummary.n_observations}
-            </span>
-          </div>
-        )}
-      </div>
+      <div className="p-3 space-y-3">
+        <CoefficientForestPlot coefficients={logitSummary.odds_ratios} title="Effets logistiques estimés (β)" />
 
-      <CoefficientForestPlot
-        coefficients={logitSummary.odds_ratios}
-        title="Effets logistiques estimés (β)"
-      />
-
-      <div className="overflow-x-auto rounded-[var(--ui-radius-sm)]" style={{ border: '1px solid var(--ui-border)' }}>
-        <table className="ui-table w-full text-left text-sm">
-          <thead>
-            <tr>
-              <th className="p-2.5">Variable</th>
-              <th className="p-2.5 text-right">Coeff (β)</th>
-              <th className="p-2.5 text-right">Odds Ratio (e^β)</th>
-              <th className="p-2.5 text-right">p-valeur</th>
-              <th className="p-2.5 pl-4">Interprétation</th>
-            </tr>
-          </thead>
-          <tbody className="text-xs ui-num">
-            {logitSummary.odds_ratios.map((or: any, i: number) => (
-              <tr key={i} style={or.significant ? { background: 'var(--ui-accent-soft)' } : undefined}>
-                <td className="p-2.5 font-medium" style={{ color: 'var(--ui-text)' }}>{or.variable}</td>
-                <td className="p-2.5 text-right font-mono">
-                  {or.coefficient > 0 ? `+${or.coefficient}` : or.coefficient}
-                </td>
-                <td className="p-2.5 text-right font-mono font-bold text-accent-400">
-                  {or.odds_ratio}
-                </td>
-                <td
-                  className={`p-2.5 text-right font-mono font-bold ${
-                    or.p_value !== undefined && or.p_value < 0.05
-                      ? 'text-emerald-400'
-                      : 'text-amber-400'
-                  }`}
-                >
-                  {or.p_value !== undefined
-                    ? or.p_value < 0.001
-                      ? '< 0.001'
-                      : or.p_value.toFixed(4)
-                    : '—'}
-                </td>
-                <td className="p-2.5 text-left pl-4">{or.interpretation}</td>
+        <div className="overflow-x-auto rounded-[var(--ui-radius-sm)]" style={{ border: '1px solid var(--ui-border)' }}>
+          <table className="ui-table w-full text-left text-xs">
+            <thead>
+              <tr>
+                <th className="p-2.5 text-left">Variable</th>
+                <th className="ui-th-num p-2.5 text-right">Coeff (β)</th>
+                <th className="ui-th-num p-2.5 text-right">Odds Ratio</th>
+                <th className="ui-th-num p-2.5 text-right">p-valeur</th>
+                <th className="p-2.5 pl-4 text-left">Interprétation</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="ui-num">
+              {logitSummary.odds_ratios.map((or: any, i: number) => (
+                <tr key={i} style={or.significant ? { background: 'var(--ui-accent-soft)' } : undefined}>
+                  <td className="p-2.5 font-medium" style={{ color: 'var(--ui-text)' }}>{or.variable}</td>
+                  <td className="ui-td-num p-2.5">
+                    {or.coefficient > 0 ? `+${or.coefficient}` : or.coefficient}
+                  </td>
+                  <td className="ui-td-num p-2.5 font-bold ui-t-accent">{or.odds_ratio}</td>
+                  <td
+                    className="ui-td-num p-2.5 font-bold"
+                    style={{ color: or.p_value !== undefined && or.p_value < 0.05 ? 'var(--ui-success)' : 'var(--ui-warning)' }}
+                  >
+                    {or.p_value !== undefined ? (or.p_value < 0.0001 ? '< 0.0001' : or.p_value.toFixed(4)) : '—'}
+                  </td>
+                  <td className="p-2.5 text-left pl-4">{or.interpretation}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -164,126 +128,101 @@ export function OlsSummaryView({ regSummary }: { regSummary: any }) {
   if (!regSummary) return null;
 
   return (
-    <div className="ui-panel p-4 space-y-4">
-      <h4 className="text-md font-semibold flex items-center gap-2" style={{ color: 'var(--ui-accent-text)' }}>
-        <Activity className="w-4 h-4" />
-        Résumé de la Régression Linéaire (OLS / MCO)
-      </h4>
+    <section className="ui-panel overflow-hidden">
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <Activity className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          Résumé de la régression OLS
+        </span>
+        <span className="flex flex-wrap items-center gap-3 text-xs ui-num ui-t-muted">
+          {regSummary.r2_adjusted !== undefined && (
+            <span>R² aj. <strong className="ui-t-success">{(regSummary.r2_adjusted * 100).toFixed(2)}%</strong></span>
+          )}
+          {regSummary.f_statistic != null && (
+            <span>
+              F = <strong>{regSummary.f_statistic.toFixed(2)}</strong>
+              {regSummary.f_pvalue !== undefined && ` (p=${regSummary.f_pvalue < 0.0001 ? '<0.0001' : regSummary.f_pvalue.toFixed(4)})`}
+            </span>
+          )}
+          {regSummary.durbin_watson !== undefined && <span>DW = {regSummary.durbin_watson.toFixed(2)}</span>}
+          {regSummary.aic !== undefined && (
+            <span>AIC/BIC = {regSummary.aic.toFixed(1)}/{regSummary.bic?.toFixed(1)}</span>
+          )}
+        </span>
+      </header>
 
-      {regSummary.equation && (
-        <div
-          className="p-3 rounded-[var(--ui-radius-sm)] overflow-x-auto"
-          style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border-strong)' }}
-        >
-          <span className="text-xs font-semibold block mb-1" style={{ color: 'var(--ui-accent-text)' }}>
-            Équation de Régression Estimée :
-          </span>
-          <code className="text-sm font-mono whitespace-nowrap" style={{ color: 'var(--ui-text)' }}>
+      <div className="p-3 space-y-3">
+        {regSummary.equation && (
+          <div
+            className="px-3 py-2 rounded-[var(--ui-radius-sm)] overflow-x-auto ui-mono text-xs whitespace-nowrap"
+            style={{ background: 'var(--ui-bg-sunken)', border: '1px solid var(--ui-border)' }}
+          >
             {regSummary.equation}
-          </code>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 ui-num">
-        <div className="p-3 rounded-[var(--ui-radius-sm)]" style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}>
-          <span className="text-xs ui-t-muted block">R² Ajusté</span>
-          <span className="text-base font-mono font-bold text-emerald-400">
-            {regSummary.r2_adjusted !== undefined
-              ? (regSummary.r2_adjusted * 100).toFixed(2) + '%'
-              : 'N/A'}
-          </span>
-        </div>
-        <div className="p-3 rounded-[var(--ui-radius-sm)]" style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}>
-          <span className="text-xs ui-t-muted block">Statistique F (p-valeur)</span>
-          <span className="text-base font-mono font-bold text-sky-400">
-            {regSummary.f_statistic !== null && regSummary.f_statistic !== undefined
-              ? regSummary.f_statistic.toFixed(2)
-              : 'N/A'}
-            {regSummary.f_pvalue !== undefined && (
-              <span className="text-xs font-normal ui-t-muted block">
-                p = {regSummary.f_pvalue < 0.001 ? '< 0.001' : regSummary.f_pvalue.toFixed(4)}
-              </span>
-            )}
-          </span>
-        </div>
-        <div className="p-3 rounded-[var(--ui-radius-sm)]" style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}>
-          <span className="text-xs ui-t-muted block">Durbin-Watson</span>
-          <span className="text-base font-mono font-bold text-blue-400">
-            {regSummary.durbin_watson !== undefined ? regSummary.durbin_watson.toFixed(2) : 'N/A'}
-          </span>
-        </div>
-        <div className="p-3 rounded-[var(--ui-radius-sm)]" style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}>
-          <span className="text-xs ui-t-muted block">AIC / BIC</span>
-          <span className="text-base font-mono font-bold" style={{ color: 'var(--ui-text)' }}>
-            {regSummary.aic !== undefined
-              ? `${regSummary.aic.toFixed(1)} / ${regSummary.bic?.toFixed(1)}`
-              : 'N/A'}
-          </span>
-        </div>
-      </div>
-
-      {regSummary.coefficients && regSummary.coefficients.length > 0 && (
-        <>
-          <CoefficientForestPlot
-            coefficients={regSummary.coefficients}
-            title="Diagramme des coefficients (β ± IC 95%)"
-          />
-          <div className="overflow-x-auto rounded-[var(--ui-radius-sm)]" style={{ border: '1px solid var(--ui-border)' }}>
-            <table className="ui-table w-full text-left text-sm">
-              <thead>
-                <tr>
-                  <th className="p-2.5">Variable</th>
-                  <th className="p-2.5 text-right">Coefficient (β)</th>
-                  <th className="p-2.5 text-right">Erreur Type</th>
-                  <th className="p-2.5 text-right text-accent-400" title="Erreurs-types robustes à l'hétéroscédasticité (White / HC1 standard Stata)">SE Robuste (White)</th>
-                  <th className="p-2.5 text-right">Stat t</th>
-                  <th className="p-2.5 text-right">p-valeur</th>
-                  <th className="p-2.5 text-right text-accent-400" title="p-valeur robuste HC1">p-robuste</th>
-                  <th className="p-2.5 text-right">IC (95%)</th>
-                  <th className="p-2.5 text-center">Sig.</th>
-                </tr>
-              </thead>
-              <tbody className="font-mono text-xs ui-num">
-                {regSummary.coefficients.map((c: any, i: number) => {
-                  const isSig = c.robust_significant !== undefined ? c.robust_significant : c.significant;
-                  const pVal = c.robust_p_value !== undefined ? c.robust_p_value : c.p_value;
-                  return (
-                    <tr key={i} style={isSig ? { background: 'var(--ui-success-soft)' } : undefined}>
-                      <td className="p-2.5 font-sans font-medium" style={{ color: 'var(--ui-text)' }}>{c.variable}</td>
-                      <td className="p-2.5 text-right font-bold text-accent-400">
-                        {c.coefficient > 0 ? `+${c.coefficient.toFixed(4)}` : c.coefficient.toFixed(4)}
-                      </td>
-                      <td className="p-2.5 text-right ui-t-muted">{c.std_error?.toFixed(4) ?? '—'}</td>
-                      <td className="p-2.5 text-right font-semibold text-accent-400" title="Robuste HC1">
-                        {c.robust_std_error !== undefined ? c.robust_std_error.toFixed(4) : (c.std_error?.toFixed(4) ?? '—')}
-                      </td>
-                      <td className="p-2.5 text-right">
-                        {c.robust_t_statistic !== undefined ? c.robust_t_statistic.toFixed(2) : c.t_statistic?.toFixed(2)}
-                      </td>
-                      <td className="p-2.5 text-right ui-t-muted">
-                        {c.p_value < 0.001 ? '< 0.001' : c.p_value?.toFixed(4)}
-                      </td>
-                      <td
-                        className={`p-2.5 text-right font-bold ${
-                          pVal < 0.05 ? 'text-emerald-400' : 'text-amber-400'
-                        }`}
-                      >
-                        {pVal < 0.001 ? '< 0.001' : pVal?.toFixed(4)}
-                      </td>
-                      <td className="p-2.5 text-right ui-t-muted">
-                        [{c.ci_lower?.toFixed(3)}, {c.ci_upper?.toFixed(3)}]
-                      </td>
-                      <td className="p-2.5 text-center">
-                        {pVal < 0.001 ? '***' : pVal < 0.01 ? '**' : pVal < 0.05 ? '*' : 'ns'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
-        </>
-      )}
-    </div>
+        )}
+
+        {regSummary.coefficients && regSummary.coefficients.length > 0 && (
+          <>
+            <CoefficientForestPlot
+              coefficients={regSummary.coefficients}
+              title="Diagramme des coefficients (β ± IC 95%)"
+            />
+            <div className="overflow-x-auto rounded-[var(--ui-radius-sm)]" style={{ border: '1px solid var(--ui-border)' }}>
+              <table className="ui-table w-full text-left text-xs">
+                <thead>
+                  <tr>
+                    <th className="p-2.5 text-left">Variable</th>
+                    <th className="ui-th-num p-2.5 text-right">Coeff (β)</th>
+                    <th className="ui-th-num p-2.5 text-right">SE</th>
+                    <th className="ui-th-num p-2.5 text-right" title="Erreurs-types robustes White HC1">SE Robuste</th>
+                    <th className="ui-th-num p-2.5 text-right">Stat t</th>
+                    <th className="ui-th-num p-2.5 text-right">p-valeur</th>
+                    <th className="ui-th-num p-2.5 text-right" title="p-valeur robuste HC1">p-robuste</th>
+                    <th className="ui-th-num p-2.5 text-right">IC (95%)</th>
+                    <th className="ui-th-num p-2.5 text-right">Sig.</th>
+                  </tr>
+                </thead>
+                <tbody className="ui-num">
+                  {regSummary.coefficients.map((c: any, i: number) => {
+                    const isSig = c.robust_significant !== undefined ? c.robust_significant : c.significant;
+                    const pVal = c.robust_p_value !== undefined ? c.robust_p_value : c.p_value;
+                    return (
+                      <tr key={i} style={isSig ? { background: 'var(--ui-success-soft)' } : undefined}>
+                        <td className="p-2.5 font-medium" style={{ color: 'var(--ui-text)' }}>{c.variable}</td>
+                        <td className="ui-td-num p-2.5 font-bold ui-t-accent">
+                          {c.coefficient > 0 ? `+${c.coefficient.toFixed(4)}` : c.coefficient.toFixed(4)}
+                        </td>
+                        <td className="ui-td-num p-2.5 ui-t-muted">{c.std_error?.toFixed(4) ?? '—'}</td>
+                        <td className="ui-td-num p-2.5 font-semibold ui-t-accent">
+                          {c.robust_std_error !== undefined ? c.robust_std_error.toFixed(4) : (c.std_error?.toFixed(4) ?? '—')}
+                        </td>
+                        <td className="ui-td-num p-2.5">
+                          {c.robust_t_statistic !== undefined ? c.robust_t_statistic.toFixed(2) : c.t_statistic?.toFixed(2)}
+                        </td>
+                        <td className="ui-td-num p-2.5 ui-t-muted">
+                          {c.p_value < 0.0001 ? '< 0.0001' : c.p_value?.toFixed(4)}
+                        </td>
+                        <td
+                          className="ui-td-num p-2.5 font-bold"
+                          style={{ color: pVal < 0.05 ? 'var(--ui-success)' : 'var(--ui-warning)' }}
+                        >
+                          {pVal < 0.0001 ? '< 0.0001' : pVal?.toFixed(4)}
+                        </td>
+                        <td className="ui-td-num p-2.5 ui-t-muted">
+                          [{c.ci_lower?.toFixed(3)}, {c.ci_upper?.toFixed(3)}]
+                        </td>
+                        <td className="ui-td-num p-2.5 font-bold">
+                          {pVal < 0.001 ? '***' : pVal < 0.01 ? '**' : pVal < 0.05 ? '*' : 'ns'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
   );
 }

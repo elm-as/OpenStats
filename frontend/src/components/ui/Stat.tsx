@@ -9,22 +9,22 @@ interface StatProps {
   hint?: ReactNode;
 }
 
-export function Stat({ label, value, icon, iconColor = 'text-accent-400', delta, hint }: StatProps) {
+export function Stat({ label, value, icon, iconColor = 'ui-t-accent', delta, hint }: StatProps) {
   return (
     <div className="stat">
       <div className="stat-label">
         {icon && <span className={iconColor}>{icon}</span>}
         <span>{label}</span>
       </div>
-      <div className="stat-value">{value}</div>
+      <div className="stat-value ui-num">{value}</div>
       {delta && (
-        <div className={`stat-delta ${delta.direction === 'up' ? 'stat-delta-up' : delta.direction === 'down' ? 'stat-delta-down' : 'text-muted'}`}>
+        <div className={`stat-delta ${delta.direction === 'up' ? 'stat-delta-up' : delta.direction === 'down' ? 'stat-delta-down' : 'ui-t-muted'}`}>
           {delta.direction === 'up' && '↑ '}
           {delta.direction === 'down' && '↓ '}
           {delta.value}
         </div>
       )}
-      {hint && <div className="text-xs text-faint mt-1">{hint}</div>}
+      {hint && <div className="text-xs ui-t-faint mt-1">{hint}</div>}
     </div>
   );
 }

@@ -13,13 +13,20 @@ interface Props {
   onGraphDiv?: (gd: any) => void;
 }
 
+export interface ExportPlotlyFigureOptions {
+  graphDiv: any;
+  format: 'png' | 'svg';
+  chartTitle?: string;
+  theme: 'dark' | 'light';
+}
+
 /** Exporte une figure Plotly existante en image haute définition avec fond lisible. */
-export async function exportPlotlyFigure(
-  graphDiv: any,
-  format: 'png' | 'svg',
-  chartTitle: string | undefined,
-  theme: 'dark' | 'light'
-): Promise<void> {
+export async function exportPlotlyFigure({
+  graphDiv,
+  format,
+  chartTitle,
+  theme,
+}: ExportPlotlyFigureOptions): Promise<void> {
   if (!graphDiv) return;
   const mod = await import('plotly.js/dist/plotly');
   const PlotlyLib = (mod as any).default || mod;

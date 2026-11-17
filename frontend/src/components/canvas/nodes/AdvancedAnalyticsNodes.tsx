@@ -17,7 +17,7 @@ export function SurvivalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#ec4899" icon={Activity} title="Analyse de Survie (Kaplan-Meier)" hasInput badge="Survie">
+    <NodeShell id={id} data={data} color="#ec4899" icon={Activity} title="Analyse de Survie (Kaplan-Meier)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Courbes Kaplan-Meier (IC Greenwood 95%), test du Log-Rank et modèle de Cox.
       </div>
@@ -43,7 +43,7 @@ export function CausalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const method = (data.method as string) || 'psm';
 
   return (
-    <NodeShell id={id} data={data} color="#06b6d4" icon={GitCompare} title="Inférence Causale" hasInput badge="Causal">
+    <NodeShell id={id} data={data} color="#06b6d4" icon={GitCompare} title="Inférence Causale" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Appariement sur score de propension (PSM), Diff-in-Diff ou 2SLS.
       </div>
@@ -70,7 +70,7 @@ export function CausalNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 
 export function ManifoldNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
-    <NodeShell id={id} data={data} color="#8b5cf6" icon={Layers} title="Projection t-SNE & DBSCAN" hasInput badge="Manifold">
+    <NodeShell id={id} data={data} color="#8b5cf6" icon={Layers} title="Projection t-SNE & DBSCAN" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Réduction non-linéaire de dimension t-SNE 2D combinée avec clustering par densité DBSCAN.
       </div>
@@ -83,7 +83,7 @@ export function GarchNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#f59e0b" icon={TrendingUp} title="Volatilité GARCH(1,1)" hasInput badge="Volatilité">
+    <NodeShell id={id} data={data} color="#f59e0b" icon={TrendingUp} title="Volatilité GARCH(1,1)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Modélisation de la variance conditionnelle temporelle de séries financières ou hautement volatiles.
       </div>
@@ -108,7 +108,6 @@ export function PanelNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
       icon={Grid3x3}
       title="Économétrie de Panel"
       hasInput
-      badge="Panel"
     >
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Entités suivies dans le temps : effets fixes (within), effets aléatoires et test de

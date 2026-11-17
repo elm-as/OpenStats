@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Activity, BarChart2, TrendingUp } from 'lucide-react';
-import { Section, KpiCard, DataTable } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable } from './ResultAtoms';
 import { PlotlyChart, SCI_COLORS, useCurrentTheme } from '../../viz/PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
@@ -79,15 +79,13 @@ export const SurvivalResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-5">
       <Section title={`Analyse de Survie (${resultData.duration_column || ''})`} icon={Activity} color="#0284c7">
-        <div className="grid grid-cols-3 gap-3 ui-num">
-          <KpiCard label="Observations" value={resultData.n_observations} color="#0284c7" />
-          <KpiCard label="Événements" value={resultData.n_events} color="#dc2626" />
-          <KpiCard
-            label="Survie Médiane"
-            value={resultData.median_survival_time ?? 'Non atteinte'}
-            color="#059669"
-          />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Observations', value: resultData.n_observations },
+            { label: 'Événements', value: resultData.n_events },
+            { label: 'Survie Médiane', value: resultData.median_survival_time ?? 'Non atteinte', tone: 'success' },
+          ]}
+        />
       </Section>
 
       {kmPlot.traces.length > 0 && (
@@ -98,12 +96,14 @@ export const SurvivalResultView = ({ resultData }: { resultData: any }) => {
 
       {logRank && (
         <Section title="Test du Log-Rank (Mantel-Cox)" icon={Activity} color="#0284c7">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
-            <KpiCard label="Comparaison" value={`${logRank.group1} vs ${logRank.group2}`} color="#0284c7" />
-            <KpiCard label="Statistique χ²" value={logRank.chi2_statistic} color="#0e7490" />
-            <KpiCard label="p-value" value={logRank.p_value} color={logRank.significant ? '#059669' : '#d97706'} />
-            <KpiCard label="Différence" value={logRank.significant ? 'Significative' : 'Non significative'} color={logRank.significant ? '#059669' : '#d97706'} />
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Comparaison', value: `${logRank.group1} vs ${logRank.group2}` },
+              { label: 'Statistique χ²', value: logRank.chi2_statistic },
+              { label: 'p-value', value: logRank.p_value, tone: logRank.significant ? 'success' : 'warning' },
+              { label: 'Différence', value: logRank.significant ? 'Significative' : 'Non significative', tone: logRank.significant ? 'success' : 'warning' },
+            ]}
+          />
         </Section>
       )}
 

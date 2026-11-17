@@ -18,12 +18,12 @@ const VARIANT_CLASS: Record<BadgeVariant, string> = {
 };
 
 const DOT_COLOR: Record<BadgeVariant, string> = {
-  default: 'bg-accent-400',
-  success: 'bg-emerald-400',
-  warning: 'bg-amber-400',
-  danger: 'bg-red-400',
-  info: 'bg-blue-400',
-  neutral: 'bg-slate-400',
+  default: 'bg-[var(--ui-accent)]',
+  success: 'bg-[var(--ui-success)]',
+  warning: 'bg-[var(--ui-warning)]',
+  danger: 'bg-[var(--ui-danger)]',
+  info: 'bg-[var(--ui-info)]',
+  neutral: 'bg-[var(--ui-text-faint)]',
 };
 
 export function Badge({ variant = 'default', dot = false, className = '', children, ...rest }: BadgeProps) {

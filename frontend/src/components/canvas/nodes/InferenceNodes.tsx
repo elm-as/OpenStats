@@ -17,7 +17,7 @@ export function CountModelNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#14b8a6" icon={Hash} title="Modèle de Comptage" hasInput badge="Poisson">
+    <NodeShell id={id} data={data} color="#14b8a6" icon={Hash} title="Modèle de Comptage" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Pour une cible de dénombrement. Teste la surdispersion et bascule en binomiale négative
         si la variance dépasse la moyenne.
@@ -44,7 +44,7 @@ export function RegressionDiagnosticsNode({ id, data }: NodeProps<Node<CanvasNod
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#ef4444" icon={Stethoscope} title="Diagnostics de Régression" hasInput badge="Hypothèses">
+    <NodeShell id={id} data={data} color="#ef4444" icon={Stethoscope} title="Diagnostics de Régression" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Breusch-Pagan, Jarque-Bera, Ljung-Box, RESET de Ramsey et Durbin-Watson : chaque
         hypothèse en défaut est signalée avec sa conséquence.
@@ -67,7 +67,7 @@ export function PowerAnalysisNode({ id, data }: NodeProps<Node<CanvasNodeData>>)
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#f59e0b" icon={Gauge} title="Puissance Statistique" hasInput badge="Puissance">
+    <NodeShell id={id} data={data} color="#f59e0b" icon={Gauge} title="Puissance Statistique" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         « Non significatif » peut vouloir dire « échantillon trop petit ». Donne la puissance
         atteinte, l'effet minimal détectable et la taille requise.
@@ -94,7 +94,7 @@ export function QuantileRegressionNode({ id, data }: NodeProps<Node<CanvasNodeDa
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#8b5cf6" icon={SlidersHorizontal} title="Régression Quantile" hasInput badge="Quantiles">
+    <NodeShell id={id} data={data} color="#8b5cf6" icon={SlidersHorizontal} title="Régression Quantile" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Un effet peut être nul au centre et fort dans les queues. Compare les coefficients
         d'un quantile à l'autre.
@@ -121,7 +121,7 @@ export function EquivalenceTestNode({ id, data }: NodeProps<Node<CanvasNodeData>
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#10b981" icon={Equal} title="Test d'Équivalence (TOST)" hasInput badge="Équivalence">
+    <NodeShell id={id} data={data} color="#10b981" icon={Equal} title="Test d'Équivalence (TOST)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Un p &gt; 0,05 ne prouve pas l'absence d'effet. Le TOST teste si l'écart tient dans
         une marge que vous jugez négligeable.

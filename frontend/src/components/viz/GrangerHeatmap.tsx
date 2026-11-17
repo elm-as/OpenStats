@@ -62,9 +62,20 @@ export default function GrangerHeatmap({ pvalues, alpha = 0.05, height = 460, ti
 
     const lay: Partial<Layout> = {
       title: { text: title + ` (α=${alpha})`, font: { size: 14 } },
-      xaxis: { title: { text: 'Effet (variable expliquée)' }, side: 'bottom', showgrid: false },
-      yaxis: { title: { text: 'Cause (variable explicative)' }, autorange: 'reversed', showgrid: false },
-      margin: { l: 100, r: 80, t: 50, b: 80 },
+      xaxis: {
+        title: { text: 'Effet (variable expliquée)' },
+        side: 'bottom',
+        showgrid: false,
+        automargin: true,
+        tickangle: -35,
+      },
+      yaxis: {
+        title: { text: 'Cause (variable explicative)' },
+        autorange: 'reversed',
+        showgrid: false,
+        automargin: true,
+      },
+      margin: { l: 80, r: 80, t: 50, b: 80 },
     };
 
     return { trace: tr, layout: lay };

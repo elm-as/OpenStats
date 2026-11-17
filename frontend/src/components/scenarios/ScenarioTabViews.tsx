@@ -1,16 +1,14 @@
 import React from 'react';
-import { Badge, Stat, StatGrid } from '../ui';
+import { Badge } from '../ui';
 import { MonteCarloDistribution } from '../viz';
 import { PlotlyChart, DEFAULT_CONFIG, SCI_COLORS, useCurrentTheme } from '../viz/PlotlyBase';
 import type { Data, Layout } from 'plotly.js';
 
-export function SensitivityCurve({
-  analysis,
-  colorIdx,
-}: {
+export function SensitivityCurve(props: {
   analysis: any;
   colorIdx: number;
 }) {
+  const { analysis, colorIdx } = props;
   const theme = useCurrentTheme();
   const guideColor = theme === 'light' ? 'rgba(0,0,0,0.28)' : 'rgba(255,255,255,0.3)';
   const color = SCI_COLORS[colorIdx % SCI_COLORS.length];
@@ -32,9 +30,11 @@ export function SensitivityCurve({
     margin: { l: 50, r: 15, t: 10, b: 35 },
     xaxis: {
       title: { text: analysis.variable, font: { size: 10 } },
+      automargin: true,
     },
     yaxis: {
       title: { text: 'Prédiction', font: { size: 10 } },
+      automargin: true,
     },
     showlegend: false,
     shapes: [
@@ -62,7 +62,7 @@ export function SensitivityCurve({
           <Badge variant="warning">η = {analysis.elasticity.toFixed(3)}</Badge>
         )}
       </div>
-      <div className="flex gap-4 text-xs text-muted mb-2 num">
+      <div className="flex gap-4 text-xs text-muted mb-2 ui-num">
         <span>μ = {analysis.base_mean.toFixed(3)}</span>
         <span>σ = {analysis.base_std.toFixed(3)}</span>
       </div>
@@ -73,49 +73,34 @@ export function SensitivityCurve({
 
 export function PresetScenariosResults({ scenarioResults }: { scenarioResults: any }) {
   return (
-    <div className="mt-5 space-y-3">
-      <h5 className="text-strong text-sm font-medium">Résultats</h5>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {scenarioResults.comparison.scenarios.map((sc: any) => {
-          const tone =
-            sc.name === 'pessimiste'
-              ? 'border-red-500/30 bg-red-500/5'
-              : sc.name === 'optimiste'
-              ? 'border-emerald-500/30 bg-emerald-500/5'
-              : 'border-accent-500/30 bg-accent-500/5';
-          return (
-            <div key={sc.name} className={`rounded-lg p-4 border ${tone}`}>
-              <div className="text-xs uppercase tracking-wider text-muted mb-1">
-                {sc.name}
-              </div>
-              <div className="text-2xl font-bold text-strong num">
-                {sc.predictions_mean.toFixed(2)}
-              </div>
-              {!sc.is_baseline && sc.pct_change !== null && (
-                <div
-                  className={`text-sm mt-1 num ${
-                    sc.pct_change > 0 ? 'text-emerald-300' : 'text-red-300'
-                  }`}
-                >
-                  {sc.pct_change > 0 ? '+' : ''}
-                  {sc.pct_change.toFixed(1)}% vs central
-                </div>
-              )}
-              {sc.is_baseline && (
-                <Badge variant="info" className="mt-1">
-                  Référence
-                </Badge>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="text-xs text-muted flex gap-3">
+    <div className="mt-4 space-y-3">
+      <table className="ui-table w-full text-xs">
+        <thead>
+          <tr>
+            <th>Scénario</th>
+            <th className="ui-th-num">Prédiction moyenne</th>
+            <th className="ui-th-num">Écart vs central</th>
+          </tr>
+        </thead>
+        <tbody>
+          {scenarioResults.comparison.scenarios.map((sc: any) => (
+            <tr key={sc.name}>
+              <td className="font-medium text-strong capitalize">{sc.name}</td>
+              <td className="ui-td-num font-semibold">{sc.predictions_mean.toFixed(2)}</td>
+              <td className="ui-td-num">
+                {sc.is_baseline
+                  ? 'Référence'
+                  : sc.pct_change !== null
+                  ? `${sc.pct_change > 0 ? '+' : ''}${sc.pct_change.toFixed(1)}%`
+                  : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="text-xs text-muted flex gap-4 ui-num">
         <span>
-          Amplitude :{' '}
-          <span className="text-default num">
-            {scenarioResults.comparison.spread.toFixed(2)}
-          </span>
+          Amplitude : <span className="text-default">{scenarioResults.comparison.spread.toFixed(2)}</span>
         </span>
         <span>
           Type : <span className="text-default">{scenarioResults.task_type}</span>
@@ -127,21 +112,21 @@ export function PresetScenariosResults({ scenarioResults }: { scenarioResults: a
 
 export function StressTestResultsTable({ stressData }: { stressData: any }) {
   return (
-    <div className="mt-5 space-y-3">
-      <Badge variant="info">
-        Prédiction de base :{' '}
-        <span className="num ml-1">{stressData.baseline_prediction.toFixed(3)}</span>
-      </Badge>
-      <div className="table-container">
-        <table>
+    <div className="mt-4 space-y-3">
+      <div className="ui-panel px-3 py-1.5 inline-flex items-center gap-2 text-xs ui-num">
+        <span className="ui-t-muted">Prédiction de base :</span>
+        <span className="font-semibold">{stressData.baseline_prediction.toFixed(3)}</span>
+      </div>
+      <div className="table-container overflow-x-auto">
+        <table className="ui-table w-full text-xs">
           <thead>
             <tr>
               <th>Variable</th>
               {stressData.sigmas_tested.flatMap((s: any) => [
-                <th key={`-${s}`} className="text-center text-red-300">
+                <th key={`-${s}`} className="ui-th-num text-red-400">
                   −{s}σ
                 </th>,
-                <th key={`+${s}`} className="text-center text-emerald-300">
+                <th key={`+${s}`} className="ui-th-num text-emerald-400">
                   +{s}σ
                 </th>,
               ])}
@@ -152,20 +137,16 @@ export function StressTestResultsTable({ stressData }: { stressData: any }) {
               <tr key={i}>
                 <td className="font-medium text-strong">{v.variable}</td>
                 {v.shocks.map((shock: any, j: number) => (
-                  <td key={j} className="text-center">
-                    <div
-                      className={`text-xs num font-medium ${
-                        shock.impact > 0 ? 'text-emerald-300' : 'text-red-300'
-                      }`}
-                    >
+                  <td key={j} className="ui-td-num">
+                    <span className={shock.impact > 0 ? 'text-emerald-400 font-medium' : 'text-red-400 font-medium'}>
                       {shock.impact > 0 ? '+' : ''}
                       {shock.impact.toFixed(3)}
-                    </div>
+                    </span>
                     {shock.impact_pct !== null && (
-                      <div className="text-xs text-muted num">
+                      <span className="text-muted ml-1">
                         ({shock.impact_pct > 0 ? '+' : ''}
                         {shock.impact_pct.toFixed(1)}%)
-                      </div>
+                      </span>
                     )}
                   </td>
                 ))}
@@ -178,24 +159,20 @@ export function StressTestResultsTable({ stressData }: { stressData: any }) {
   );
 }
 
-export function MonteCarloResultsView({
-  mcData,
-  mcValues,
-}: {
+export function MonteCarloResultsView(props: {
   mcData: any;
   mcValues: number[];
 }) {
+  const { mcData, mcValues } = props;
+  const dist = mcData.distribution;
   return (
     <div className="space-y-4">
-      <StatGrid>
-        <Stat label="Moyenne" value={mcData.distribution.mean.toFixed(3)} />
-        <Stat label="Écart-type" value={mcData.distribution.std.toFixed(3)} />
-        <Stat label="Médiane" value={mcData.distribution.median.toFixed(3)} />
-        <Stat
-          label="IC 90%"
-          value={`[${mcData.distribution.q05.toFixed(2)} ; ${mcData.distribution.q95.toFixed(2)}]`}
-        />
-      </StatGrid>
+      <div className="ui-panel px-3.5 py-2 flex flex-wrap items-center gap-x-6 gap-y-1.5 text-xs ui-num">
+        <span><span className="ui-t-muted">Moyenne :</span> <strong>{dist.mean.toFixed(3)}</strong></span>
+        <span><span className="ui-t-muted">Écart-type :</span> <strong>{dist.std.toFixed(3)}</strong></span>
+        <span><span className="ui-t-muted">Médiane :</span> <strong>{dist.median.toFixed(3)}</strong></span>
+        <span><span className="ui-t-muted">IC 90% :</span> <strong>[{dist.q05.toFixed(2)} ; {dist.q95.toFixed(2)}]</strong></span>
+      </div>
       <MonteCarloDistribution
         values={mcValues}
         quantiles={[0.05, 0.5, 0.95]}

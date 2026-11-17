@@ -116,17 +116,18 @@ export const nodeTypes = {
   python: PythonNode,
 };
 
-export const AnimatedDataEdge = ({
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  markerEnd,
-  data,
-}: any) => {
+export const AnimatedDataEdge = (props: any) => {
+  const {
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    style = {},
+    markerEnd,
+    data,
+  } = props;
   const [edgePath] = getBezierPath({
     sourceX,
     sourceY,

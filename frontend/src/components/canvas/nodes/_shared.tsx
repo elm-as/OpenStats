@@ -8,6 +8,7 @@ import {
   XCircle,
   AlertCircle,
 } from 'lucide-react';
+import { resolveColumnTypes, resolveUpstreamContext } from './canvasColumnResolver';
 
 export {
   NodeLabel,
@@ -37,38 +38,30 @@ export function useNodeUpdate(id: string, data: CanvasNodeData) {
 
 function getNodeSummaryText(res: any): string | null {
   if (!res || typeof res !== 'object') return null;
-  if (res.name && res.rows !== undefined) return `${res.name} (${res.rows.toLocaleString()} lg × ${res.columns} col)`;
-  if (res.shape_after) return `${res.shape_after.rows.toLocaleString()} lg × ${res.shape_after.columns} col`;
-  if (res.rows !== undefined && res.columns !== undefined) return `${res.rows.toLocaleString()} lg × ${res.columns} col`;
-  if (res.best_model_name || res.best_model_key || res.model_selected) return `Modèle : ${res.best_model_name || res.best_model_key || res.model_selected}`;
-  if (res.n_clusters !== undefined) return `${res.n_clusters} clusters (Silhouette : ${(res.silhouette ?? 0).toFixed(2)})`;
-  if (res.p_value !== undefined) {
-    const p = typeof res.p_value === 'number' ? (res.p_value < 0.001 ? '< 0.001' : res.p_value.toFixed(4)) : res.p_value;
-    return `p-value : ${p} ${res.significant ? '(Significatif)' : ''}`;
+  if (res.name && res.rows !== undefined) return `${res.name} (${res.rows.toLocaleString()} × ${res.columns})`;
+  if (res.shape_after) return `${res.shape_after.rows.toLocaleString()} × ${res.shape_after.columns}`;
+  if (res.rows !== undefined && res.columns !== undefined) return `${res.rows.toLocaleString()} × ${res.columns}`;
+  if (res.best_model_name || res.best_model_key || res.model_selected) {
+    return `Modèle : ${res.best_model_name || res.best_model_key || res.model_selected}`;
   }
-  if (res.statistic !== undefined) return `Statistique : ${typeof res.statistic === 'number' ? res.statistic.toFixed(2) : res.statistic}`;
+  if (res.n_clusters !== undefined) return `${res.n_clusters} clusters (Silhouette ${(res.silhouette ?? 0).toFixed(2)})`;
+  if (res.p_value !== undefined) {
+    const p = typeof res.p_value === 'number' ? (res.p_value < 0.0001 ? '< 0.0001' : res.p_value.toFixed(4)) : res.p_value;
+    return `p = ${p}${res.significant ? ' · significatif' : ''}`;
+  }
+  if (res.statistic !== undefined) return `Stat = ${typeof res.statistic === 'number' ? res.statistic.toFixed(2) : res.statistic}`;
   if (res.explained_variance_ratio) {
     const cum = res.cumulative_variance?.[1] ?? res.explained_variance_ratio[0] ?? 0;
-    return `Variance cum. : ${(cum > 1 ? cum : cum * 100).toFixed(1)}%`;
+    return `Variance : ${(cum > 1 ? cum : cum * 100).toFixed(1)}%`;
   }
   if (res.chart_type) return `Graphique : ${res.chart_type}`;
   if (Array.isArray(res.insights)) return `${res.insights.length} insight(s)`;
-  if (res.mean_outcome !== undefined) return `Moy. simulée : ${typeof res.mean_outcome === 'number' ? res.mean_outcome.toFixed(2) : res.mean_outcome}`;
+  if (res.mean_outcome !== undefined) return `Moy. : ${typeof res.mean_outcome === 'number' ? res.mean_outcome.toFixed(2) : res.mean_outcome}`;
   if (res.message && typeof res.message === 'string') return res.message;
   return null;
 }
 
-export function NodeShell({
-  id,
-  data,
-  children,
-  color,
-  icon: Icon,
-  title,
-  hasInput = false,
-  hasOutput = true,
-  badge,
-}: {
+export interface NodeShellProps {
   id: string;
   data: CanvasNodeData;
   children: React.ReactNode;
@@ -78,125 +71,118 @@ export function NodeShell({
   hasInput?: boolean;
   hasOutput?: boolean;
   badge?: string;
-}) {
-  const runStatus = data.runStatus as string | undefined;
-  const runResult = data.runResult as any;
-  const runError = data.runError as string | undefined;
-  const onOpenResult = data.onOpenResult as ((id: string) => void) | undefined;
+}
 
-  let statusBorder = 'border-white/[0.08]';
-  let shadowGlow =
-    'shadow-[0_8px_40px_-12px_rgba(0,0,0,0.6)] group-hover:shadow-[0_12px_50px_-8px_rgba(0,0,0,0.7)]';
+function getStatusAccent(status?: string): string {
+  if (status === 'processing') return 'var(--ui-accent)';
+  if (status === 'success') return 'var(--ui-success)';
+  if (status === 'error') return 'var(--ui-danger)';
+  if (status === 'skipped') return 'var(--ui-warning)';
+  return 'var(--ui-border-strong)';
+}
 
-  if (runStatus === 'processing') {
-    statusBorder = 'border-accent-400 ring-1 ring-accent-400/50';
-    shadowGlow = 'shadow-[0_0_20px_rgba(56,189,248,0.4)]';
-  } else if (runStatus === 'success') {
-    statusBorder = 'border-emerald-500 ring-1 ring-emerald-500/50';
-    shadowGlow = 'shadow-[0_0_20px_rgba(16,185,129,0.3)]';
-  } else if (runStatus === 'error') {
-    statusBorder = 'border-red-500 ring-1 ring-red-500/50';
-    shadowGlow = 'shadow-[0_0_20px_rgba(239,68,68,0.3)]';
-  } else if (runStatus === 'skipped') {
-    statusBorder = 'border-amber-500 ring-1 ring-amber-500/50';
-  }
+function StatusIcon({ status }: { status?: string }) {
+  if (status === 'processing') return <Loader2 size={13} className="animate-spin shrink-0" style={{ color: 'var(--ui-accent)' }} />;
+  if (status === 'success') return <CheckCircle2 size={13} className="shrink-0" style={{ color: 'var(--ui-success)' }} />;
+  if (status === 'error') return <XCircle size={13} className="shrink-0" style={{ color: 'var(--ui-danger)' }} />;
+  if (status === 'skipped') return <AlertCircle size={13} className="shrink-0" style={{ color: 'var(--ui-warning)' }} />;
+  return null;
+}
 
+export function NodeShell(props: NodeShellProps) {
+  const Icon = props.icon;
+  const hasInput = props.hasInput ?? false;
+  const hasOutput = props.hasOutput ?? true;
+  const runStatus = props.data.runStatus as string | undefined;
+  const runResult = props.data.runResult as any;
+  const runError = props.data.runError as string | undefined;
+  const onOpenResult = props.data.onOpenResult as ((id: string) => void) | undefined;
   const summaryText = runStatus === 'success' ? getNodeSummaryText(runResult) : null;
 
   return (
-    <div className="relative group" style={{ minWidth: 260 }}>
+    <div className="relative group" style={{ minWidth: 248, maxWidth: 310 }}>
       {hasInput && (
         <Handle
           type="target"
           position={Position.Left}
           id="in"
-          className="!w-3 !h-3 !bg-surface-300 !border-2 !border-surface-700 hover:!bg-accent-400 transition-colors"
+          className="!w-2.5 !h-2.5 transition-colors"
+          style={{ background: 'var(--ui-accent)', border: '2px solid var(--ui-bg-panel)' }}
         />
       )}
 
       <div
-        className={`rounded-xl overflow-hidden bg-surface-900/95 transition-colors border group-hover:border-white/[0.2] ${statusBorder} ${shadowGlow}`}
+        className="ui-panel overflow-hidden transition-colors"
+        style={{
+          background: 'var(--ui-bg-panel)',
+          borderColor: getStatusAccent(runStatus),
+          color: 'var(--ui-text)',
+        }}
       >
-        <div
-          className="h-1 w-full"
-          style={{ background: `linear-gradient(90deg, ${color}, ${color}88)` }}
-        />
+        <div className="h-[3px] w-full" style={{ background: props.color }} />
 
-        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-white/[0.06]">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
-            style={{ background: `${color}20`, boxShadow: `0 0 20px ${color}15` }}
+        <div
+          className="flex items-center gap-2 px-3 py-1.5"
+          style={{
+            background: 'var(--ui-bg-raised)',
+            borderBottom: '1px solid var(--ui-border)',
+          }}
+        >
+          <Icon size={14} className="shrink-0" style={{ color: props.color }} />
+          <span
+            className="font-semibold text-[12px] tracking-tight truncate"
+            style={{ color: 'var(--ui-text)' }}
           >
-            <Icon size={16} style={{ color }} />
-          </div>
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="font-bold text-[13px] text-surface-100 tracking-wide truncate">
-              {title}
-            </span>
-            {runStatus === 'processing' && (
-              <Loader2 size={14} className="text-accent-400 animate-spin shrink-0" />
-            )}
-            {runStatus === 'success' && (
-              <CheckCircle2
-                size={14}
-                className="text-emerald-400 drop-shadow-[0_0_5px_rgba(16,185,129,0.5)] shrink-0"
-              />
-            )}
-            {runStatus === 'error' && (
-              <XCircle
-                size={14}
-                className="text-red-400 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)] shrink-0"
-              />
-            )}
-            {runStatus === 'skipped' && (
-              <AlertCircle size={14} className="text-amber-400 shrink-0" />
-            )}
-          </div>
-          <div className="ml-auto flex items-center gap-2 shrink-0">
-            {badge && (
-              <span
-                className="text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full border"
-                style={{ color, borderColor: `${color}40`, background: `${color}10` }}
-              >
-                {badge}
-              </span>
-            )}
-            {data?.onDelete && (
-              <button
-                onClick={() => data.onDelete!(id)}
-                className="text-surface-400 hover:text-red-400 hover:bg-red-400/10 p-1.5 rounded-md transition-colors"
-                title="Supprimer ce bloc"
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
+            {props.title}
+          </span>
+          <StatusIcon status={runStatus} />
+          {props.data?.onDelete && (
+            <button
+              type="button"
+              onClick={() => props.data.onDelete!(props.id)}
+              className="ml-auto p-1 rounded-[var(--ui-radius-sm)] transition-colors shrink-0 hover:text-red-500"
+              style={{ color: 'var(--ui-text-faint)' }}
+              title="Supprimer ce bloc"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
 
-        <div className="px-4 py-3 space-y-3 text-[12px]">
-          {children}
+        <div className="px-3 py-2.5 space-y-2.5 text-[12px]" style={{ color: 'var(--ui-text)' }}>
+          {props.children}
 
           {runStatus === 'success' && (
-            <div className="mt-2 pt-2 border-t border-emerald-500/20 flex flex-col gap-1.5 bg-emerald-500/[0.04] -mx-4 -mb-3 px-4 py-2.5 rounded-b-2xl">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 size={11} /> Résultat disponible
+            <div
+              className="-mx-3 -mb-2.5 px-3 py-2 flex flex-col gap-1"
+              style={{
+                background: 'var(--ui-success-soft)',
+                borderTop: '1px solid var(--ui-border)',
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                  style={{ color: 'var(--ui-success)' }}
+                >
+                  <CheckCircle2 size={11} /> Résultat prêt
                 </span>
                 {onOpenResult && (
                   <button
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
-                      onOpenResult(id);
+                      onOpenResult(props.id);
                     }}
-                    className="text-[10px] font-bold text-accent-300 hover:text-surface-100 bg-accent-500/20 hover:bg-accent-500/40 px-2 py-0.5 rounded-md transition-colors border border-accent-500/30"
+                    className="ui-btn ui-btn-primary text-[10px]"
+                    style={{ height: 22, padding: '0 8px' }}
                   >
-                    Voir détails
+                    Ouvrir
                   </button>
                 )}
               </div>
               {summaryText && (
-                <p className="text-[11px] font-medium text-surface-200 font-mono truncate">
+                <p className="text-[11px] ui-num truncate" style={{ color: 'var(--ui-text-secondary)' }}>
                   {summaryText}
                 </p>
               )}
@@ -204,11 +190,20 @@ export function NodeShell({
           )}
 
           {runStatus === 'error' && (
-            <div className="mt-2 pt-2 border-t border-red-500/20 flex flex-col gap-1 bg-red-500/[0.04] -mx-4 -mb-3 px-4 py-2.5 rounded-b-2xl">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-1">
-                <XCircle size={11} /> Erreur d'exécution
+            <div
+              className="-mx-3 -mb-2.5 px-3 py-2 flex flex-col gap-1"
+              style={{
+                background: 'var(--ui-danger-soft)',
+                borderTop: '1px solid var(--ui-border)',
+              }}
+            >
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1"
+                style={{ color: 'var(--ui-danger)' }}
+              >
+                <XCircle size={11} /> Erreur
               </span>
-              <p className="text-[11px] font-medium text-red-300/80 truncate">
+              <p className="text-[11px] truncate" style={{ color: 'var(--ui-danger)' }}>
                 {runError || "Une erreur est survenue lors de l'exécution."}
               </p>
             </div>
@@ -221,7 +216,8 @@ export function NodeShell({
           type="source"
           position={Position.Right}
           id="out"
-          className="!w-3 !h-3 !bg-surface-300 !border-2 !border-surface-700 hover:!bg-accent-400 transition-colors"
+          className="!w-2.5 !h-2.5 transition-colors"
+          style={{ background: 'var(--ui-accent)', border: '2px solid var(--ui-bg-panel)' }}
         />
       )}
     </div>
@@ -231,107 +227,15 @@ export function NodeShell({
 export function useConnectedColumns(id: string) {
   const allNodes = useNodes();
   const allEdges = useEdges();
-
-  const walkBackwards = (): {
-    dsId: string | null;
-    excludedCols: Set<string>;
-    typingNodeId: string | null;
-    dynamicCols: Set<string>;
-  } => {
-    let currentId: string | null = id;
-    const visited = new Set<string>();
-    let dsId: string | null = null;
-    let typingNodeId: string | null = null;
-    const excludedCols: Set<string> = new Set();
-    const dynamicCols: Set<string> = new Set();
-
-    while (currentId) {
-      if (visited.has(currentId)) break;
-      visited.add(currentId);
-      const node = allNodes.find(n => n.id === currentId);
-      if (node) {
-        if (node.id !== id && node.data?.runResult) {
-          const res = node.data.runResult as any;
-          if (res.residuals || res.fitted_values) {
-            dynamicCols.add('_fitted_values');
-            dynamicCols.add('_residuals');
-          }
-          if (res.forecast || res.predictions) {
-            dynamicCols.add('_forecast');
-          }
-          if (res.clusters || res.cluster_labels || res.n_clusters) {
-            dynamicCols.add('_cluster');
-          }
-          if (Array.isArray(res.columns)) {
-            res.columns.forEach((c: string) => dynamicCols.add(c));
-          }
-          if (Array.isArray(res.records) && res.records.length > 0) {
-            Object.keys(res.records[0]).forEach(c => dynamicCols.add(c));
-          }
-        }
-
-        if (node.type === 'typing') {
-          typingNodeId = node.id;
-          if (node.id !== id) {
-            const raw = node.data?.excludedColumns;
-            if (raw) {
-              let parsed: string[] = [];
-              if (typeof raw === 'string') {
-                try {
-                  parsed = JSON.parse(raw);
-                } catch {
-                  parsed = [];
-                }
-              } else if (Array.isArray(raw)) {
-                parsed = raw as string[];
-              }
-              parsed.forEach(c => excludedCols.add(c));
-            }
-          }
-        }
-        if (node.type === 'dataset' && node.data?.file) {
-          dsId = node.data.file as string;
-          break;
-        }
-      }
-      const parentEdge = allEdges.find(e => e.target === currentId);
-      if (!parentEdge) break;
-      currentId = parentEdge.source;
-    }
-
-    return { dsId, excludedCols, typingNodeId, dynamicCols };
-  };
-
-  const { dsId, excludedCols, typingNodeId, dynamicCols } = walkBackwards();
+  const { dsId, excludedCols, typingNodeId, dynamicCols } = resolveUpstreamContext(id, allNodes, allEdges);
   const { data: dataset } = useGetDatasetQuery(dsId!, { skip: !dsId });
 
   const rawColumns: string[] = [
-    ...(dataset?.profile?.dictionary?.map((c: any) =>
-      typeof c === 'string' ? c : c.nom_brut || ''
-    ) || []),
-    ...Array.from(dynamicCols || []),
+    ...(dataset?.profile?.dictionary?.map((c: any) => (typeof c === 'string' ? c : c.nom_brut || '')) || []),
+    ...Array.from(dynamicCols),
   ];
-
-  const columns =
-    excludedCols.size > 0
-      ? rawColumns.filter(c => !excludedCols.has(c))
-      : rawColumns;
-
-  const columnTypes: Record<string, string> = {};
-  if (dataset?.profile?.dictionary) {
-    const dtypes = dataset.profile?.dtypes || {};
-    for (const entry of dataset.profile.dictionary) {
-      const colName = typeof entry === 'string' ? entry : entry.nom_brut;
-      const dtype = String(dtypes[colName] || '');
-      const statType = typeof entry === 'object' ? entry.type_statistique : null;
-      columnTypes[colName] = statType || (
-        /^(float|int)\d*$/.test(dtype) ? 'numerique' :
-        /^(object|string|category)$/.test(dtype) ? 'categoriel' :
-        /^datetime/.test(dtype) ? 'temporel' :
-        /^bool/.test(dtype) ? 'binaire' : (dtype || '?')
-      );
-    }
-  }
+  const columns = excludedCols.size > 0 ? rawColumns.filter(c => !excludedCols.has(c)) : rawColumns;
+  const columnTypes = resolveColumnTypes(dataset);
 
   return { dsId, dataset, columns, excludedCols, typingNodeId, columnTypes };
 }

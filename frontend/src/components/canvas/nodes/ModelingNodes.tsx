@@ -12,7 +12,7 @@ export function RegressionNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const isAdvanced = mode === 'advanced';
   
   return (
-    <NodeShell id={id} data={data} color="#8b5cf6" icon={TrendingUp} title="Régression" hasInput badge="ML">
+    <NodeShell id={id} data={data} color="#8b5cf6" icon={TrendingUp} title="Régression" hasInput>
       <div>
         <NodeLabel>Cible (variable numérique)</NodeLabel>
         <NodeColumnSelect name="targetCol" placeholder="-- Variable Cible --" value={(data.targetCol as string) || ''} onChange={handleChange} columns={columns} />
@@ -89,7 +89,7 @@ export function ClassificationNode({ id, data }: NodeProps<Node<CanvasNodeData>>
   const isAdvanced = mode === 'advanced';
   
   return (
-    <NodeShell id={id} data={data} color="#8b5cf6" icon={Target} title="Classification" hasInput badge="ML">
+    <NodeShell id={id} data={data} color="#8b5cf6" icon={Target} title="Classification" hasInput>
       <div>
         <NodeLabel>Cible (variable catégorielle)</NodeLabel>
         <NodeColumnSelect name="targetCol" placeholder="-- Variable Cible --" value={(data.targetCol as string) || ''} onChange={handleChange} columns={columns} />
@@ -173,7 +173,7 @@ export function ExplainabilityNode({ id, data }: NodeProps<Node<CanvasNodeData>>
   const { columns } = useConnectedColumns(id);
 
   return (
-    <NodeShell id={id} data={data} color="#8b5cf6" icon={Target} title="Explicabilité SHAP" hasInput badge="XAI">
+    <NodeShell id={id} data={data} color="#8b5cf6" icon={Target} title="Explicabilité SHAP" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Calcul des valeurs SHAP (Tree/Kernel Explainer) pour l'importance et l'impact local des variables.
       </div>

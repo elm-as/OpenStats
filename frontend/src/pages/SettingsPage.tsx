@@ -125,10 +125,7 @@ export default function SettingsPage() {
                 }}
               >
                 <Moon className="w-4 h-4 shrink-0" />
-                <div>
-                  <div className="text-xs font-bold">Sombre Minéral</div>
-                  <div className="text-[10.5px] ui-t-muted">Optimal pour longues sessions</div>
-                </div>
+                <div className="text-xs font-bold">Sombre Minéral</div>
               </button>
 
               <button
@@ -142,10 +139,7 @@ export default function SettingsPage() {
                 }}
               >
                 <Sun className="w-4 h-4 shrink-0" />
-                <div>
-                  <div className="text-xs font-bold">Clair Papier</div>
-                  <div className="text-[10.5px] ui-t-muted">Lecture haute luminosité</div>
-                </div>
+                <div className="text-xs font-bold">Clair Papier</div>
               </button>
             </div>
           </div>
@@ -247,9 +241,13 @@ export default function SettingsPage() {
   );
 }
 
-function DiagRow({ label, value, mono = false, icon: Icon }: {
-  label: string; value: string; mono?: boolean; icon?: typeof Monitor;
+function DiagRow(props: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  icon?: typeof Monitor;
 }) {
+  const { label, value, mono = false, icon: Icon } = props;
   return (
     <div
       className="flex items-center justify-between gap-3 px-2.5 py-2 rounded-[var(--ui-radius-sm)]"

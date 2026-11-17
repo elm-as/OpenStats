@@ -72,12 +72,13 @@ export default function PCACorrelationCircle({
       type: 'scatter',
       text: vars,
       textfont: { size: 12, color: textColor },
+      cliponaxis: false,
       hovertext: vars.map((v, i) =>
         `<b>${v}</b><br>PC${pcX + 1}: ${xs[i].toFixed(3)}<br>PC${pcY + 1}: ${ys[i].toFixed(3)}<br>cos²: ${(xs[i] ** 2 + ys[i] ** 2).toFixed(3)}`
       ),
       hovertemplate: '%{hovertext}<extra></extra>',
       showlegend: false,
-    };
+    } as Data;
 
     // Têtes de flèches (markers)
     const headsTrace: Data = {
@@ -105,17 +106,19 @@ export default function PCACorrelationCircle({
       title: { text: title, font: { size: 14, color: textColor } },
       xaxis: {
         title: { text: xLabel },
-        range: [-1.25, 1.25],
+        range: [-1.38, 1.38],
         zeroline: true,
         showgrid: false,
+        automargin: true,
         scaleanchor: 'y',
         scaleratio: 1,
       },
       yaxis: {
         title: { text: yLabel },
-        range: [-1.25, 1.25],
+        range: [-1.38, 1.38],
         zeroline: true,
         showgrid: false,
+        automargin: true,
       },
       shapes: [
         {

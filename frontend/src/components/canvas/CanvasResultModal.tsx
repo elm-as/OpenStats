@@ -50,15 +50,16 @@ interface CanvasResultModalProps {
   pipelineResults?: any;
 }
 
-export default function CanvasResultModal({
-  isOpen,
-  onClose,
-  nodeTitle,
-  nodeType,
-  resultData,
-  nodes,
-  pipelineResults,
-}: CanvasResultModalProps) {
+export default function CanvasResultModal(props: CanvasResultModalProps) {
+  const {
+    isOpen,
+    onClose,
+    nodeTitle,
+    nodeType,
+    resultData,
+    nodes,
+    pipelineResults,
+  } = props;
   const [showCodeModal, setShowCodeModal] = React.useState(false);
   const [pyCode, setPyCode] = React.useState('');
   const [rCode, setRCode] = React.useState('');
@@ -239,7 +240,6 @@ export default function CanvasResultModal({
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-bold text-surface-100">{ins.title || 'Insight'}</span>
                         <Badge color={col}>{sev}</Badge>
-                        {isTutorial && <Badge color="#0284c7">TUTORIEL</Badge>}
                       </div>
                       <p className="text-xs text-surface-300 leading-relaxed">
                         {ins.description || ins.text || ins.message}
@@ -275,14 +275,15 @@ export default function CanvasResultModal({
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
         <div className="absolute inset-0 bg-black/75" onClick={onClose} />
         <div className="ui-panel relative w-full max-w-4xl rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-surface-800/40 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-accent-500/15 flex items-center justify-center border border-accent-500/25">
-                <BarChart2 className="text-accent-400" size={18} />
-              </div>
+          <div
+            className="flex items-center justify-between px-4 py-3 border-b shrink-0"
+            style={{ borderColor: 'var(--ui-border)', background: 'var(--ui-bg-sunken)' }}
+          >
+            <div className="flex items-center gap-2.5">
+              <BarChart2 className="text-accent-400" size={16} />
               <div>
-                <h2 className="text-base font-bold text-surface-100">{nodeTitle}</h2>
-                <p className="text-[11px] text-surface-400">Résultats détaillés du bloc</p>
+                <h2 className="text-sm font-bold text-[var(--ui-text)]">{nodeTitle}</h2>
+                <p className="text-[11px] ui-t-muted">Résultats du bloc</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

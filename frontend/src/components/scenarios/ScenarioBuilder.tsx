@@ -171,14 +171,10 @@ export default function ScenarioBuilder({ datasetId, onBack }: Props) {
       {/* Scénarios prédéfinis */}
       {activeTab === 'scenarios' && (
         <Card>
-          <div className="mb-4">
-            <h4 className="text-strong font-semibold mb-1">
+          <div className="mb-3">
+            <h4 className="text-strong text-sm font-semibold">
               Comparaison pessimiste / central / optimiste
             </h4>
-            <p className="text-muted text-sm">
-              Crée 3 scénarios basés sur les quantiles Q10, Q50, Q90 de chaque variable et
-              compare les prédictions du modèle.
-            </p>
           </div>
           <Button
             onClick={handleRunPresets}
@@ -195,11 +191,8 @@ export default function ScenarioBuilder({ datasetId, onBack }: Props) {
       {/* Tornado */}
       {activeTab === 'tornado' && (
         <Card>
-          <div className="mb-4">
-            <h4 className="text-strong font-semibold mb-1">Diagramme Tornado</h4>
-            <p className="text-muted text-sm">
-              Impact de chaque variable lorsqu'elle varie de ±1 écart-type autour de sa moyenne.
-            </p>
+          <div className="mb-3">
+            <h4 className="text-strong text-sm font-semibold">Diagramme Tornado (±1σ)</h4>
           </div>
           <Button
             onClick={handleTornado}
@@ -229,12 +222,8 @@ export default function ScenarioBuilder({ datasetId, onBack }: Props) {
       {/* Analyse de sensibilité */}
       {activeTab === 'sensitivity' && (
         <Card>
-          <div className="mb-4">
-            <h4 className="text-strong font-semibold mb-1">Analyse de sensibilité</h4>
-            <p className="text-muted text-sm">
-              Fait varier chaque variable individuellement et observe l'impact sur la
-              prédiction.
-            </p>
+          <div className="mb-3">
+            <h4 className="text-strong text-sm font-semibold">Analyse de sensibilité</h4>
           </div>
           <Button
             onClick={handleSensitivity}
@@ -258,12 +247,8 @@ export default function ScenarioBuilder({ datasetId, onBack }: Props) {
       {/* Monte Carlo */}
       {activeTab === 'montecarlo' && (
         <Card>
-          <div className="mb-4">
-            <h4 className="text-strong font-semibold mb-1">Simulation Monte Carlo</h4>
-            <p className="text-muted text-sm">
-              Perturbe aléatoirement toutes les variables pour estimer la distribution des
-              prédictions.
-            </p>
+          <div className="mb-3">
+            <h4 className="text-strong text-sm font-semibold">Simulation Monte Carlo</h4>
           </div>
           <div className="flex flex-wrap gap-3 items-end mb-4">
             <div>
@@ -322,12 +307,8 @@ export default function ScenarioBuilder({ datasetId, onBack }: Props) {
       {/* Stress Test */}
       {activeTab === 'stress' && (
         <Card>
-          <div className="mb-4">
-            <h4 className="text-strong font-semibold mb-1">Stress Test</h4>
-            <p className="text-muted text-sm">
-              Applique des chocs de ±1σ et ±2σ sur chaque variable et mesure l'impact sur la
-              prédiction.
-            </p>
+          <div className="mb-3">
+            <h4 className="text-strong text-sm font-semibold">Stress Test (±1σ / ±2σ)</h4>
           </div>
           <Button
             onClick={handleStressTest}

@@ -4,15 +4,12 @@ import { EmptyState } from './ResultAtoms';
 import { LogitSummaryView, OlsSummaryView } from './RegressionSummaries';
 import { ModelComparisonTable } from './ModelComparisonTable';
 
-export function ModelingTab({
-  result,
-  problemType,
-  target,
-}: {
+export function ModelingTab(props: {
   result?: any;
   problemType?: string;
   target?: string | null;
 }) {
+  const { result, problemType, target } = props;
   if (!result) return <EmptyState message="Pas de résultats de modélisation disponibles" />;
 
   const ranking = result.ranking || [];
@@ -28,158 +25,109 @@ export function ModelingTab({
     (bestModel.feature_importance ? { feature_importance_table: bestModel.feature_importance } : null);
 
   return (
-    <div className="space-y-4">
-      {/* Modélisation — Présentation Générale */}
-      <div className="ui-panel p-4">
-        <h3 className="text-lg font-semibold text-surface-100 mb-4 flex items-center gap-2">
-          <Brain className="w-5 h-5 text-accent-400" />
-          Modélisation — {problemType?.replace(/_/g, ' ')}
-          {target && (
-            <span className="text-sm text-surface-300">
-              sur <code className="text-accent-400 bg-accent-500/15 px-1.5 py-0.5 rounded">{target}</code>
+    <div className="space-y-3">
+      <section className="ui-panel overflow-hidden">
+        <header className="ui-panel-header">
+          <span className="flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
+            <Brain className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+            Modélisation — {problemType?.replace(/_/g, ' ')}
+            {target && <span className="ui-tag ui-tag-accent ui-mono">{target}</span>}
+          </span>
+          {result.best_model_key && (
+            <span className="flex items-center gap-1.5 text-xs ui-num">
+              <Trophy className="w-3.5 h-3.5 text-amber-500" />
+              <strong style={{ color: 'var(--ui-text)' }}>{bestModel.model_name || result.best_model_key}</strong>
             </span>
           )}
-        </h3>
+        </header>
 
-        {result.best_model_key && (
-          <div className="mb-4 p-3 bg-accent-500/10 border border-accent-500/30 rounded-lg flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-accent-400" />
-              <span className="text-sm text-surface-300">Meilleur modèle :</span>
-              <code className="text-surface-100 font-bold bg-accent-500/20 border border-accent-500/35 px-2.5 py-1 rounded-md">
-                {bestModel.model_name || result.best_model_key}
-              </code>
-            </div>
-            {bestModel.metrics?.r2 !== undefined && (
-              <div className="flex flex-col items-end">
-                <span
-                  className={`text-sm font-mono ui-num font-bold px-2.5 py-1 rounded ${
-                    bestModel.metrics.r2 < 0
-                      ? 'text-rose-400 bg-rose-500/15 border border-rose-500/30'
-                      : bestModel.metrics.r2 > 0.5
-                      ? 'text-emerald-400 bg-emerald-500/15 border border-emerald-500/30'
-                      : 'text-amber-400 bg-amber-500/15 border border-amber-500/30'
-                  }`}
-                >
-                  R² = {bestModel.metrics.r2.toFixed(3)}
-                </span>
-                {bestModel.metrics.r2 < 0 && (
-                  <span className="text-[10px] text-rose-400 mt-1 italic max-w-xs text-right">
-                    Modèle moins performant que la moyenne (extrapolation temporelle défavorable)
-                  </span>
-                )}
-              </div>
-            )}
-
-            {bestModel.metrics?.f1_weighted !== undefined && (
-              <span className="text-sm font-mono ui-num text-accent-300 font-bold bg-accent-500/15 border border-accent-500/30 px-2.5 py-1 rounded">
-                F1 Score = {(bestModel.metrics.f1_weighted * 100).toFixed(1)}%
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Tableau comparatif des modèles */}
         {ranking.length > 0 ? (
-          <div className="space-y-2">
-            {ranking.map((r: any) => {
-              const metrics = r.metrics || {};
-              const primary = metrics.r2 ?? metrics.roc_auc ?? metrics.f1_weighted ?? metrics.accuracy;
-              const label =
-                metrics.r2 !== undefined
-                  ? 'R²'
-                  : metrics.roc_auc !== undefined
-                  ? 'AUC'
-                  : metrics.f1_weighted !== undefined
-                  ? 'F1'
-                  : 'Acc';
+          <div className="overflow-x-auto">
+            <table className="ui-table w-full text-xs">
+              <thead>
+                <tr>
+                  <th className="ui-th-num w-10">#</th>
+                  <th className="text-left">Modèle</th>
+                  <th className="ui-th-num">RMSE</th>
+                  <th className="ui-th-num">MAE</th>
+                  <th className="ui-th-num">CV</th>
+                  <th className="ui-th-num">Score principal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ranking.map((r: any) => {
+                  const metrics = r.metrics || {};
+                  const primary = metrics.r2 ?? metrics.roc_auc ?? metrics.f1_weighted ?? metrics.accuracy;
+                  const label =
+                    metrics.r2 !== undefined ? 'R²'
+                      : metrics.roc_auc !== undefined ? 'AUC'
+                      : metrics.f1_weighted !== undefined ? 'F1'
+                      : 'Acc';
 
-              return (
-                <div key={r.model_key} className="flex items-center gap-3 p-3 bg-surface-700/50 rounded-lg">
-                  <span className="text-sm text-surface-400 w-8">#{r.rank}</span>
-                  <span className="text-sm text-surface-200 flex-1 font-medium">
-                    {r.model_name || r.model_key}
-                  </span>
-
-                  {metrics.rmse !== undefined && (
-                    <span className="text-xs font-mono text-surface-400">
-                      RMSE: {metrics.rmse.toFixed(3)}
-                    </span>
-                  )}
-                  {metrics.mae !== undefined && (
-                    <span className="text-xs font-mono text-surface-400">
-                      MAE: {metrics.mae.toFixed(3)}
-                    </span>
-                  )}
-                  {r.cv_scores?.mean !== undefined && (
-                    <span
-                      className="text-xs font-mono text-surface-300 bg-surface-600/40 px-2 py-0.5 rounded"
-                      title={r.cv_scores.rmse_mean !== undefined ? `CV RMSE: ${r.cv_scores.rmse_mean}` : undefined}
+                  return (
+                    <tr
+                      key={r.model_key}
+                      style={r.rank === 1 ? { background: 'var(--ui-accent-soft)' } : undefined}
                     >
-                      CV ({r.cv_scores.metric || (metrics.r2 !== undefined ? 'R²' : 'F1')}): {r.cv_scores.mean.toFixed(3)}
-                    </span>
-                  )}
-                  {metrics.accuracy !== undefined && (
-                    <span className="text-xs font-mono text-surface-400">
-                      Acc: {(metrics.accuracy * 100).toFixed(1)}%
-                    </span>
-                  )}
-
-                  {primary !== undefined && (
-                    <>
-                      <div className="w-28 h-2 bg-surface-600 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            primary > 0.5 ? 'bg-emerald-500' : primary >= 0 ? 'bg-amber-500' : 'bg-rose-500'
-                          }`}
-                          style={{ width: `${primary > 0 ? Math.min(primary * 100, 100) : 0}%` }}
-                        />
-                      </div>
-                      <span
-                        className={`text-sm font-mono w-24 text-right font-semibold ${
-                          primary > 0.5 ? 'text-emerald-300' : primary >= 0 ? 'text-amber-300' : 'text-rose-400'
-                        }`}
+                      <td className="ui-td-num ui-t-faint">{r.rank}</td>
+                      <td className="font-semibold" style={{ color: 'var(--ui-text)' }}>
+                        {r.model_name || r.model_key}
+                      </td>
+                      <td className="ui-td-num ui-t-muted">
+                        {metrics.rmse !== undefined ? metrics.rmse.toFixed(3) : '—'}
+                      </td>
+                      <td className="ui-td-num ui-t-muted">
+                        {metrics.mae !== undefined ? metrics.mae.toFixed(3) : '—'}
+                      </td>
+                      <td className="ui-td-num ui-t-muted">
+                        {r.cv_scores?.mean !== undefined ? r.cv_scores.mean.toFixed(3) : '—'}
+                      </td>
+                      <td
+                        className="ui-td-num font-bold"
+                        style={{
+                          color: primary > 0.5 ? 'var(--ui-success)' : primary >= 0 ? 'var(--ui-warning)' : 'var(--ui-danger)',
+                        }}
                       >
-                        {label === 'R²' ? `R² ${primary.toFixed(3)}` : `${label} ${(primary * 100).toFixed(1)}%`}
-                      </span>
-                    </>
-                  )}
-                </div>
-              );
-            })}
+                        {primary !== undefined
+                          ? label === 'R²'
+                            ? `R² ${primary.toFixed(3)}`
+                            : `${label} ${(primary * 100).toFixed(1)}%`
+                          : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         ) : (
           <EmptyState message="Aucun modèle entraîné" />
         )}
 
         {result.failed && result.failed.length > 0 && (
-          <div className="mt-4">
-            <h4 className="text-sm font-medium text-red-300 mb-2">Modèles en échec</h4>
-            <div className="space-y-1">
-              {result.failed.map((f: any) => (
-                <div key={f.model_key} className="text-xs text-red-200/70 p-2 bg-red-500/10 rounded">
-                  {f.model_name}: {f.error}
-                </div>
-              ))}
-            </div>
+          <div className="p-3 space-y-1" style={{ borderTop: '1px solid var(--ui-border)' }}>
+            {result.failed.map((f: any) => (
+              <div key={f.model_key} className="text-xs ui-t-danger">
+                <strong>{f.model_name}</strong> : {f.error}
+              </div>
+            ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Résumé de Régression Logistique */}
       <LogitSummaryView logitSummary={logitSummary} />
 
-      {/* Résumé d'Arbres & Boosting */}
       {treeSummary &&
         treeSummary.feature_importance_table &&
         treeSummary.feature_importance_table.length > 0 && (
-          <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4 space-y-4">
-            <h4 className="text-md font-semibold text-emerald-300 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-emerald-400" />
-              Importance des Variables ({bestModel.model_name || 'Arbres / Ensemble'})
-            </h4>
-
-            <div className="space-y-2">
+          <section className="ui-panel overflow-hidden">
+            <header className="ui-panel-header">
+              <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+                <BarChart3 className="w-3.5 h-3.5" style={{ color: 'var(--ui-success)' }} />
+                Importance des variables ({bestModel.model_name || 'Ensemble'})
+              </span>
+            </header>
+            <div className="p-3 space-y-1.5">
               {(() => {
                 const table = treeSummary.feature_importance_table;
                 const maxImp = Math.max(...table.map((t: any) => Math.abs(t.importance || 0)), 1e-6);
@@ -191,29 +139,21 @@ export function ModelingTab({
                   const relPct = ((absVal / sumImp) * 100).toFixed(1);
 
                   return (
-                    <div key={i} className="flex items-center gap-3 p-2 bg-surface-700/40 rounded-lg">
-                      <span className="text-sm font-medium text-surface-200 w-44 truncate" title={item.feature}>
-                        {item.feature}
-                      </span>
-                      <div className="flex-1 h-2 bg-surface-600 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${barWidth}%` }} />
+                    <div key={i} className="flex items-center gap-3 text-xs">
+                      <span className="font-medium w-44 truncate" title={item.feature}>{item.feature}</span>
+                      <div className="flex-1 h-1.5 rounded-sm overflow-hidden" style={{ background: 'var(--ui-bg-sunken)' }}>
+                        <div className="h-full" style={{ width: `${barWidth}%`, background: 'var(--ui-success)' }} />
                       </div>
-                      <span className="text-xs font-mono text-emerald-300 w-16 text-right font-semibold">
-                        {relPct}%
-                      </span>
+                      <span className="ui-num ui-t-success w-14 text-right font-semibold">{relPct}%</span>
                     </div>
                   );
                 });
               })()}
             </div>
-
-          </div>
+          </section>
         )}
 
-      {/* Résumé de Régression OLS */}
       <OlsSummaryView regSummary={regSummary} />
-
-      {/* Tableau comparatif multi-modèles (Stargazer / esttab) */}
       <ModelComparisonTable ranking={ranking} />
     </div>
   );

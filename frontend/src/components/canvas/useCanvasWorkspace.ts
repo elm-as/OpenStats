@@ -31,18 +31,19 @@ interface UseCanvasWorkspaceProps {
   fitView?: (options?: any) => void;
 }
 
-export function useCanvasWorkspace({
-  nodes,
-  setNodes,
-  edges,
-  setEdges,
-  pipelineResults,
-  setPipelineResults,
-  onSuccess,
-  onError,
-  onTakeSnapshot,
-  fitView,
-}: UseCanvasWorkspaceProps) {
+export function useCanvasWorkspace(props: UseCanvasWorkspaceProps) {
+  const {
+    nodes,
+    setNodes,
+    edges,
+    setEdges,
+    pipelineResults,
+    setPipelineResults,
+    onSuccess,
+    onError,
+    onTakeSnapshot,
+    fitView,
+  } = props;
   // Exporter l'espace de travail en fichier .openstats
   const exportWorkspace = useCallback(
     (title: string = 'Projet_OpenStats') => {

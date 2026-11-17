@@ -32,7 +32,7 @@ export function Tabs({ defaultValue, value: controlled, onChange, children, clas
 
 export function TabList({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div role="tablist" className={`flex items-center gap-1 border-b border-white/5 ${className}`}>
+    <div role="tablist" className={`flex items-center gap-1 border-b border-ui-border ${className}`}>
       {children}
     </div>
   );
@@ -51,18 +51,19 @@ export function Tab({ value, icon, children, disabled = false }: TabProps) {
   const active = ctx.value === value;
   return (
     <button
+      type="button"
       role="tab"
       aria-selected={active}
       disabled={disabled}
       onClick={() => ctx.setValue(value)}
-      className={`relative inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors focus-ring ${
-        active ? 'text-accent-300' : 'text-muted hover:text-default'
+      className={`relative inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ui-focusable ${
+        active ? 'ui-t-accent' : 'ui-t-muted hover:text-ui-text'
       } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
     >
       {icon}
       {children}
       {active && (
-        <span className="absolute bottom-[-1px] left-2 right-2 h-0.5 bg-accent-500 rounded-t" />
+        <span className="absolute bottom-[-1px] left-2 right-2 h-0.5 bg-ui-accent rounded-t" />
       )}
     </button>
   );

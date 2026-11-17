@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import { apiFetch } from '../../lib/apiBase';
+import { useToast } from '../ui/Toast';
 import { fetchPythonAndRCode, requestCanvasCodeExport } from './canvasCodeExport';
 import { saveUserTemplate } from './templates';
 import type { NodeResult } from './canvasGraphConfig';
@@ -11,9 +12,12 @@ interface UseCanvasExportProps {
   pipelineResults: Record<string, NodeResult> | null;
 }
 
-export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExportProps) {
+export function useCanvasExport(props: UseCanvasExportProps) {
+  const { nodes, edges, pipelineResults } = props;
+  const toast = useToast();
   const [isSharing, setIsSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [showGlobalCodeModal, setShowGlobalCodeModal] = useState(false);
   const [pythonCode, setPythonCode] = useState('');
   const [rCode, setRCode] = useState('');
@@ -54,39 +58,28 @@ export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExpo
       });
       const result = await response.json();
       if (result.success) {
-        const fullUrl = `${window.location.origin}${result.url}`;
-        setShareUrl(fullUrl);
+        setShareUrl(`${window.location.origin}${result.url}`);
       } else {
-        alert('Erreur lors du partage : ' + result.error);
+        toast.error({ title: 'Partage impossible', description: String(result.error || 'Erreur') });
       }
     } catch (e) {
       console.error('Share error:', e);
-      alert('Erreur réseau lors du partage');
+      toast.error({ title: 'Erreur réseau', description: 'Échec lors du partage du canvas.' });
     } finally {
       setIsSharing(false);
     }
   };
 
   const copyToClipboard = () => {
-    if (shareUrl) {
-      navigator.clipboard.writeText(shareUrl);
-      const btn = document.getElementById('copy-btn');
-      if (btn) {
-        btn.innerHTML =
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="text-emerald-400"><path d="M20 6 9 17l-5-5"/></svg> Copié !';
-        setTimeout(() => {
-          btn.innerHTML =
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copier le lien';
-        }, 2000);
-      }
-    }
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = (customName?: string) => {
     if (nodes.length === 0) return;
-    const name = window.prompt('Nom du modèle personnalisé :');
-    if (!name) return;
-
+    const name = customName?.trim() || `Modèle (${nodes.length} blocs — ${new Date().toLocaleTimeString('fr-FR')})`;
     const cleanNodes = nodes.map(n => {
       const cleanData = { ...n.data };
       delete cleanData.runResult;
@@ -95,15 +88,13 @@ export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExpo
       return { ...n, data: cleanData };
     });
 
-    saveUserTemplate(
+    saveUserTemplate({
       name,
-      'Modèle personnalisé sauvegardé depuis le Canvas.',
-      cleanNodes,
-      edges
-    );
-    alert(
-      `Modèle "${name}" sauvegardé avec succès ! Il est disponible dans "Nouveau depuis un Template".`
-    );
+      description: 'Modèle personnalisé sauvegardé depuis le Canvas.',
+      nodes: cleanNodes,
+      edges,
+    });
+    toast.success({ title: 'Modèle enregistré', description: `"${name}" ajouté aux modèles.` });
   };
 
   const handleOpenGlobalCodeModal = useCallback(async () => {
@@ -149,6 +140,7 @@ export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExpo
     isSharing,
     shareUrl,
     setShareUrl,
+    copied,
     copyToClipboard,
     handleShare,
     handleSaveTemplate,
@@ -158,6 +150,5 @@ export function useCanvasExport({ nodes, edges, pipelineResults }: UseCanvasExpo
     rCode,
     handleOpenGlobalCodeModal,
     handleExportNotebook,
-    activeDatasetName,
   };
 }

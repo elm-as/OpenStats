@@ -10,18 +10,20 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import { Section, KpiCard, DataTable, Badge, pctBar, fmt, RenderJson } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable, Badge, pctBar, fmt, RenderJson } from './ResultAtoms';
 import { SvgBarChart } from './ResultCharts';
 
 export const DatasetResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-4">
       <Section title="Dataset chargé" icon={Database} color="#10b981">
-        <div className="grid grid-cols-3 gap-3">
-          <KpiCard label="Nom" value={resultData.name || '\u2014'} icon={Database} color="#10b981" />
-          <KpiCard label="Lignes" value={resultData.rows ?? '\u2014'} icon={Hash} color="#3b82f6" />
-          <KpiCard label="Colonnes" value={resultData.columns ?? '\u2014'} icon={Layers} color="#8b5cf6" />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Nom', value: resultData.name || '—' },
+            { label: 'Lignes', value: resultData.rows ?? '—' },
+            { label: 'Colonnes', value: resultData.columns ?? '—' },
+          ]}
+        />
       </Section>
       {Array.isArray(resultData.head) && resultData.head.length > 0 && (() => {
         const cols = Object.keys(resultData.head[0]);
@@ -64,24 +66,20 @@ export const TypingResultView = ({ resultData }: { resultData: any }) => {
 export const CleaningResultView = ({ resultData }: { resultData: any }) => {
   return (
     <Section title="Résultat du nettoyage" icon={CheckCircle2} color="#f59e0b">
-      <div className="grid grid-cols-2 gap-3">
-        {resultData.shape_before && (
-          <KpiCard
-            label="Avant"
-            value={`${resultData.shape_before.rows} x ${resultData.shape_before.columns}`}
-            icon={Database}
-            color="#6b7280"
-          />
-        )}
-        {resultData.shape_after && (
-          <KpiCard
-            label="Après"
-            value={`${resultData.shape_after.rows} x ${resultData.shape_after.columns}`}
-            icon={Database}
-            color="#10b981"
-          />
-        )}
-      </div>
+      <SummaryStrip
+        items={[
+          ...(resultData.shape_before
+            ? [{ label: 'Avant', value: `${resultData.shape_before.rows} × ${resultData.shape_before.columns}` }]
+            : []),
+          ...(resultData.shape_after
+            ? [{
+                label: 'Après',
+                value: `${resultData.shape_after.rows} × ${resultData.shape_after.columns}`,
+                tone: 'success' as const,
+              }]
+            : []),
+        ]}
+      />
       {Array.isArray(resultData.logs) && resultData.logs.length > 0 && (
         <div className="mt-4 space-y-1.5">
           <p className="text-xs font-bold text-surface-300 uppercase tracking-wider">
@@ -135,13 +133,13 @@ export const DescriptiveStatsResultView = ({ resultData }: { resultData: any }) 
   return (
     <div className="space-y-4 overflow-hidden">
       <p className="text-xs font-semibold text-surface-400">{cols.length} variable(s) analysée(s)</p>
-      <div className="overflow-x-auto custom-scrollbar bg-surface-800/40 border border-white/[0.04] rounded-xl">
-        <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
+      <div className="overflow-x-auto ui-scroll ui-panel p-0">
+        <table className="ui-table w-full text-left border-collapse text-xs whitespace-nowrap">
           <thead>
-            <tr className="border-b border-white/[0.04] bg-surface-800/80">
-              <th className="p-3 font-semibold text-surface-300">Variable</th>
+            <tr>
+              <th className="p-3 font-semibold">Variable</th>
               {metricsList.map(m => (
-                <th key={m} className="p-3 font-semibold text-surface-300 text-right capitalize">
+                <th key={m} className="p-3 font-semibold ui-th-num capitalize">
                   {m.replace(/_/g, ' ')}
                 </th>
               ))}
@@ -208,8 +206,8 @@ export const CorrelationResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-5">
       <Section title={`Matrice de corrélation ${method} (${columns.length} variables)`} icon={TrendingUp} color="#3b82f6">
-        <div className="overflow-x-auto rounded-xl border border-white/[0.04]">
-          <table className="w-full text-xs">
+        <div className="overflow-x-auto ui-panel p-0">
+          <table className="ui-table w-full text-xs">
             <thead className="bg-surface-800/80 text-surface-400 uppercase">
               <tr>
                 <th className="px-3 py-2.5 text-left font-bold" />

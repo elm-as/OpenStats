@@ -151,24 +151,24 @@ export function MultiForecastChart({
   return (
     <div>
       <div className="flex flex-wrap gap-3 items-center mb-3">
-        <p className="text-xs font-medium text-gray-600">Historique, ajustement et prévisions</p>
-        <label className="text-xs text-gray-600 flex items-center gap-2">
+        <span className="text-xs font-medium ui-t-secondary">Historique, ajustement et prévisions</span>
+        <label className="text-xs ui-t-secondary flex items-center gap-2">
           Vue
           <select
             value={viewMode}
             onChange={e => setViewMode(e.target.value as 'detail' | 'compare')}
-            className="text-xs"
+            className="ui-select text-xs"
           >
             <option value="detail">Détaillée</option>
             <option value="compare">Comparée</option>
           </select>
         </label>
-        <label className="text-xs text-gray-600 flex items-center gap-2">
+        <label className="text-xs ui-t-secondary flex items-center gap-2">
           Variable
           <select
             value={focusVar}
             onChange={e => setFocusVar(e.target.value)}
-            className="text-xs"
+            className="ui-select text-xs"
           >
             <option value="all">Toutes</option>
             {vars.map(v => (
@@ -178,7 +178,7 @@ export function MultiForecastChart({
             ))}
           </select>
         </label>
-        <label className="text-xs text-gray-600 flex items-center gap-2">
+        <label className="text-xs ui-t-secondary flex items-center gap-2">
           <input
             type="checkbox"
             checked={normalize}
@@ -187,7 +187,7 @@ export function MultiForecastChart({
           Normaliser
         </label>
         {!compact && (
-          <label className="text-xs text-gray-600 flex items-center gap-2">
+          <label className="text-xs ui-t-secondary flex items-center gap-2">
             <input
               type="checkbox"
               checked={dualAxis}

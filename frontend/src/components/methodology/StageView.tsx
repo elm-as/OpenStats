@@ -4,13 +4,42 @@ import StageCharts from './StageCharts';
 import IterationTimeline from './IterationTimeline';
 import type { CorrectionReport, Stage, StageTable } from './methodologyTypes';
 
-const ROWS_PER_PAGE = 25;
+const ROWS_PER_PAGE = 10;
+
+function isNumericValue(value: unknown): boolean {
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value !== 'string') return false;
+  return /^-?\d+([.,]\d+)?\s*%?$/.test(value.trim());
+}
+
+function isNumericColumn(rows: unknown[][], colIndex: number): boolean {
+  for (const row of rows) {
+    const cell = row[colIndex];
+    if (cell === null || cell === undefined || cell === '' || cell === '—') continue;
+    return isNumericValue(cell);
+  }
+  return false;
+}
+
+function formatTableCell(cell: unknown, columnName: string): string {
+  if (cell === null || cell === undefined) return '—';
+  if (typeof cell !== 'number') return String(cell);
+  const isPValue = /^p(-?val(ue)?)?$/i.test(columnName.trim());
+  if (isPValue && cell >= 0 && cell < 0.0001) return '< 0.0001';
+  if (Number.isInteger(cell)) return cell.toLocaleString('fr-FR');
+  return Number(cell.toFixed(4)).toString();
+}
 
 /** Tableau triable et filtrable — un outil affiche des tableaux, pas des cartes. */
 function DataTable({ table }: { table: StageTable }) {
   const [sort, setSort] = useState<{ column: number; asc: boolean } | null>(null);
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState(false);
+
+  const numericCols = useMemo(
+    () => table.columns.map((_, idx) => isNumericColumn(table.rows, idx)),
+    [table],
+  );
 
   const rows = useMemo(() => {
     let out = table.rows;
@@ -63,36 +92,47 @@ function DataTable({ table }: { table: StageTable }) {
         <table className="ui-table">
           <thead>
             <tr>
-              {table.columns.map((column, index) => (
-                <th key={column}>
-                  <button
-                    onClick={() => setSort(s =>
-                      s && s.column === index ? { column: index, asc: !s.asc } : { column: index, asc: true })}
-                    className="ui-focusable flex items-center gap-1"
-                    style={{ font: 'inherit', color: 'inherit', letterSpacing: 'inherit' }}
-                  >
-                    {column}
-                    <ArrowUpDown
-                      className="w-2.5 h-2.5"
-                      style={{ opacity: sort?.column === index ? 1 : 0.3 }}
-                    />
-                  </button>
-                </th>
-              ))}
+              {table.columns.map((column, index) => {
+                const isNum = numericCols[index];
+                const arrow = (
+                  <ArrowUpDown
+                    className="w-2.5 h-2.5 shrink-0"
+                    style={{ opacity: sort?.column === index ? 1 : 0.3 }}
+                  />
+                );
+                return (
+                  <th key={column} style={{ textAlign: isNum ? 'right' : 'left' }}>
+                    <button
+                      onClick={() => setSort(s =>
+                        s && s.column === index ? { column: index, asc: !s.asc } : { column: index, asc: true })}
+                      className={isNum
+                        ? 'ui-focusable flex items-center justify-end gap-1 w-full ml-auto'
+                        : 'ui-focusable flex items-center gap-1'}
+                      style={{ font: 'inherit', color: 'inherit', letterSpacing: 'inherit' }}
+                    >
+                      {isNum ? arrow : <span>{column}</span>}
+                      {isNum ? <span>{column}</span> : arrow}
+                    </button>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
             {visible.map((row, rowIndex) => (
               <tr key={rowIndex}>
-                {row.map((cell, cellIndex) => (
-                  <td
-                    key={cellIndex}
-                    className={typeof cell === 'number' ? 'ui-td-num' : undefined}
-                    title={String(cell ?? '')}
-                  >
-                    {cell === null || cell === undefined ? '—' : String(cell)}
-                  </td>
-                ))}
+                {row.map((cell, cellIndex) => {
+                  const formatted = formatTableCell(cell, table.columns[cellIndex] ?? '');
+                  return (
+                    <td
+                      key={cellIndex}
+                      className={numericCols[cellIndex] ? 'ui-td-num' : undefined}
+                      title={formatted}
+                    >
+                      {formatted}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

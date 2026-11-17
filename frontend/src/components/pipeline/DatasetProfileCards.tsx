@@ -1,66 +1,50 @@
 import React from 'react';
 import { Database, Clock, Hash, Gauge } from 'lucide-react';
 
-interface DatasetProfileCardsProps {
+interface DatasetProfileStripProps {
   profile: any;
   allColumnsCount: number;
 }
 
-export function DatasetProfileCards({ profile, allColumnsCount }: DatasetProfileCardsProps) {
+export function DatasetProfileStrip(props: DatasetProfileStripProps) {
+  const { profile, allColumnsCount } = props;
+  const structureLabel = profile.is_timeseries
+    ? 'Série temporelle'
+    : profile.is_panel
+    ? 'Données de panel'
+    : 'Coupe transversale';
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-      <div className="ui-panel p-4">
-        <p className="text-[11px] font-medium text-surface-400 flex items-center gap-1.5 mb-1">
-          <Database className="w-3.5 h-3.5 text-accent-400" />
-          Observations
-        </p>
-        <p className="text-base font-bold text-surface-100 ui-num">{profile.n_rows.toLocaleString()} lignes</p>
-        <p className="text-[10px] text-surface-500 mt-0.5">
-          {profile.has_temporal ? 'Série chronologique' : 'Coupe transversale'}
-        </p>
+    <div className="ui-panel px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs">
+      <div className="flex items-center gap-2 ui-num">
+        <Database className="w-3.5 h-3.5 text-accent-400 shrink-0" />
+        <span className="text-surface-400">Observations :</span>
+        <span className="font-semibold text-surface-100">{profile.n_rows.toLocaleString()}</span>
       </div>
 
-      <div className="ui-panel p-4">
-        <p className="text-[11px] font-medium text-surface-400 flex items-center gap-1.5 mb-1">
-          <Clock className="w-3.5 h-3.5 text-cyan-400" />
-          Dimension Temporelle
-        </p>
-        <p className="text-base font-bold text-cyan-400 truncate">
+      <div className="flex items-center gap-2">
+        <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+        <span className="text-surface-400">Temporel :</span>
+        <span className="font-semibold text-surface-100 truncate max-w-[180px]">
           {profile.temporal_cols?.length > 0 ? profile.temporal_cols.join(', ') : 'Aucune date'}
-        </p>
-        <p className="text-[10px] text-surface-500 mt-0.5">
-          {profile.has_temporal ? 'Analyses économétriques prêtes' : 'Standard'}
-        </p>
+        </span>
       </div>
 
-      <div className="ui-panel p-4">
-        <p className="text-[11px] font-medium text-surface-400 flex items-center gap-1.5 mb-1">
-          <Hash className="w-3.5 h-3.5 text-blue-400" />
-          Variables Prédictives (X)
-        </p>
-        <p className="text-base font-bold text-surface-100 ui-num">{allColumnsCount} colonnes</p>
-        <p className="text-[10px] text-surface-500 mt-0.5 ui-num">
-          {profile.numeric_cols?.length || 0} num / {profile.categorical_cols?.length || 0} cat
-        </p>
+      <div className="flex items-center gap-2 ui-num">
+        <Hash className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+        <span className="text-surface-400">Variables :</span>
+        <span className="font-semibold text-surface-100">
+          {allColumnsCount} ({profile.numeric_cols?.length || 0} num / {profile.categorical_cols?.length || 0} cat)
+        </span>
       </div>
 
-      <div className="ui-panel p-4">
-        <p className="text-[11px] font-medium text-surface-400 flex items-center gap-1.5 mb-1">
-          <Gauge className="w-3.5 h-3.5 text-emerald-400" />
-          Structure Détectée
-        </p>
-        <p className="text-base font-bold text-emerald-400">
-          {profile.is_timeseries
-            ? 'Série Temporelle'
-            : profile.is_panel
-            ? 'Données de Panel'
-            : 'Coupe Transversale'}
-        </p>
-        <p className="text-[10px] text-surface-500 mt-0.5 ui-num">
-          {profile.duplicate_rows === 0
-            ? 'Qualité optimale (0 doublon)'
-            : `${profile.duplicate_rows} doublons`}
-        </p>
+      <div className="flex items-center gap-2 ui-num">
+        <Gauge className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+        <span className="text-surface-400">Structure :</span>
+        <span className="font-semibold text-surface-100">{structureLabel}</span>
+        {profile.duplicate_rows > 0 && (
+          <span className="text-amber-400">• {profile.duplicate_rows} doublon(s)</span>
+        )}
       </div>
     </div>
   );

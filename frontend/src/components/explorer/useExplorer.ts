@@ -15,6 +15,18 @@ import type {
  * arrivent au fil de l'eau, ce qui permet d'afficher la recherche pendant
  * qu'elle a lieu plutôt qu'un spinner suivi d'un pavé de résultats.
  */
+function dispatchSseChunks(chunks: string[], handleEvent: (ev: ExplorerEvent) => void): void {
+  for (const chunk of chunks) {
+    const line = chunk.split('\n').find(l => l.startsWith('data: '));
+    if (!line) continue;
+    try {
+      handleEvent(JSON.parse(line.slice(6)) as ExplorerEvent);
+    } catch {
+      // Un événement illisible ne doit pas interrompre le flux.
+    }
+  }
+}
+
 export function useExplorer(datasetId: string | undefined) {
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
@@ -151,19 +163,9 @@ export function useExplorer(datasetId: string | undefined) {
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
-
           const chunks = buffer.split('\n\n');
           buffer = chunks.pop() ?? '';
-
-          for (const chunk of chunks) {
-            const line = chunk.split('\n').find(l => l.startsWith('data: '));
-            if (!line) continue; // keep-alive
-            try {
-              handleEvent(JSON.parse(line.slice(6)) as ExplorerEvent);
-            } catch {
-              // Un événement illisible ne doit pas interrompre le flux.
-            }
-          }
+          dispatchSseChunks(chunks, handleEvent);
         }
       } catch (err) {
         if (!(err instanceof DOMException && err.name === 'AbortError')) {

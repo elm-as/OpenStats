@@ -82,19 +82,9 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
 
   if (isDetecting) {
     return (
-      <div className="ui-panel flex flex-col items-center justify-center py-14 gap-4">
-        <div className="w-12 h-12 rounded-xl bg-accent-500/10 border border-accent-500/30 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 text-accent-400 animate-spin" />
-        </div>
-        <div className="text-center max-w-sm">
-          <h4 className="text-base font-bold text-surface-100 tracking-tight">
-            Analyse sémantique des variables...
-          </h4>
-          <p className="text-xs text-surface-400 mt-1.5 leading-relaxed">
-            Inspection des structures temporelles, distributions et identification des analyses
-            recommandées.
-          </p>
-        </div>
+      <div className="ui-panel flex items-center justify-center py-8 gap-3 text-xs text-surface-300">
+        <Loader2 className="w-4 h-4 text-accent-400 animate-spin shrink-0" />
+        <span>Analyse des variables et détection de la structure...</span>
       </div>
     );
   }
@@ -159,16 +149,11 @@ export default function AutoPipelinePanel({ datasetId, datasetName, onComplete }
       )}
 
       {workflowStage === 'results' && executed && execution && (
-        <div className="space-y-6">
-          <div className="ui-panel flex items-center justify-between p-4">
-            <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-              <div>
-                <h3 className="text-sm font-bold text-surface-100">Pipeline exécuté avec succès !</h3>
-                <p className="text-xs text-surface-400">
-                  Toutes les étapes et calculs statistiques ont été réalisés.
-                </p>
-              </div>
+        <div className="space-y-4">
+          <div className="ui-panel flex items-center justify-between px-3.5 py-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-surface-200">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>Exécution terminée</span>
             </div>
 
             <div className="flex items-center gap-2">

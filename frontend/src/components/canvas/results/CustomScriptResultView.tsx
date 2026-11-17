@@ -11,25 +11,28 @@ import {
   Zap,
   Hash,
 } from 'lucide-react';
-import { Section, KpiCard, DataTable, RenderJson } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable, RenderJson } from './ResultAtoms';
 import { ChartRenderer } from '../../chartBuilder/ChartRenderers';
 
 export const VisualizationResultView = ({ resultData }: { resultData: any }) => {
   if (resultData.data && resultData.chart_type) {
+    const metaItems = [
+      { label: 'Type', value: resultData.chart_type },
+      ...(resultData.x_col ? [{ label: 'Axe X', value: resultData.x_col }] : []),
+      ...(resultData.y_col ? [{ label: 'Axe Y', value: resultData.y_col }] : []),
+      ...(resultData.color_col ? [{ label: 'Couleur', value: resultData.color_col }] : []),
+    ];
     return (
       <Section title="Graphique généré" icon={BarChart2} color="#8b5cf6">
-        <div className="bg-surface-900/50 rounded-xl border border-white/[0.04] p-1 overflow-hidden">
+        <div className="ui-panel p-1 overflow-hidden">
           <ChartRenderer
             data={resultData}
             chartType={resultData.chart_type as any}
             yCols={resultData.series || (resultData.y_col ? [resultData.y_col] : [])}
           />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <KpiCard label="Type" value={resultData.chart_type} icon={BarChart2} color="#8b5cf6" />
-          {resultData.x_col && <KpiCard label="Axe X" value={resultData.x_col} color="#3b82f6" />}
-          {resultData.y_col && <KpiCard label="Axe Y" value={resultData.y_col} color="#10b981" />}
-          {resultData.color_col && <KpiCard label="Couleur" value={resultData.color_col} color="#ec4899" />}
+        <div className="mt-3">
+          <SummaryStrip items={metaItems} />
         </div>
       </Section>
     );
@@ -54,11 +57,13 @@ export const OutputReportResultView = ({ resultData }: { resultData: any }) => {
 
   return (
     <Section title={`Export / Rapport généré (${fmtUpper})`} icon={FileText} color="#ef4444">
-      <div className="bg-surface-800/40 rounded-xl p-5 border border-white/[0.04] space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard label="Format" value={fmtUpper} icon={FileText} color="#ef4444" />
-          <KpiCard label="Statut" value="Prêt au téléchargement" icon={CheckCircle2} color="#10b981" />
-        </div>
+      <div className="ui-panel p-4 space-y-3">
+        <SummaryStrip
+          items={[
+            { label: 'Format', value: fmtUpper },
+            { label: 'Statut', value: 'Prêt au téléchargement', tone: 'success' },
+          ]}
+        />
         {downloadUrl ? (
           <div className="pt-2 flex items-center justify-between bg-black/20 p-4 rounded-xl border border-white/[0.06]">
             <div>
@@ -102,17 +107,17 @@ export const SimulationResultView = ({ resultData }: { resultData: any }) => {
   const var95 = resultData.var_95 ?? resultData.VaR;
   const quantiles = resultData.quantiles || {};
 
+  const simItems = [
+    ...(mean !== undefined ? [{ label: 'Moyenne estimée', value: mean }] : []),
+    ...(std !== undefined ? [{ label: 'Écart-type', value: std }] : []),
+    ...(var95 !== undefined ? [{ label: 'VaR (95%)', value: var95 }] : []),
+    ...(resultData.n_simulations ? [{ label: 'Simulations', value: resultData.n_simulations }] : []),
+  ];
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <Section title={`Résultat de Simulation (${simType})`} icon={Zap} color="#ec4899">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {mean !== undefined && <KpiCard label="Moyenne estimée" value={mean} icon={Hash} color="#10b981" />}
-          {std !== undefined && <KpiCard label="Écart-type" value={std} icon={BarChart2} color="#3b82f6" />}
-          {var95 !== undefined && <KpiCard label="VaR (95%)" value={var95} icon={AlertCircle} color="#ef4444" />}
-          {resultData.n_simulations && (
-            <KpiCard label="Simulations" value={resultData.n_simulations} icon={Layers} color="#8b5cf6" />
-          )}
-        </div>
+        {simItems.length > 0 && <SummaryStrip items={simItems} />}
       </Section>
 
       {quantiles && typeof quantiles === 'object' && Object.keys(quantiles).length > 0 && (
@@ -153,16 +158,13 @@ export const ScriptAndCustomResultView = ({
   if (nodeType === 'extension') {
     return (
       <Section title="Exécution de l'Extension" icon={Activity} color="#10b981">
-        <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <KpiCard
-              label="Extension"
-              value={resultData.name || 'Custom Extension'}
-              icon={Activity}
-              color="#10b981"
-            />
-            <KpiCard label="Statut" value={resultData.status || 'OK'} icon={CheckCircle2} color="#10b981" />
-          </div>
+        <div className="ui-panel p-4 space-y-3">
+          <SummaryStrip
+            items={[
+              { label: 'Extension', value: resultData.name || 'Custom Extension' },
+              { label: 'Statut', value: resultData.status || 'OK', tone: 'success' },
+            ]}
+          />
           {resultData.stdout && (
             <div className="bg-black/40 p-3 rounded-lg border border-white/[0.06]">
               <div className="text-[10px] text-surface-400 font-bold uppercase tracking-wider mb-1">
@@ -186,11 +188,13 @@ export const ScriptAndCustomResultView = ({
         icon={isSql ? Database : Activity}
         color={isSql ? '#3b82f6' : '#10b981'}
       >
-        <div className="bg-surface-800/40 rounded-xl p-4 border border-white/[0.03] space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <KpiCard label="Lignes générées" value={resultData.rows ?? 0} icon={Database} color="#10b981" />
-            <KpiCard label="Colonnes" value={resultData.columns ?? 0} icon={Layers} color="#8b5cf6" />
-          </div>
+        <div className="ui-panel p-4 space-y-3">
+          <SummaryStrip
+            items={[
+              { label: 'Lignes générées', value: resultData.rows ?? 0 },
+              { label: 'Colonnes', value: resultData.columns ?? 0 },
+            ]}
+          />
           {(resultData.query || resultData.code) && (
             <div className="bg-black/20 p-3 rounded-lg border border-white/[0.06]">
               <div className="text-[10px] text-surface-400 font-bold uppercase tracking-wider mb-1">

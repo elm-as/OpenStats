@@ -83,8 +83,9 @@ export default function LearningCurve({
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: "Taille de l'échantillon d'entraînement" } },
-      yaxis: { title: { text: metricLabel } },
+      xaxis: { title: { text: "Taille de l'échantillon d'entraînement" }, automargin: true },
+      yaxis: { title: { text: metricLabel }, automargin: true },
+      margin: { l: 60, r: 20, t: 64, b: 50 },
       legend: { x: 0.5, y: 1.05, xanchor: 'center', orientation: 'h' },
     };
 

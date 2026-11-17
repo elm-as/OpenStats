@@ -64,7 +64,6 @@ export function TypingNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
       icon={Type}
       title="Detection de types"
       hasInput
-      badge={dsId ? 'Connecte' : 'Auto'}
     >
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Detecte et corrige automatiquement les types statistiques des colonnes.

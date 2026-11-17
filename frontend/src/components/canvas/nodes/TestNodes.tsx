@@ -21,7 +21,7 @@ export function TestCompareMeansNode({ id, data }: NodeProps<Node<CanvasNodeData
   const numericCols = columns.filter(c => isNumericType(columnTypes[c] || ''));
   
   return (
-    <NodeShell id={id} data={data} color="#ef4444" icon={GitCompare} title="Comparaison de moyennes" hasInput badge="Test">
+    <NodeShell id={id} data={data} color="#ef4444" icon={GitCompare} title="Comparaison de moyennes" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         T-test / Mann-Whitney / ANOVA / Kruskal-Wallis (sélection automatique).
       </div>
@@ -46,7 +46,7 @@ export function TestCorrelationNode({ id, data }: NodeProps<Node<CanvasNodeData>
   const numericCols = columns.filter(c => isNumericType(columnTypes[c] || ''));
   
   return (
-    <NodeShell id={id} data={data} color="#ef4444" icon={Link2} title="Test de corrélation" hasInput badge="Test">
+    <NodeShell id={id} data={data} color="#ef4444" icon={Link2} title="Test de corrélation" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Significativité Pearson / Spearman (p-value).
       </div>
@@ -71,7 +71,7 @@ export function TestIndependenceNode({ id, data }: NodeProps<Node<CanvasNodeData
   const catCols = columns.filter(c => isCategoricalType(columnTypes[c] || ''));
   
   return (
-    <NodeShell id={id} data={data} color="#ef4444" icon={Grid3X3} title="Test d'indépendance" hasInput badge="Test">
+    <NodeShell id={id} data={data} color="#ef4444" icon={Grid3X3} title="Test d'indépendance" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Chi-carré / Fisher (variables catégorielles).
       </div>
@@ -96,7 +96,7 @@ export function TestStationarityNode({ id, data }: NodeProps<Node<CanvasNodeData
   const numericCols = columns.filter(c => isNumericType(columnTypes[c] || ''));
   
   return (
-    <NodeShell id={id} data={data} color="#ef4444" icon={Activity} title="Test de stationnarité" hasInput badge="Test">
+    <NodeShell id={id} data={data} color="#ef4444" icon={Activity} title="Test de stationnarité" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         ADF + KPSS combinés. Conclusion automatique sur l'ordre d'intégration.
       </div>
@@ -117,7 +117,7 @@ export function TestNormalityNode({ id, data }: NodeProps<Node<CanvasNodeData>>)
   const numericCols = columns.filter(c => isNumericType(columnTypes[c] || ''));
 
   return (
-    <NodeShell id={id} data={data} color="#ef4444" icon={Activity} title="Test de normalité" hasInput badge="Test">
+    <NodeShell id={id} data={data} color="#ef4444" icon={Activity} title="Test de normalité" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Shapiro-Wilk (p-value). Évalue si la distribution suit une loi Normale (Gaussienne).
       </div>
@@ -135,7 +135,7 @@ export function TestAnovaNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const numericCols = columns.filter(c => isNumericType(columnTypes[c] || ''));
 
   return (
-    <NodeShell id={id} data={data} color="#ef4444" icon={GitCompare} title="ANOVA & Kruskal-Wallis" hasInput badge="Test">
+    <NodeShell id={id} data={data} color="#ef4444" icon={GitCompare} title="ANOVA & Kruskal-Wallis" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Analyse de variance paramétrique (F-test) et non-paramétrique (Kruskal-Wallis) sur 2+ groupes.
       </div>

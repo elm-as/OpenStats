@@ -9,7 +9,7 @@ import {
   Layers,
   Hash,
 } from 'lucide-react';
-import { Section, KpiCard, DataTable, Badge, RenderJson } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable, Badge, RenderJson } from './ResultAtoms';
 import { SurvivalResultView } from './SurvivalResultView';
 
 export const TimeSeriesResultView = ({
@@ -28,7 +28,7 @@ export const TimeSeriesResultView = ({
       <div className="space-y-4">
         <Section title={`Causalité de Granger (Lag max=${resultData.max_lag || 4})`} icon={Shuffle} color="#f59e0b">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs font-mono border-collapse">
+            <table className="ui-table w-full text-xs ui-num border-collapse">
               <thead>
                 <tr className="border-b border-white/10 text-surface-400">
                   <th className="p-2 text-left">Cause \ Effet</th>
@@ -89,10 +89,12 @@ export const TimeSeriesResultView = ({
     return (
       <div className="space-y-4">
         <Section title="Test de Johansen (Cointégration)" icon={Shuffle} color="#f59e0b">
-          <div className="grid grid-cols-2 gap-3">
-            <KpiCard label="Statistique Trace (r=0)" value={resultData.r0_stat} color="#f59e0b" />
-            <KpiCard label="Valeur Critique 5%" value={resultData.r0_crit_5pct} color="#6b7280" />
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Statistique Trace (r=0)', value: resultData.r0_stat },
+              { label: 'Valeur Critique 5%', value: resultData.r0_crit_5pct },
+            ]}
+          />
         </Section>
         <div
           className={`p-3 rounded-xl border text-xs font-semibold ${
@@ -115,11 +117,13 @@ export const TimeSeriesResultView = ({
     return (
       <div className="space-y-4">
         <Section title={`Décomposition STL (${resultData.column})`} icon={LineChart} color="#f59e0b">
-          <div className="grid grid-cols-3 gap-3">
-            <KpiCard label="Moyenne Tendance" value={resultData.trend_mean} color="#3b82f6" />
-            <KpiCard label="Écart-type Saison" value={resultData.seasonal_std} color="#10b981" />
-            <KpiCard label="Écart-type Bruit" value={resultData.resid_std} color="#f59e0b" />
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Moyenne Tendance', value: resultData.trend_mean },
+              { label: 'Écart-type Saison', value: resultData.seasonal_std },
+              { label: 'Écart-type Bruit', value: resultData.resid_std },
+            ]}
+          />
         </Section>
         {hasVector && (
           <Section title="Composantes Isolées (Tendance, Saisonnalité, Résidus)" icon={LineChart} color="#f59e0b">
@@ -154,12 +158,14 @@ export const TimeSeriesResultView = ({
     return (
       <div className="space-y-4">
         <Section title={`Test de Rupture Structurelle de Chow (${resultData.target_col})`} icon={Shuffle} color="#f59e0b">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <KpiCard label="Statistique F" value={resultData.f_statistic} color="#f59e0b" />
-            <KpiCard label="p-value" value={resultData.p_value} color={resultData.is_significant ? '#10b981' : '#6b7280'} />
-            <KpiCard label="Point de Rupture" value={resultData.break_label} color="#06b6d4" />
-            <KpiCard label="Échantillon N" value={resultData.sample_size} color="#8b5cf6" />
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Statistique F', value: resultData.f_statistic },
+              { label: 'p-value', value: resultData.p_value, tone: resultData.is_significant ? 'success' : 'neutral' },
+              { label: 'Point de Rupture', value: resultData.break_label },
+              { label: 'Échantillon N', value: resultData.sample_size },
+            ]}
+          />
         </Section>
         <div
           className={`p-3 rounded-xl border text-xs font-semibold ${
@@ -178,15 +184,13 @@ export const TimeSeriesResultView = ({
     return (
       <div className="space-y-4">
         <Section title="Détection d'anomalies (Isolation Forest)" icon={AlertCircle} color="#f97316">
-          <div className="grid grid-cols-3 gap-3">
-            <KpiCard label="Obs. Atypiques" value={resultData.n_outliers} color="#f97316" />
-            <KpiCard
-              label="Pourcentage"
-              value={`${resultData.outlier_percentage?.toFixed(1)}%`}
-              color="#ef4444"
-            />
-            <KpiCard label="Variables Analysées" value={resultData.n_features} color="#8b5cf6" />
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Obs. Atypiques', value: resultData.n_outliers },
+              { label: 'Pourcentage', value: `${resultData.outlier_percentage?.toFixed(1)}%` },
+              { label: 'Variables Analysées', value: resultData.n_features },
+            ]}
+          />
         </Section>
       </div>
     );
@@ -202,11 +206,13 @@ export const TimeSeriesResultView = ({
     return (
       <div className="space-y-4">
         <Section title={`Volatilité GARCH(1,1) — ${resultData.variable}`} icon={TrendingUp} color="#f59e0b">
-          <div className="grid grid-cols-3 gap-3">
-            <KpiCard label="Volatilité Inconditionnelle" value={resultData.unconditional_volatility} color="#f59e0b" />
-            <KpiCard label="Volatilité Moyenne" value={resultData.mean_conditional_volatility} color="#10b981" />
-            <KpiCard label="Persistance (α+β)" value={params['persistence']} color="#8b5cf6" />
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Volatilité Inconditionnelle', value: resultData.unconditional_volatility },
+              { label: 'Volatilité Moyenne', value: resultData.mean_conditional_volatility },
+              { label: 'Persistance (α+β)', value: params['persistence'] },
+            ]}
+          />
         </Section>
       </div>
     );
@@ -222,12 +228,14 @@ export const TimeSeriesResultView = ({
     return (
       <div className="space-y-5">
         <Section title={`Analyse de Série Temporelle (${bestModel})`} icon={TrendingUp} color="#f59e0b">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <KpiCard label="Modèle" value={bestModel} icon={TrendingUp} color="#f59e0b" />
-            {metrics.aic !== undefined && <KpiCard label="AIC" value={metrics.aic} color="#3b82f6" />}
-            {metrics.rmse !== undefined && <KpiCard label="RMSE" value={metrics.rmse} color="#10b981" />}
-            {metrics.mae !== undefined && <KpiCard label="MAE" value={metrics.mae} color="#8b5cf6" />}
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Modèle', value: bestModel },
+              ...(metrics.aic !== undefined ? [{ label: 'AIC', value: metrics.aic }] : []),
+              ...(metrics.rmse !== undefined ? [{ label: 'RMSE', value: metrics.rmse }] : []),
+              ...(metrics.mae !== undefined ? [{ label: 'MAE', value: metrics.mae }] : []),
+            ]}
+          />
         </Section>
 
         {isArrayForecast && forecast.length > 0 && (
@@ -264,18 +272,16 @@ export const TimeSeriesResultView = ({
     return (
       <div className="space-y-5">
         <Section title={`Séries Temporelles Multivariées (${model})`} icon={Activity} color="#f59e0b">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <KpiCard label="Modèle" value={model} icon={Activity} color="#f59e0b" />
-            <KpiCard label="Variables" value={vars.length} icon={Layers} color="#3b82f6" />
-            {lags !== undefined && <KpiCard label="Lags retenus" value={lags} icon={Hash} color="#8b5cf6" />}
-            {resultData.johansen_test?.coint_rank !== undefined && (
-              <KpiCard
-                label="Rang de cointégration"
-                value={resultData.johansen_test.coint_rank}
-                color="#10b981"
-              />
-            )}
-          </div>
+          <SummaryStrip
+            items={[
+              { label: 'Modèle', value: model },
+              { label: 'Variables', value: vars.length },
+              ...(lags !== undefined ? [{ label: 'Lags retenus', value: lags }] : []),
+              ...(resultData.johansen_test?.coint_rank !== undefined
+                ? [{ label: 'Rang de cointégration', value: resultData.johansen_test.coint_rank }]
+                : []),
+            ]}
+          />
         </Section>
 
         {granger && typeof granger === 'object' && (

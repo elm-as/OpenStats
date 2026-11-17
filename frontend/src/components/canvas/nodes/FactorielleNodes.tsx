@@ -8,7 +8,7 @@ import {
 export function PCANode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const handleChange = useNodeUpdate(id, data);
   return (
-    <NodeShell id={id} data={data} color="#06b6d4" icon={Layers} title="ACP" hasInput badge="Factoriel">
+    <NodeShell id={id} data={data} color="#06b6d4" icon={Layers} title="ACP" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Analyse en Composantes Principales : valeurs propres, cercle des corrélations, biplot.
       </div>
@@ -30,7 +30,7 @@ export function CANode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const { columns } = useConnectedColumns(id);
   
   return (
-    <NodeShell id={id} data={data} color="#06b6d4" icon={Grid3X3} title="AFC" hasInput badge="Factoriel">
+    <NodeShell id={id} data={data} color="#06b6d4" icon={Grid3X3} title="AFC" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Analyse Factorielle des Correspondances (tableau de contingence).
       </div>
@@ -48,7 +48,7 @@ export function CANode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 
 export function MCANode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   return (
-    <NodeShell id={id} data={data} color="#06b6d4" icon={Layers} title="ACM" hasInput badge="Factoriel">
+    <NodeShell id={id} data={data} color="#06b6d4" icon={Layers} title="ACM" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed">
         Analyse des Correspondances Multiples. Nuage des modalités, η², contributions.
       </div>
@@ -59,7 +59,7 @@ export function MCANode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
 export function ClusteringNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const handleChange = useNodeUpdate(id, data);
   return (
-    <NodeShell id={id} data={data} color="#06b6d4" icon={Radar} title="Clustering" hasInput badge="Non-supervisé">
+    <NodeShell id={id} data={data} color="#06b6d4" icon={Radar} title="Clustering" hasInput>
       <div>
         <NodeLabel>Algorithme</NodeLabel>
         <NodeSelect name="method" value={(data.method as string) || 'kmeans'} onChange={handleChange}>
@@ -77,7 +77,7 @@ export function HierarchicalClusteringNode({ id, data }: NodeProps<Node<CanvasNo
   const method = (data.method as string) || 'ward';
 
   return (
-    <NodeShell id={id} data={data} color="#0ea5e9" icon={Radar} title="Clustering Hiérarchique (CAH)" hasInput badge="Dendrogramme">
+    <NodeShell id={id} data={data} color="#0ea5e9" icon={Radar} title="Clustering Hiérarchique (CAH)" hasInput>
       <div className="text-surface-400 text-[11px] leading-relaxed mb-2">
         Construction de la matrice de liaison, tracé du dendrogramme et découpage en clusters.
       </div>

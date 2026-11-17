@@ -76,7 +76,7 @@ export default function MonteCarloDistribution({
         line: { color: baseColor, width: 2 },
       });
       annotations.push({
-        x: baseline, y: -0.06, xref: 'x', yref: 'paper',
+        x: baseline, y: -0.14, xref: 'x', yref: 'paper',
         text: `Baseline: ${baseline.toFixed(2)}`,
         showarrow: false,
         font: { size: 10, color: baseColor },
@@ -98,9 +98,9 @@ export default function MonteCarloDistribution({
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: xLabel } },
-      yaxis: { title: { text: 'Fréquence' } },
-      margin: { l: 58, r: 24, t: 54, b: 56 },
+      xaxis: { title: { text: xLabel }, automargin: true },
+      yaxis: { title: { text: 'Fréquence' }, automargin: true },
+      margin: { l: 60, r: 24, t: 74, b: 72 },
       shapes,
       annotations,
       showlegend: false,

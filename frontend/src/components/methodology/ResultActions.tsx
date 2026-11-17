@@ -103,19 +103,13 @@ export default function ResultActions({ datasetId, datasetName, result }: Props)
   };
 
   return (
-    <section className="ui-panel overflow-hidden">
-      <header className="ui-panel-header">
-        <span>Prolonger l’analyse</span>
-      </header>
+    <section className="ui-panel overflow-hidden" style={{ padding: '8px var(--ui-pad-x)' }}>
+      <div className="flex items-center justify-between flex-wrap" style={{ gap: 'var(--ui-gap-2)' }}>
+        <span className="ui-label" style={{ color: 'var(--ui-text-secondary)' }}>
+          Exporter ou prolonger le pipeline
+        </span>
 
-      <div style={{ padding: 'var(--ui-gap-3) var(--ui-pad-x)' }}>
-        <p className="ui-t-muted" style={{ fontSize: 'var(--ui-fs-xs)', marginBottom: 10, lineHeight: 1.65 }}>
-          Le pipeline exécuté peut devenir un graphe nodal modifiable, ou un script
-          reproductible. Seules les corrections retenues par la boucle sont converties —
-          les itérations annulées n’y figurent pas.
-        </p>
-
-        <div className="flex items-center flex-wrap" style={{ gap: 'var(--ui-gap-2)' }}>
+        <div className="flex items-center flex-wrap" style={{ gap: 'var(--ui-gap-1)' }}>
           <button
             onClick={openInCanvas}
             disabled={busy !== null}
@@ -147,23 +141,23 @@ export default function ResultActions({ datasetId, datasetName, result }: Props)
             </button>
           ))}
         </div>
-
-        {message && (
-          <p className="flex items-center gap-1.5 ui-t-success"
-             style={{ fontSize: 'var(--ui-fs-sm)', marginTop: 10 }}>
-            <Check className="w-3 h-3" />
-            {message}
-          </p>
-        )}
-
-        {warning && (
-          <p className="flex items-start gap-1.5 ui-t-warning"
-             style={{ fontSize: 'var(--ui-fs-xs)', marginTop: 8, lineHeight: 1.55 }}>
-            <AlertTriangle className="w-3 h-3 shrink-0" style={{ marginTop: 2 }} />
-            {warning}
-          </p>
-        )}
       </div>
+
+      {message && (
+        <p className="flex items-center gap-1.5 ui-t-success"
+           style={{ fontSize: 'var(--ui-fs-xs)', marginTop: 6 }}>
+          <Check className="w-3 h-3" />
+          {message}
+        </p>
+      )}
+
+      {warning && (
+        <p className="flex items-start gap-1.5 ui-t-warning"
+           style={{ fontSize: 'var(--ui-fs-xs)', marginTop: 6, lineHeight: 1.5 }}>
+          <AlertTriangle className="w-3 h-3 shrink-0" style={{ marginTop: 2 }} />
+          {warning}
+        </p>
+      )}
     </section>
   );
 }

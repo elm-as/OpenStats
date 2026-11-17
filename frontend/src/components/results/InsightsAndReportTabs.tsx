@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Info, Activity, FileText, Download } from 'lucide-react';
+import { BarChart2, Info, Activity, FileText, Download, Loader2 } from 'lucide-react';
 import { EmptyState } from './ResultAtoms';
 import type { ShapResult, InsightsResult } from './ResultsWizardTypes';
 
@@ -8,16 +8,11 @@ export function ShapTab({ result }: { result?: ShapResult }) {
 
   if (result.note) {
     return (
-      <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-amber-400 mt-0.5" />
-          <div>
-            <h3 className="text-lg font-semibold text-surface-50 mb-2">Explicabilité SHAP</h3>
-            <p className="text-surface-300">{result.note}</p>
-            <p className="text-sm text-surface-400 mt-2">
-              Utilisez l'onglet "Modélisation" puis l'option SHAP pour générer les explications.
-            </p>
-          </div>
+      <div className="ui-panel p-3 flex items-start gap-2.5">
+        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--ui-warning)' }} />
+        <div className="text-xs space-y-1">
+          <h3 className="font-semibold" style={{ color: 'var(--ui-text)' }}>Explicabilité SHAP</h3>
+          <p className="ui-t-secondary">{result.note}</p>
         </div>
       </div>
     );
@@ -27,27 +22,30 @@ export function ShapTab({ result }: { result?: ShapResult }) {
   const waterfall = result.waterfall_example || [];
 
   return (
-    <div className="space-y-4">
-      <div className="ui-panel p-4">
-        <h3 className="text-lg font-semibold text-surface-100 mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-accent-400" />
+    <section className="ui-panel overflow-hidden">
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <BarChart2 className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
           Importance des variables (SHAP)
-        </h3>
+        </span>
+      </header>
 
+      <div className="p-3 space-y-4">
         {importance.length > 0 ? (
           <div className="space-y-2 ui-num">
             {importance.map((imp: any, i: number) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-sm text-surface-300 w-32 truncate">{imp.feature}</span>
-                <div className="flex-1 h-2 bg-surface-700 rounded-full overflow-hidden">
+              <div key={i} className="flex items-center gap-3 text-xs">
+                <span className="ui-t-secondary w-44 shrink-0 break-words" title={imp.feature}>{imp.feature}</span>
+                <div className="flex-1 h-1.5 rounded-sm overflow-hidden" style={{ background: 'var(--ui-bg-sunken)' }}>
                   <div
-                    className="h-full bg-accent-500 rounded-full"
+                    className="h-full"
                     style={{
+                      background: 'var(--ui-accent)',
                       width: `${Math.min((imp.mean_shap / importance[0].mean_shap) * 100, 100)}%`,
                     }}
                   />
                 </div>
-                <span className="text-sm font-mono text-accent-400 w-20 text-right">
+                <span className="ui-t-accent w-16 text-right font-semibold">
                   {imp.mean_shap.toFixed(3)}
                 </span>
               </div>
@@ -58,34 +56,32 @@ export function ShapTab({ result }: { result?: ShapResult }) {
         )}
 
         {waterfall.length > 0 && (
-          <div className="mt-6">
-            <h4 className="text-sm font-medium text-surface-300 mb-3">Exemple local (waterfall)</h4>
-            <div className="space-y-2">
-              {waterfall.slice(0, 10).map((item: any, i: number) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-sm text-surface-300 w-32 truncate">{item.feature}</span>
-                  <div className="flex-1 h-2 bg-surface-700 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        item.shap_value >= 0 ? 'bg-emerald-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${Math.min(Math.abs(item.shap_value) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <span
-                    className={`text-sm font-mono w-20 text-right ${
-                      item.shap_value >= 0 ? 'text-emerald-300' : 'text-red-300'
-                    }`}
-                  >
-                    {item.shap_value.toFixed(3)}
-                  </span>
+          <div className="space-y-2 pt-2" style={{ borderTop: '1px solid var(--ui-border)' }}>
+            <h4 className="ui-label">Exemple local (waterfall)</h4>
+            {waterfall.slice(0, 10).map((item: any, i: number) => (
+              <div key={i} className="flex items-center gap-3 text-xs ui-num">
+                <span className="ui-t-secondary w-44 shrink-0 break-words" title={item.feature}>{item.feature}</span>
+                <div className="flex-1 h-1.5 rounded-sm overflow-hidden" style={{ background: 'var(--ui-bg-sunken)' }}>
+                  <div
+                    className="h-full"
+                    style={{
+                      background: item.shap_value >= 0 ? 'var(--ui-success)' : 'var(--ui-danger)',
+                      width: `${Math.min(Math.abs(item.shap_value) * 100, 100)}%`,
+                    }}
+                  />
                 </div>
-              ))}
-            </div>
+                <span
+                  className="w-16 text-right font-semibold"
+                  style={{ color: item.shap_value >= 0 ? 'var(--ui-success)' : 'var(--ui-danger)' }}
+                >
+                  {item.shap_value.toFixed(3)}
+                </span>
+              </div>
+            ))}
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -94,14 +90,9 @@ export function InsightsTab({ result }: { result?: InsightsResult }) {
 
   if ((result as any).note) {
     return (
-      <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-amber-400 mt-0.5" />
-          <div>
-            <h3 className="text-lg font-semibold text-surface-50 mb-2">Insights IA</h3>
-            <p className="text-surface-300">{(result as any).note}</p>
-          </div>
-        </div>
+      <div className="ui-panel p-3 flex items-start gap-2.5 text-xs">
+        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--ui-warning)' }} />
+        <p className="ui-t-secondary">{(result as any).note}</p>
       </div>
     );
   }
@@ -109,51 +100,42 @@ export function InsightsTab({ result }: { result?: InsightsResult }) {
   const insights = result.insights || [];
 
   return (
-    <div className="space-y-4">
-      <div className="bg-surface-800/50 rounded-xl border border-white/10 p-4">
-        <h3 className="text-lg font-semibold text-surface-50 mb-4 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-rose-400" />
-          Insights générés
-        </h3>
-
+    <section className="ui-panel overflow-hidden">
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <Activity className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          Insights générés ({insights.length})
+        </span>
+      </header>
+      <div className="p-3 space-y-2">
         {insights.length > 0 ? (
-          <div className="space-y-3">
-            {insights.map((insight: any, i: number) => (
+          insights.map((insight: any, i: number) => {
+            const border =
+              insight.severity === 'critical' ? 'var(--ui-danger)'
+                : insight.severity === 'warning' ? 'var(--ui-warning)'
+                : insight.severity === 'success' ? 'var(--ui-success)'
+                : 'var(--ui-info)';
+            return (
               <div
                 key={i}
-                className={`p-3 rounded-lg border ${
-                  insight.severity === 'critical'
-                    ? 'bg-red-500/10 border-red-500/30'
-                    : insight.severity === 'warning'
-                    ? 'bg-amber-500/10 border-amber-500/30'
-                    : insight.severity === 'success'
-                    ? 'bg-emerald-500/10 border-emerald-500/30'
-                    : 'bg-blue-500/10 border-blue-500/30'
-                }`}
+                className="ui-panel p-2.5 text-xs space-y-1"
+                style={{ borderLeft: `3px solid ${border}` }}
               >
-                <h4 className="text-sm font-medium text-surface-200">{insight.title}</h4>
-                <p className="text-sm text-surface-300 mt-1">{insight.message}</p>
-                {insight.suggestion && (
-                  <p className="text-xs text-surface-400 mt-2">{insight.suggestion}</p>
-                )}
+                <h4 className="font-semibold" style={{ color: 'var(--ui-text)' }}>{insight.title}</h4>
+                <p className="ui-t-secondary">{insight.message}</p>
+                {insight.suggestion && <p className="ui-t-muted italic">{insight.suggestion}</p>}
               </div>
-            ))}
-          </div>
+            );
+          })
         ) : (
           <EmptyState message="Aucun insight généré" />
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
-export function ReportTab({
-  format,
-  setFormat,
-  onDownload,
-  isGenerating,
-  hasResults,
-}: {
+export function ReportTab(props: {
   format: 'pdf' | 'docx';
   setFormat: (f: 'pdf' | 'docx') => void;
   onDownload: () => void;
@@ -161,43 +143,27 @@ export function ReportTab({
   hasResults: boolean;
 }) {
   return (
-    <div className="card overflow-hidden !p-0">
-      <div className="px-5 py-4 border-b border-white/10 bg-gradient-to-r from-orange-500/[0.08] to-red-500/[0.04]">
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <div className="absolute inset-0 bg-orange-400/20 blur-lg rounded-full" />
-            <FileText className="w-5 h-5 text-orange-400 relative z-10" />
-          </div>
-          <h3 className="text-sm font-bold text-strong">Génération de rapport professionnel</h3>
-        </div>
-        <p className="text-xs text-muted mt-1.5">
-          Téléchargez un rapport complet au format PDF ou Word avec tous les résultats, graphiques et insights.
-        </p>
-      </div>
+    <section className="ui-panel overflow-hidden">
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <FileText className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          Export de rapport
+        </span>
+      </header>
 
-      <div className="px-5 py-4 space-y-4">
+      <div className="p-3 space-y-3">
         <div>
-          <p className="text-[10px] font-semibold text-muted uppercase tracking-wider mb-2">
-            Format de sortie
-          </p>
+          <p className="ui-label mb-1.5">Format de sortie</p>
           <div className="flex gap-2">
             <button
-              onClick={() => setFormat('pdf')}
-              className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
-                format === 'pdf'
-                  ? 'bg-orange-500/15 border-orange-500/40 text-orange-300 shadow-sm'
-                  : 'bg-white/5 border-white/10 text-muted hover:bg-white/10 hover:text-default'
-              }`}
+              onClick={() => props.setFormat('pdf')}
+              className={`ui-btn flex-1 justify-center text-xs ${props.format === 'pdf' ? 'ui-btn-primary' : ''}`}
             >
               PDF
             </button>
             <button
-              onClick={() => setFormat('docx')}
-              className={`flex-1 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
-                format === 'docx'
-                  ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-sm'
-                  : 'bg-white/5 border-white/10 text-muted hover:bg-white/10 hover:text-default'
-              }`}
+              onClick={() => props.setFormat('docx')}
+              className={`ui-btn flex-1 justify-center text-xs ${props.format === 'docx' ? 'ui-btn-primary' : ''}`}
             >
               Word (DOCX)
             </button>
@@ -205,29 +171,27 @@ export function ReportTab({
         </div>
 
         <button
-          onClick={onDownload}
-          disabled={isGenerating || !hasResults}
-          className="btn-primary w-full text-sm py-3"
+          onClick={props.onDownload}
+          disabled={props.isGenerating || !props.hasResults}
+          className="ui-btn ui-btn-primary ui-focusable w-full justify-center text-xs"
         >
-          {isGenerating ? (
+          {props.isGenerating ? (
             <>
-              <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-              Génération en cours...
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Génération en cours…
             </>
           ) : (
             <>
-              <Download className="w-4 h-4" />
-              Télécharger le rapport {format.toUpperCase()}
+              <Download className="w-3.5 h-3.5" /> Télécharger le rapport {props.format.toUpperCase()}
             </>
           )}
         </button>
 
-        {!hasResults && (
-          <p className="text-xs text-amber-400 text-center">
-            Exécutez d'abord le pipeline pour générer un rapport
+        {!props.hasResults && (
+          <p className="text-xs ui-t-warning text-center">
+            Exécutez d&apos;abord le pipeline pour générer un rapport.
           </p>
         )}
       </div>
-    </div>
+    </section>
   );
 }

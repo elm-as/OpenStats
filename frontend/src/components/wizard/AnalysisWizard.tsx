@@ -17,6 +17,28 @@ interface Props {
   datasetId: string;
 }
 
+function validateAnalysisConfig(
+  analysis: AnalysisCapability,
+  configValues: Record<string, string>,
+): string | null {
+  for (const field of analysis.config_fields || []) {
+    if (!field.optional && !configValues[field.key]) {
+      return `Veuillez sélectionner : ${field.label}`;
+    }
+    if (field.type === 'multiselect' && configValues[field.key].split(',').filter(Boolean).length < 2) {
+      return `Veuillez sélectionner au moins 2 options pour : ${field.label}`;
+    }
+  }
+  const twoVarTest = analysis.key === 'test_correlation' || analysis.key === 'test_independence';
+  if (twoVarTest && configValues.col1 === configValues.col2) {
+    return 'Les deux variables doivent être différentes';
+  }
+  if (analysis.key.startsWith('modeling_') && !configValues.target_column) {
+    return 'Veuillez sélectionner la variable cible';
+  }
+  return null;
+}
+
 export default function AnalysisWizard({ datasetId }: Props) {
   const {
     data: capabilities,
@@ -135,43 +157,19 @@ export default function AnalysisWizard({ datasetId }: Props) {
     ) {
       setWizardStep('configure');
     } else {
-      executeAnalysis(analysis, {}, selectedModels, setWizardStep);
+      executeAnalysis({ analysis, config: {}, selectedModels, setWizardStep });
     }
   };
 
   const handleConfigure = () => {
     if (!selectedAnalysis) return;
-
-    if (selectedAnalysis.config_fields) {
-      for (const field of selectedAnalysis.config_fields) {
-        if (!field.optional && !configValues[field.key]) {
-          setError(`Veuillez sélectionner : ${field.label}`);
-          return;
-        }
-        if (field.type === 'multiselect') {
-          const vals = configValues[field.key].split(',').filter(Boolean);
-          if (vals.length < 2) {
-            setError(`Veuillez sélectionner au moins 2 options pour : ${field.label}`);
-            return;
-          }
-        }
-      }
-      if (
-        (selectedAnalysis.key === 'test_correlation' || selectedAnalysis.key === 'test_independence') &&
-        configValues.col1 === configValues.col2
-      ) {
-        setError('Les deux variables doivent être différentes');
-        return;
-      }
-    }
-
-    if (selectedAnalysis.key.startsWith('modeling_') && !configValues.target_column) {
-      setError('Veuillez sélectionner la variable cible');
+    const validationError = validateAnalysisConfig(selectedAnalysis, configValues);
+    if (validationError) {
+      setError(validationError);
       return;
     }
-
     setError(null);
-    executeAnalysis(selectedAnalysis, configValues, selectedModels, setWizardStep);
+    executeAnalysis({ analysis: selectedAnalysis, config: configValues, selectedModels, setWizardStep });
   };
 
   const resetWizard = () => {

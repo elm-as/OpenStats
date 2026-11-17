@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import ResultsWizard from '../components/wizard/ResultsWizard';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AnalyzerResultsPage() {
   const location = useLocation();
@@ -18,7 +18,9 @@ export default function AnalyzerResultsPage() {
           datasetId: storedDs,
         };
       }
-    } catch {}
+    } catch {
+      // sessionStorage indisponible
+    }
   }
 
   if (!state?.autoPipelineExecution || !state?.datasetId) {
@@ -33,45 +35,33 @@ export default function AnalyzerResultsPage() {
   const errorCount = stepEntries.filter(([, s]) => s.status === 'error').length;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Hero */}
-      <section className="ui-panel">
-        <div className="px-6 py-5 md:px-8 md:py-6">
+    <div className="space-y-3 animate-fade-in">
+      <div className="ui-panel px-3 py-1.5 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/analyzer')}
-            className="mb-3 flex items-center gap-1.5 text-xs text-muted hover:text-accent-400 transition-colors"
+            className="ui-btn ui-btn-ghost ui-focusable text-xs"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Retour à l'analyseur
+            Retour
           </button>
-
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div>
-              <span className="ui-tag bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider mb-2 inline-flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3" />
-                Analyse terminée
-              </span>
-              <h1 className="text-2xl font-bold text-surface-100 tracking-tight leading-tight">
-                Résultats de l'Analyseur
-              </h1>
-            </div>
-            <div className="flex items-center gap-2.5 ui-num">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25">
-                <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-                  {successCount}/{stepEntries.length} étapes réussies
-                </span>
-              </div>
-              {errorCount > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/25">
-                  <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider">
-                    {errorCount} erreur{errorCount > 1 ? 's' : ''}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
+          <span className="ui-sep" aria-hidden />
+          <span className="text-xs font-semibold" style={{ color: 'var(--ui-text)' }}>
+            Résultats du pipeline
+          </span>
         </div>
-      </section>
+
+        <div className="flex items-center gap-2 ui-num">
+          <span className="ui-tag ui-tag-ok">
+            {successCount}/{stepEntries.length} étape(s) réussie(s)
+          </span>
+          {errorCount > 0 && (
+            <span className="ui-tag ui-tag-danger">
+              {errorCount} erreur{errorCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+      </div>
 
       <ResultsWizard
         datasetId={datasetId}

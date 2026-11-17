@@ -1,6 +1,6 @@
 import React from 'react';
 import { BarChart2, Hash, Layers, TrendingUp } from 'lucide-react';
-import { Section, KpiCard, DataTable } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable } from './ResultAtoms';
 import { SvgScatterPlot, SvgBarChart } from './ResultCharts';
 
 export const FactorAnalysisResultView = ({
@@ -80,28 +80,24 @@ export const FactorAnalysisResultView = ({
   return (
     <div className="space-y-5">
       <Section title={`${method} - Résumé`} icon={BarChart2} color="#06b6d4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {nObs && <KpiCard label="Observations" value={nObs} icon={Hash} color="#3b82f6" />}
-          {nVars && <KpiCard label="Variables" value={nVars} icon={Layers} color="#8b5cf6" />}
-          <KpiCard
-            label="Composantes"
-            value={resultData.n_components || evr.length}
-            icon={BarChart2}
-            color="#06b6d4"
-          />
-          {cumVar.length > 0 && (
-            <KpiCard
-              label="Var. cumulée (2 axes)"
-              value={`${(
-                (cumVar[1] ?? cumVar[0] ?? 0) > 1
-                  ? cumVar[1] ?? cumVar[0]
-                  : (cumVar[1] ?? cumVar[0]) * 100
-              ).toFixed(1)}%`}
-              icon={TrendingUp}
-              color="#10b981"
-            />
-          )}
-        </div>
+        <SummaryStrip
+          items={[
+            ...(nObs ? [{ label: 'Observations', value: nObs }] : []),
+            ...(nVars ? [{ label: 'Variables', value: nVars }] : []),
+            { label: 'Composantes', value: resultData.n_components || evr.length },
+            ...(cumVar.length > 0
+              ? [{
+                  label: 'Var. cumulée (2 axes)',
+                  value: `${(
+                    (cumVar[1] ?? cumVar[0] ?? 0) > 1
+                      ? cumVar[1] ?? cumVar[0]
+                      : (cumVar[1] ?? cumVar[0]) * 100
+                  ).toFixed(1)}%`,
+                  tone: 'success' as const,
+                }]
+              : []),
+          ]}
+        />
       </Section>
 
       {evr.length > 0 && (

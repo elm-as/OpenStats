@@ -8,70 +8,63 @@ export function formatStatNumber(v: number | null | undefined): string {
   return v.toFixed(3);
 }
 
-export function RecommendationCard({
-  rec,
-  catalog,
-  isSelected,
-  onToggle,
-  onPreview,
-}: {
+export function RecommendationCard(props: {
   rec: TransformRecommendation;
   catalog: { key: string; label: string; description: string }[];
   isSelected: (col: string, t: string) => boolean;
   onToggle: (col: string, t: string) => void;
   onPreview: (col: string, t: string) => void;
 }) {
-  const severityClass: Record<string, string> = {
-    high: 'border-l-red-500',
-    medium: 'border-l-amber-500',
-    low: 'border-l-blue-500',
-  };
+  const rec = props.rec;
+  const severityBorder =
+    rec.severity === 'high' ? 'var(--ui-danger)'
+      : rec.severity === 'medium' ? 'var(--ui-warning)'
+        : 'var(--ui-info)';
+  const severityTag =
+    rec.severity === 'high' ? 'ui-tag ui-tag-danger'
+      : rec.severity === 'medium' ? 'ui-tag ui-tag-warning'
+        : 'ui-tag ui-tag-info';
 
   return (
-    <div className={`border-l-4 ${severityClass[rec.severity] || ''} bg-gray-50 rounded-r-lg p-3`}>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-sm font-bold text-gray-800">{rec.column}</span>
-            <span
-              className={`badge text-xs ${
-                rec.severity === 'high'
-                  ? 'bg-red-100 text-red-700'
-                  : rec.severity === 'medium'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-blue-100 text-blue-700'
-              }`}
-            >
+    <div
+      className="ui-panel p-2.5 space-y-2"
+      style={{ borderLeft: `3px solid ${severityBorder}` }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="ui-mono text-xs font-bold" style={{ color: 'var(--ui-text)' }}>
+              {rec.column}
+            </span>
+            <span className={severityTag}>
               {rec.severity === 'high' ? 'Critique' : rec.severity === 'medium' ? 'Modéré' : 'Info'}
             </span>
           </div>
-          <p className="text-sm font-medium text-gray-700">{rec.issue_label}</p>
-          <p className="text-xs text-gray-500 mt-0.5">{rec.detail}</p>
-          {rec.note && <p className="text-xs text-gray-400 italic mt-1">{rec.note}</p>}
+          <p className="text-xs font-semibold" style={{ color: 'var(--ui-text-secondary)' }}>
+            {rec.issue_label}
+          </p>
+          <p className="text-[11px] ui-t-muted ui-num">{rec.detail}</p>
+          {rec.note && <p className="text-[11px] ui-t-faint italic mt-0.5">{rec.note}</p>}
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {rec.suggested_transforms.map(tKey => {
-          const info = catalog.find(c => c.key === tKey);
-          const selected = isSelected(rec.column, tKey);
+          const info = props.catalog.find(c => c.key === tKey);
+          const selected = props.isSelected(rec.column, tKey);
           return (
             <div key={tKey} className="flex items-center gap-1">
               <button
-                onClick={() => onToggle(rec.column, tKey)}
-                className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
-                  selected
-                    ? 'bg-primary-600 text-white border-primary-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-primary-400'
-                }`}
+                onClick={() => props.onToggle(rec.column, tKey)}
+                className={`ui-btn text-xs ${selected ? 'ui-btn-primary' : ''}`}
                 title={info?.description}
               >
-                {selected && <Check className="w-3 h-3 inline mr-1" />}
+                {selected && <Check className="w-3 h-3" />}
                 {info?.label || tKey}
               </button>
               <button
-                onClick={() => onPreview(rec.column, tKey)}
-                className="text-gray-400 hover:text-primary-600 transition-colors"
+                onClick={() => props.onPreview(rec.column, tKey)}
+                className="ui-btn ui-btn-ghost p-1"
                 title="Aperçu"
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -84,153 +77,113 @@ export function RecommendationCard({
   );
 }
 
-export function PreviewCard({
-  preview,
-  catalog,
-}: {
+export function PreviewCard(props: {
   preview: TransformPreview;
   catalog: { key: string; label: string }[];
 }) {
-  const info = catalog.find(c => c.key === preview.transform);
+  const preview = props.preview;
+  const info = props.catalog.find(c => c.key === preview.transform);
 
   return (
-    <div className="card border-primary-200">
-      <div className="flex items-center gap-2 mb-3">
-        <Eye className="w-4 h-4 text-primary-600" />
-        <h4 className="font-semibold text-gray-900">
-          Aperçu : <span className="font-mono">{preview.column}</span> →{' '}
-          {info?.label || preview.transform}
-        </h4>
-      </div>
+    <section className="ui-panel overflow-hidden" style={{ borderColor: 'var(--ui-accent)' }}>
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <Eye className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          Aperçu : <span className="ui-mono">{preview.column}</span> → {info?.label || preview.transform}
+        </span>
+      </header>
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-xs font-medium text-gray-500 mb-2">Avant</p>
-          <StatsRow label="Moyenne" value={preview.original.mean} />
-          <StatsRow label="Écart-type" value={preview.original.std} />
-          <StatsRow
-            label="Asymétrie"
-            value={preview.original.skewness}
-            highlight={Math.abs(preview.original.skewness ?? 0) > 1}
-          />
-          <StatsRow label="Kurtosis" value={preview.original.kurtosis} />
+      <div className="p-3 space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="ui-panel p-2.5" style={{ background: 'var(--ui-bg-sunken)' }}>
+            <p className="ui-label mb-1">Avant</p>
+            <StatsRow label="Moyenne" value={preview.original.mean} />
+            <StatsRow label="Écart-type" value={preview.original.std} />
+            <StatsRow
+              label="Asymétrie"
+              value={preview.original.skewness}
+              highlight={Math.abs(preview.original.skewness ?? 0) > 1}
+            />
+            <StatsRow label="Kurtosis" value={preview.original.kurtosis} />
+          </div>
+          <div className="ui-panel p-2.5" style={{ background: 'var(--ui-accent-soft)' }}>
+            <p className="ui-label mb-1" style={{ color: 'var(--ui-accent-text)' }}>Après</p>
+            <StatsRow label="Moyenne" value={preview.transformed.mean} />
+            <StatsRow label="Écart-type" value={preview.transformed.std} />
+            <StatsRow
+              label="Asymétrie"
+              value={preview.transformed.skewness}
+              highlight={Math.abs(preview.transformed.skewness ?? 0) > 1}
+              good={Math.abs(preview.transformed.skewness ?? 0) < Math.abs(preview.original.skewness ?? 0)}
+            />
+            <StatsRow label="Kurtosis" value={preview.transformed.kurtosis} />
+          </div>
         </div>
-        <div className="bg-primary-50 rounded-lg p-3">
-          <p className="text-xs font-medium text-primary-600 mb-2">Après</p>
-          <StatsRow label="Moyenne" value={preview.transformed.mean} />
-          <StatsRow label="Écart-type" value={preview.transformed.std} />
-          <StatsRow
-            label="Asymétrie"
-            value={preview.transformed.skewness}
-            highlight={Math.abs(preview.transformed.skewness ?? 0) > 1}
-            good={
-              Math.abs(preview.transformed.skewness ?? 0) <
-              Math.abs(preview.original.skewness ?? 0)
-            }
-          />
-          <StatsRow label="Kurtosis" value={preview.transformed.kurtosis} />
-        </div>
-      </div>
 
-      <PreviewChart
-        original={preview.original.values as number[]}
-        transformed={preview.transformed.values as number[]}
-      />
-    </div>
+        <PreviewChart
+          original={preview.original.values as number[]}
+          transformed={preview.transformed.values as number[]}
+        />
+      </div>
+    </section>
   );
 }
 
-function PreviewChart({
-  original,
-  transformed,
-}: {
-  original: number[];
-  transformed: number[];
-}) {
-  const theme = useCurrentTheme();
-  const isLight = theme === 'light';
+function PreviewChart(props: { original: number[]; transformed: number[] }) {
+  const isLight = useCurrentTheme() === 'light';
   const origColor = isLight ? '#64748b' : '#94a3b8';
   const transColor = isLight ? '#0e7490' : '#22d3ee';
-  const xs = original.map((_, i) => i);
+  const xs = props.original.map((_, i) => i);
   const traces: Data[] = [
     {
-      x: xs,
-      y: original,
-      type: 'scatter',
-      mode: 'lines',
-      name: 'Original',
+      x: xs, y: props.original, type: 'scatter', mode: 'lines', name: 'Original',
       line: { color: origColor, width: 1.4 },
       hovertemplate: '#%{x}<br>orig: %{y:.4f}<extra></extra>',
     } as Data,
     {
-      x: xs,
-      y: transformed,
-      type: 'scatter',
-      mode: 'lines',
-      name: 'Transformé',
-      line: { color: transColor, width: 1.6 },
-      yaxis: 'y2',
+      x: xs, y: props.transformed, type: 'scatter', mode: 'lines', name: 'Transformé',
+      line: { color: transColor, width: 1.6 }, yaxis: 'y2',
       hovertemplate: '#%{x}<br>trans: %{y:.4f}<extra></extra>',
     } as Data,
   ];
   const layout: Partial<Layout> = {
     autosize: true,
     margin: { l: 50, r: 50, t: 10, b: 35 },
-    xaxis: {
-      title: { text: 'Index', font: { size: 10 } },
-    },
-    yaxis: {
-      title: { text: 'Original', font: { color: origColor, size: 10 } },
-    },
+    xaxis: { title: { text: 'Index', font: { size: 10 } }, automargin: true },
+    yaxis: { title: { text: 'Original', font: { color: origColor, size: 10 } }, automargin: true },
     yaxis2: {
       title: { text: 'Transformé', font: { color: transColor, size: 10 } },
-      overlaying: 'y',
-      side: 'right',
-      showgrid: false,
-      zeroline: false,
-      tickfont: { color: transColor, size: 9 },
+      overlaying: 'y', side: 'right', showgrid: false, zeroline: false,
+      tickfont: { color: transColor, size: 9 }, automargin: true,
     },
     legend: { orientation: 'h', y: -0.2 },
   };
   return <PlotlyChart data={traces} layout={layout} config={DEFAULT_CONFIG} height={220} />;
 }
 
-function StatsRow({
-  label,
-  value,
-  highlight,
-  good,
-}: {
+function StatsRow(props: {
   label: string;
   value: number | null;
   highlight?: boolean;
   good?: boolean;
 }) {
+  const toneColor = props.highlight
+    ? props.good
+      ? 'var(--ui-success)'
+      : 'var(--ui-danger)'
+    : 'var(--ui-text)';
+
   return (
-    <div className="flex items-center justify-between py-0.5">
-      <span className="text-xs text-gray-500">{label}</span>
-      <span
-        className={`font-mono text-xs ${
-          highlight
-            ? good
-              ? 'text-green-600 font-bold'
-              : 'text-red-500 font-bold'
-            : 'text-gray-800'
-        }`}
-      >
-        {formatStatNumber(value)}
+    <div className="flex items-center justify-between py-0.5 text-xs">
+      <span className="ui-t-muted">{props.label}</span>
+      <span className="ui-num font-semibold" style={{ color: toneColor }}>
+        {formatStatNumber(props.value)}
       </span>
     </div>
   );
 }
 
-export function SelectedTransformsBar({
-  selectedTransforms,
-  catalog,
-  isApplying,
-  onApply,
-  onToggleSelected,
-}: {
+export function SelectedTransformsBar(props: {
   selectedTransforms: { column: string; transform: string }[];
   catalog: { key: string; label: string }[];
   isApplying: boolean;
@@ -238,44 +191,44 @@ export function SelectedTransformsBar({
   onToggleSelected: (column: string, transform: string) => void;
 }) {
   return (
-    <div className="card bg-primary-50 border-primary-200">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-medium text-primary-800">
-          {selectedTransforms.length} transformation
-          {selectedTransforms.length > 1 ? 's' : ''} sélectionnée
-          {selectedTransforms.length > 1 ? 's' : ''}
-        </p>
-        <div className="flex items-center gap-2">
+    <div className="ui-panel p-2.5 space-y-2" style={{ borderColor: 'var(--ui-accent)' }}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold ui-num" style={{ color: 'var(--ui-accent-text)' }}>
+          {props.selectedTransforms.length} transformation{props.selectedTransforms.length > 1 ? 's' : ''} sélectionnée{props.selectedTransforms.length > 1 ? 's' : ''}
+        </span>
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={() => onApply(false)}
-            disabled={isApplying}
-            className="btn-secondary text-sm flex items-center gap-1"
+            onClick={() => props.onApply(false)}
+            disabled={props.isApplying}
+            className="ui-btn ui-focusable text-xs"
           >
-            <Eye className="w-4 h-4" /> Aperçu
+            <Eye className="w-3.5 h-3.5" /> Aperçu
           </button>
           <button
-            onClick={() => onApply(true)}
-            disabled={isApplying}
-            className="btn-primary text-sm flex items-center gap-1"
+            onClick={() => props.onApply(true)}
+            disabled={props.isApplying}
+            className="ui-btn ui-btn-primary ui-focusable text-xs"
           >
-            <Play className="w-4 h-4" /> Appliquer au dataset
+            <Play className="w-3.5 h-3.5" /> Appliquer
           </button>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {selectedTransforms.map((t, i) => {
-          const info = catalog.find(c => c.key === t.transform);
+
+      <div className="flex flex-wrap gap-1.5">
+        {props.selectedTransforms.map((t, i) => {
+          const info = props.catalog.find(c => c.key === t.transform);
           return (
-            <span
+            <button
               key={i}
-              onClick={() => onToggleSelected(t.column, t.transform)}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-full text-xs border border-primary-300 cursor-pointer hover:bg-red-50 hover:border-red-300 transition-colors"
+              type="button"
+              onClick={() => props.onToggleSelected(t.column, t.transform)}
+              className="ui-tag ui-tag-accent cursor-pointer"
             >
-              <span className="font-medium">{t.column}</span>
-              <ArrowRight className="w-3 h-3" />
+              <span className="font-semibold">{t.column}</span>
+              <ArrowRight className="w-2.5 h-2.5" />
               <span>{info?.label || t.transform}</span>
-              <span className="text-red-400 ml-1">×</span>
-            </span>
+              <span className="ml-0.5 ui-t-danger">×</span>
+            </button>
           );
         })}
       </div>
@@ -283,51 +236,37 @@ export function SelectedTransformsBar({
   );
 }
 
-export function AppliedLogsView({
-  logs,
-  onClose,
-}: {
-  logs: any[];
-  onClose: () => void;
-}) {
+export function AppliedLogsView(props: { logs: any[]; onClose: () => void }) {
   return (
-    <div className="card bg-green-50 border-green-200">
-      <h4 className="font-semibold text-green-900 mb-2">Résultats de l'application</h4>
-      <div className="space-y-2">
-        {logs.map((log: any, i: number) => (
-          <div key={i} className="text-sm bg-white rounded p-2 border border-green-100">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-medium">{log.column}</span>
-              <span
-                className={`text-xs px-2 py-0.5 rounded ${
-                  log.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}
-              >
+    <section className="ui-panel overflow-hidden" style={{ borderColor: 'var(--ui-success)' }}>
+      <header className="ui-panel-header">
+        <span style={{ color: 'var(--ui-success)' }}>Résultats de l&apos;application</span>
+        <button onClick={props.onClose} className="ui-btn ui-btn-ghost text-xs">
+          Fermer
+        </button>
+      </header>
+      <div className="p-2.5 space-y-1.5">
+        {props.logs.map((log: any, i: number) => (
+          <div key={i} className="ui-panel p-2 text-xs" style={{ background: 'var(--ui-bg-sunken)' }}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="ui-mono font-semibold" style={{ color: 'var(--ui-text)' }}>{log.column}</span>
+              <span className={log.success ? 'ui-tag ui-tag-ok' : 'ui-tag ui-tag-danger'}>
                 {log.success ? 'Succès' : 'Échec'}
               </span>
             </div>
             {log.success && log.before && log.after && (
-              <div className="mt-2 grid grid-cols-2 gap-4 text-xs">
+              <div className="mt-1.5 grid grid-cols-2 gap-3 text-[11px] ui-num ui-t-muted">
                 <div>
-                  <span className="font-medium text-gray-500">Avant :</span> skew=
-                  {formatStatNumber(log.before.skewness)} μ=
-                  {formatStatNumber(log.before.mean)} σ=
-                  {formatStatNumber(log.before.std)}
+                  Avant : skew={formatStatNumber(log.before.skewness)} · μ={formatStatNumber(log.before.mean)} · σ={formatStatNumber(log.before.std)}
                 </div>
                 <div>
-                  <span className="font-medium text-gray-500">Après :</span> skew=
-                  {formatStatNumber(log.after.skewness)} μ=
-                  {formatStatNumber(log.after.mean)} σ=
-                  {formatStatNumber(log.after.std)}
+                  Après : skew={formatStatNumber(log.after.skewness)} · μ={formatStatNumber(log.after.mean)} · σ={formatStatNumber(log.after.std)}
                 </div>
               </div>
             )}
           </div>
         ))}
       </div>
-      <button onClick={onClose} className="mt-3 text-sm text-gray-500 underline">
-        Fermer
-      </button>
-    </div>
+    </section>
   );
 }

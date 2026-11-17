@@ -8,6 +8,25 @@ export interface RunOptions {
   allowAggressive: boolean;
 }
 
+function dispatchMethodologyChunks(
+  chunks: string[],
+  setStages: React.Dispatch<React.SetStateAction<Stage[]>>,
+  onTerminal: { setDone: (done: boolean) => void; setError: (msg: string | null) => void },
+) {
+  for (const chunk of chunks) {
+    const line = chunk.split('\n').find(l => l.startsWith('data: '));
+    if (!line) continue;
+    try {
+      const event = JSON.parse(line.slice(6)) as MethodologyEvent;
+      if (event.type === 'stage') setStages(prev => [...prev, event.stage]);
+      else if (event.type === 'complete') onTerminal.setDone(true);
+      else if (event.type === 'error') onTerminal.setError(event.error);
+    } catch {
+      continue;
+    }
+  }
+}
+
 /**
  * Pilote une exécution de la méthodologie.
  *
@@ -71,24 +90,7 @@ export function useMethodology(datasetId: string | undefined) {
 
           const chunks = buffer.split('\n\n');
           buffer = chunks.pop() ?? '';
-
-          for (const chunk of chunks) {
-            const line = chunk.split('\n').find(l => l.startsWith('data: '));
-            if (!line) continue;
-            let event: MethodologyEvent;
-            try {
-              event = JSON.parse(line.slice(6)) as MethodologyEvent;
-            } catch {
-              continue;
-            }
-            if (event.type === 'stage') {
-              setStages(prev => [...prev, event.stage]);
-            } else if (event.type === 'complete') {
-              setDone(true);
-            } else if (event.type === 'error') {
-              setError(event.error);
-            }
-          }
+          dispatchMethodologyChunks(chunks, setStages, { setDone, setError });
         }
       } catch (err) {
         if (!(err instanceof DOMException && err.name === 'AbortError')) {

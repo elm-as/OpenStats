@@ -39,36 +39,38 @@ interface AutoPipelineRecipeStageProps {
   onUpdateStepParam: (idx: number, key: string, value: any) => void;
 }
 
-export function AutoPipelineRecipeStage({
-  pipelineTitle,
-  pipelineDesc,
-  pipelineWarnings = [],
-  editableSteps,
-  activeSteps,
-  isExecuting,
-  isGeneratingCanvas,
-  showAddStepModal,
-  setShowAddStepModal,
-  availableAnalyses,
-  onBack,
-  onAddStepFromCatalog,
-  onShowCodeModal,
-  onOpenCanvas,
-  onExecute,
-  onToggleStepEnabled,
-  onToggleStepExpanded,
-  onMoveStep,
-  onRemoveStep,
-  onUpdateStepParam,
-}: AutoPipelineRecipeStageProps) {
+export function AutoPipelineRecipeStage(props: AutoPipelineRecipeStageProps) {
+  const {
+    pipelineTitle,
+    pipelineDesc,
+    pipelineWarnings = [],
+    editableSteps,
+    activeSteps,
+    isExecuting,
+    isGeneratingCanvas,
+    showAddStepModal,
+    setShowAddStepModal,
+    availableAnalyses,
+    onBack,
+    onAddStepFromCatalog,
+    onShowCodeModal,
+    onOpenCanvas,
+    onExecute,
+    onToggleStepEnabled,
+    onToggleStepExpanded,
+    onMoveStep,
+    onRemoveStep,
+    onUpdateStepParam,
+  } = props;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Analyses demandées que le profil ne permet pas de poser */}
       {pipelineWarnings.length > 0 && (
-        <div className="ui-panel p-4 border-l-4 border-l-amber-500 bg-amber-500/10 space-y-2">
+        <div className="ui-panel px-3.5 py-2.5 border border-amber-500/40 bg-amber-500/10 space-y-1.5">
           {pipelineWarnings.map((message, i) => (
-            <div key={i} className="flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+            <div key={i} className="flex items-start gap-2">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
               <p className="text-xs text-surface-200 leading-relaxed">{message}</p>
             </div>
           ))}

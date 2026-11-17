@@ -22,22 +22,20 @@ export default function TSDecomposition({
   title = 'Décomposition de la série temporelle',
 }: Props) {
   const { traces, layout } = useMemo(() => {
-    const baseLine = (y: number[], color: string, name: string, axis: string): Data => ({
+    const baseLine = (opts: { y: number[]; color: string; name: string }): Data => ({
       x: dates,
-      y,
+      y: opts.y,
       type: 'scatter',
       mode: 'lines',
-      name,
-      line: { color, width: 1.5 },
-      xaxis: axis === 'x' ? undefined : axis,
-      yaxis: axis === 'x' ? undefined : axis.replace('x', 'y'),
-      hovertemplate: '<b>%{x}</b><br>' + name + ': %{y:.3f}<extra></extra>',
+      name: opts.name,
+      line: { color: opts.color, width: 1.5 },
+      hovertemplate: '<b>%{x}</b><br>' + opts.name + ': %{y:.3f}<extra></extra>',
     } as Data);
 
     const tr: Data[] = [
-      baseLine(observed, '#0284c7', 'Observée', 'x'),
-      baseLine(trend, '#d97706', 'Tendance', 'x2'),
-      baseLine(seasonal, '#059669', 'Saisonnier', 'x3'),
+      baseLine({ y: observed, color: '#0284c7', name: 'Observée' }),
+      { ...baseLine({ y: trend, color: '#d97706', name: 'Tendance' }), xaxis: 'x2', yaxis: 'y2' } as Data,
+      { ...baseLine({ y: seasonal, color: '#059669', name: 'Saisonnier' }), xaxis: 'x3', yaxis: 'y3' } as Data,
       {
         x: dates,
         y: residuals,

@@ -1,5 +1,7 @@
 import React from 'react';
 
+export type BadgeTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
+
 export const fmt = (v: unknown): string => {
   if (v === null || v === undefined) return '\u2014';
   if (typeof v === 'boolean') return v ? 'Oui' : 'Non';
@@ -16,44 +18,100 @@ export const fmt = (v: unknown): string => {
 };
 
 export const pctBar = (pct: number, color: string) => (
-  <div className="flex-1 h-2.5 bg-surface-800 rounded-full overflow-hidden">
+  <div
+    className="flex-1 h-1.5 rounded-[var(--ui-radius-sm)] overflow-hidden"
+    style={{ background: 'var(--ui-bg-raised)' }}
+  >
     <div
-      className="h-full rounded-full transition-all duration-500"
+      className="h-full rounded-[var(--ui-radius-sm)] transition-all duration-300"
       style={{ width: `${Math.min(Math.max(pct, 0), 100)}%`, background: color }}
     />
   </div>
 );
 
-export const Badge = ({ children, color = '#6366f1' }: { children: React.ReactNode; color?: string }) => (
-  <span
-    className="inline-block text-[9px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full"
-    style={{ color, background: `${color}20`, border: `1px solid ${color}40` }}
-  >
-    {children}
-  </span>
-);
+function resolveToneFromColor(color?: string): BadgeTone {
+  if (!color) return 'neutral';
+  const c = color.toLowerCase();
+  if (c.includes('#10b981') || c.includes('#059669') || c.includes('#34d399') || c.includes('success') || c.includes('emerald')) return 'success';
+  if (c.includes('#ef4444') || c.includes('#dc2626') || c.includes('#f43f5e') || c.includes('danger') || c.includes('red')) return 'danger';
+  if (c.includes('#f59e0b') || c.includes('#f97316') || c.includes('#d97706') || c.includes('warning') || c.includes('amber')) return 'warning';
+  if (c.includes('#3b82f6') || c.includes('#0284c7') || c.includes('#06b6d4') || c.includes('info') || c.includes('cyan')) return 'info';
+  if (c.includes('#8b5cf6') || c.includes('#a855f7') || c.includes('accent') || c.includes('violet')) return 'accent';
+  return 'neutral';
+}
+
+export const Badge = ({
+  children,
+  tone,
+  color,
+}: {
+  children: React.ReactNode;
+  tone?: BadgeTone;
+  color?: string;
+}) => {
+  const finalTone = tone ?? resolveToneFromColor(color);
+  return <span className={`ui-tag ui-tag-${finalTone}`}>{children}</span>;
+};
 
 export const KpiCard = ({
   label,
   value,
   icon: Icon,
-  color = '#10b981',
 }: {
   label: string;
   value: string | number;
-  icon?: any;
+  icon?: React.ComponentType<any>;
   color?: string;
-}) => (
-  <div className="bg-surface-800/60 rounded-xl p-3 border border-white/[0.04] flex items-start gap-3">
-    {Icon && (
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${color}15` }}>
-        <Icon size={14} style={{ color }} />
+}) => {
+  const formatted = fmt(value);
+  return (
+    <div className="ui-panel px-3 py-2 flex items-start gap-2 min-w-0">
+      {Icon && (
+        <Icon size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--ui-text-faint)' }} />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="ui-label truncate">{label}</div>
+        <div className="ui-num text-sm font-bold truncate" style={{ color: 'var(--ui-text)' }} title={formatted}>
+          {formatted}
+        </div>
       </div>
-    )}
-    <div className="min-w-0 flex-1">
-      <div className="text-[10px] text-surface-400 uppercase font-bold tracking-wider mb-0.5 truncate">{label}</div>
-      <div className="text-sm font-bold text-surface-100 font-mono break-words">{fmt(value)}</div>
     </div>
+  );
+};
+
+export interface SummaryStripItem {
+  label: string;
+  value: string | number;
+  hint?: string;
+  tone?: 'success' | 'warning' | 'danger' | 'neutral';
+}
+
+const TONE_COLOR: Record<NonNullable<SummaryStripItem['tone']>, string> = {
+  success: 'var(--ui-success)',
+  warning: 'var(--ui-warning)',
+  danger: 'var(--ui-danger)',
+  neutral: 'var(--ui-text)',
+};
+
+export const SummaryStrip = ({ items }: { items: SummaryStripItem[] }) => (
+  <div className="ui-panel flex flex-wrap divide-x divide-[var(--ui-border)] overflow-hidden">
+    {items.map((item, idx) => {
+      const formatted = fmt(item.value);
+      const color = item.tone ? TONE_COLOR[item.tone] : 'var(--ui-text)';
+      return (
+        <div key={`${item.label}-${idx}`} className="px-3.5 py-2 min-w-[120px] flex-1">
+          <div className="ui-label truncate">{item.label}</div>
+          <div className="ui-num text-sm font-bold truncate" style={{ color }} title={formatted}>
+            {formatted}
+          </div>
+          {item.hint && (
+            <div className="ui-t-faint text-[11px] truncate" title={item.hint}>
+              {item.hint}
+            </div>
+          )}
+        </div>
+      );
+    })}
   </div>
 );
 
@@ -64,49 +122,112 @@ export const Section = ({
   children,
 }: {
   title: string;
-  icon?: any;
+  icon?: React.ComponentType<any>;
   color?: string;
   children: React.ReactNode;
 }) => (
-  <div className="space-y-3">
-    <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.04]">
-      {Icon && <Icon size={15} style={{ color }} />}
-      <h4 className="text-sm font-bold text-surface-100">{title}</h4>
+  <div className="space-y-2.5">
+    <div className="flex items-center gap-2 pb-1.5" style={{ borderBottom: '1px solid var(--ui-border)' }}>
+      {Icon && <Icon size={14} style={{ color: color || 'var(--ui-text-muted)' }} />}
+      <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--ui-text)' }}>
+        {title}
+      </h4>
     </div>
     {children}
   </div>
 );
 
-export const DataTable = ({ headers, rows }: { headers: string[]; rows: any[][] }) => (
-  <div className="overflow-x-auto rounded-xl border border-white/[0.04] bg-surface-900/50">
-    <table className="w-full text-xs text-left whitespace-nowrap">
-      <thead className="bg-surface-800/80 text-surface-400 uppercase">
-        <tr>
-          {headers.map(h => (
-            <th key={h} className="px-3 py-2.5 font-bold">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-white/[0.03]">
-        {rows.map((cells, i) => (
-          <tr key={i} className="hover:bg-white/[0.02] transition-colors">
-            {cells.map((c, j) => (
-              <td key={j} className="px-3 py-2 text-surface-200 font-mono">
-                {fmt(c)}
-              </td>
+function isEmptyCell(value: unknown): boolean {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'number') return !Number.isFinite(value);
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  return trimmed === '' || trimmed === '\u2014' || trimmed === '-' || trimmed === 'N/A';
+}
+
+function isNumericCell(value: unknown): boolean {
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (isEmptyCell(trimmed)) return false;
+  return /^[+-]?(\d[\d\s\u00a0]*([.,]\d+)?([eE][+-]?\d+)?)\s*%?$/.test(trimmed)
+    || /^<\s*0([.,]\d+)?$/.test(trimmed);
+}
+
+function isColumnNumeric(rows: any[][], colIdx: number): boolean {
+  let hasValue = false;
+  for (const row of rows) {
+    const cell = row?.[colIdx];
+    if (isEmptyCell(cell)) continue;
+    hasValue = true;
+    if (!isNumericCell(cell)) return false;
+  }
+  return hasValue;
+}
+
+function resolveNumericColumns(
+  cols: string[],
+  rows: any[][],
+  numericColumns?: boolean[] | number[],
+): boolean[] {
+  if (!Array.isArray(numericColumns)) {
+    return cols.map((_, idx) => isColumnNumeric(rows, idx));
+  }
+  if (numericColumns.length > 0 && typeof numericColumns[0] === 'number') {
+    const indices = new Set(numericColumns as number[]);
+    return cols.map((_, idx) => indices.has(idx));
+  }
+  return cols.map((_, idx) => Boolean((numericColumns as boolean[])[idx]));
+}
+
+export const DataTable = ({
+  headers,
+  columns,
+  rows,
+  numericColumns,
+}: {
+  headers?: string[];
+  columns?: string[];
+  rows: any[][];
+  numericColumns?: boolean[] | number[];
+}) => {
+  const cols = headers ?? columns ?? [];
+  const numCols = resolveNumericColumns(cols, rows, numericColumns);
+  return (
+    <div className="ui-panel ui-scroll overflow-x-auto">
+      <table className="ui-table">
+        <thead>
+          <tr>
+            {cols.map((h, idx) => (
+              <th
+                key={`${h}-${idx}`}
+                className={numCols[idx] ? 'ui-th-num text-right' : undefined}
+                style={numCols[idx] ? { textAlign: 'right' } : undefined}
+              >
+                {h}
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-);
+        </thead>
+        <tbody>
+          {rows.map((cells, i) => (
+            <tr key={i}>
+              {cells.map((c, j) => (
+                <td key={j} className={numCols[j] ? 'ui-td-num ui-num' : undefined}>
+                  {fmt(c)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
 export const RenderJson = ({ data }: { data: any }) => (
-  <div className="bg-surface-900/80 rounded-xl border border-white/[0.04] p-4 overflow-auto max-h-[500px]">
-    <pre className="text-xs font-mono text-surface-300 whitespace-pre-wrap break-all leading-relaxed">
+  <div className="ui-panel ui-scroll p-3 overflow-auto max-h-[500px]">
+    <pre className="ui-mono ui-t-secondary whitespace-pre-wrap break-all leading-relaxed">
       {JSON.stringify(data, null, 2)}
     </pre>
   </div>
@@ -150,4 +271,3 @@ export const getNodeLabel = (nodeType: string, nodeId: string) => {
   };
   return labels[nodeType] || nodeType || nodeId;
 };
-

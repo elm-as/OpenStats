@@ -1,16 +1,11 @@
 import { useState, useMemo } from 'react';
 import {
-  CheckCircle2,
-  XCircle,
   AlertCircle,
   RotateCcw,
   LayoutGrid,
-  Clock,
-  Target,
-  FileText,
 } from 'lucide-react';
 import { useGenerateProfessionalReportMutation } from '../../store/api';
-import { StatCard } from '../results/ResultAtoms';
+import { SummaryCell } from '../results/ResultAtoms';
 import { OverviewTab } from '../results/OverviewTab';
 import { CleaningTab, DescriptiveTab, TransformsTab } from '../results/DataPrepTabs';
 import { CorrelationsTab } from '../results/CorrelationsTab';
@@ -53,13 +48,8 @@ interface Props {
   onLowCode?: () => void;
 }
 
-export default function ResultsWizard({
-  datasetId,
-  execution,
-  execError,
-  onReset,
-  onLowCode,
-}: Props) {
+export default function ResultsWizard(props: Props) {
+  const { datasetId, execution, execError, onReset, onLowCode } = props;
   const [activeTab, setActiveTab] = useState<ResultTab>('overview');
   const [reportFormat, setReportFormat] = useState<'pdf' | 'docx'>('pdf');
 
@@ -104,115 +94,58 @@ export default function ResultsWizard({
   const hasStep = (key: string) => !!steps[key];
 
   const checkTabContent = (tab: ResultTab): boolean => {
-    switch (tab) {
-      case 'overview':
-        return true;
-      case 'cleaning':
-        return hasStep('clean') || hasStep('cleaning');
-      case 'descriptive':
-        return hasStep('descriptive');
-      case 'correlations':
-        return hasStep('correlations');
-      case 'transforms':
-        return (
-          hasStep('transform_recommendations') ||
-          hasStep('transforms') ||
-          hasStep('transform') ||
-          hasStep('stationarization_transform') ||
-          hasStep('transform_recommend')
-        );
-      case 'modeling':
-        return (
-          hasStep('model') ||
-          hasStep('timeseries') ||
-          hasStep('timeseries_multivariate')
-        );
-      case 'shap':
-        return hasStep('explainability') || hasStep('shap');
-      case 'insights':
-        return hasStep('insights');
-      case 'report':
-        return stats.success > 0;
-      default:
-        return false;
+    if (tab === 'overview') return true;
+    if (tab === 'cleaning') return hasStep('clean') || hasStep('cleaning');
+    if (tab === 'descriptive') return hasStep('descriptive');
+    if (tab === 'correlations') return hasStep('correlations');
+    if (tab === 'transforms') {
+      return (
+        hasStep('transform_recommendations') ||
+        hasStep('transforms') ||
+        hasStep('transform') ||
+        hasStep('stationarization_transform') ||
+        hasStep('transform_recommend')
+      );
     }
+    if (tab === 'modeling') {
+      return hasStep('model') || hasStep('timeseries') || hasStep('timeseries_multivariate');
+    }
+    if (tab === 'shap') return hasStep('explainability') || hasStep('shap');
+    if (tab === 'insights') return hasStep('insights');
+    if (tab === 'report') return stats.success > 0;
+    return false;
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-surface-50 flex items-center gap-2">
-            <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-            Résultats de l'analyse
-          </h2>
-          <p className="text-sm text-surface-300 mt-1">
-            {execution.title} • {stats.success} étapes réussies
-            {stats.error > 0 && <span className="text-red-400 ml-2">{stats.error} erreurs</span>}
-          </p>
+    <div className="space-y-3">
+      <div className="ui-panel px-3 py-1.5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-semibold" style={{ color: 'var(--ui-text)' }}>{execution.title}</span>
+          <span className="ui-sep" aria-hidden />
+          <span className="ui-tag ui-tag-ok ui-num">{stats.success} réussie(s)</span>
+          {stats.error > 0 && <span className="ui-tag ui-tag-danger ui-num">{stats.error} erreur(s)</span>}
+          <span className="ui-tag ui-num">{(stats.totalDuration / 1000).toFixed(1)} s</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onReset}
-            className="ui-btn text-sm"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Nouvelle analyse
+        <div className="flex items-center gap-1.5">
+          <button onClick={onReset} className="ui-btn ui-focusable text-xs">
+            <RotateCcw className="w-3.5 h-3.5" /> Nouvelle analyse
           </button>
           {onLowCode && (
-            <button
-              onClick={onLowCode}
-              className="ui-btn text-sm bg-accent-500/10 text-accent-400 border-accent-500/30 hover:bg-accent-500/20"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              Mode Canevas
+            <button onClick={onLowCode} className="ui-btn ui-focusable text-xs">
+              <LayoutGrid className="w-3.5 h-3.5" /> Canvas
             </button>
           )}
         </div>
       </div>
 
-      {/* Stats summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 ui-num">
-        <StatCard
-          icon={CheckCircle2}
-          label="Étapes réussies"
-          value={stats.success}
-          color="text-emerald-400"
-          bg="bg-emerald-500/10"
-        />
-        <StatCard
-          icon={XCircle}
-          label="Erreurs"
-          value={stats.error}
-          color={stats.error > 0 ? 'text-red-400' : 'text-surface-400'}
-          bg={stats.error > 0 ? 'bg-red-500/10' : 'bg-surface-500/10'}
-        />
-        <StatCard
-          icon={Clock}
-          label="Durée totale"
-          value={`${(stats.totalDuration / 1000).toFixed(1)}s`}
-          color="text-blue-400"
-          bg="bg-blue-500/10"
-        />
-        <StatCard
-          icon={Target}
-          label="Variable cible"
-          value={execution.target ?? '—'}
-          color="text-cyan-400"
-          bg="bg-cyan-500/10"
-        />
-        <StatCard
-          icon={FileText}
-          label="Type de problème"
-          value={execution.problem_type?.replace(/_/g, ' ') ?? '—'}
-          color="text-teal-400"
-          bg="bg-teal-500/10"
-        />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 ui-num">
+        <SummaryCell label="Étapes" value={`${stats.success}/${stepEntries.length}`} tone={stats.error > 0 ? 'warning' : 'success'} />
+        <SummaryCell label="Durée" value={`${(stats.totalDuration / 1000).toFixed(1)} s`} />
+        <SummaryCell label="Cible" value={execution.target ?? '—'} />
+        <SummaryCell label="Problème" value={execution.problem_type?.replace(/_/g, ' ') ?? '—'} />
       </div>
 
-      {/* Tab navigation */}
-      <div className="ui-panel flex flex-wrap gap-1 p-1">
+      <div className="ui-panel flex flex-wrap gap-1 p-1" role="tablist">
         {(Object.keys(TAB_META) as ResultTab[]).map(tab => {
           const meta = TAB_META[tab];
           const Icon = meta.icon;
@@ -221,34 +154,25 @@ export default function ResultsWizard({
           return (
             <button
               key={tab}
+              role="tab"
+              aria-selected={activeTab === tab}
               onClick={() => hasContent && setActiveTab(tab)}
               disabled={!hasContent}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                activeTab === tab
-                  ? `${meta.bg} ${meta.color} border border-white/10`
-                  : hasContent
-                  ? 'text-surface-300 hover:text-surface-100 hover:bg-white/[0.04]'
-                  : 'text-surface-600 cursor-not-allowed opacity-50'
+              className={`ui-btn text-xs ${
+                activeTab === tab ? 'ui-btn-primary' : hasContent ? 'ui-btn-ghost' : 'opacity-40 cursor-not-allowed'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span className="hidden md:inline">{meta.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Tab content */}
-      <div className="min-h-[400px]">
-        {activeTab === 'overview' && (
-          <OverviewTab steps={steps} stats={stats} execution={execution} />
-        )}
+      <div className="min-h-[360px]">
+        {activeTab === 'overview' && <OverviewTab steps={steps} stats={stats} execution={execution} />}
         {activeTab === 'cleaning' && (hasStep('clean') || hasStep('cleaning')) && (
-          <CleaningTab
-            result={
-              (getStepResult('clean') || getStepResult('cleaning')) as CleaningResult
-            }
-          />
+          <CleaningTab result={(getStepResult('clean') || getStepResult('cleaning')) as CleaningResult} />
         )}
         {activeTab === 'descriptive' && hasStep('descriptive') && (
           <DescriptiveTab result={getStepResult('descriptive') as DescriptiveResult} />
@@ -258,9 +182,7 @@ export default function ResultsWizard({
         )}
         {activeTab === 'transforms' && (
           <TransformsTab
-            recommendations={
-              getStepResult('transform_recommendations') as TransformRecommendation[]
-            }
+            recommendations={getStepResult('transform_recommendations') as TransformRecommendation[]}
             applied={
               (getStepResult('transforms') ||
                 getStepResult('transform') ||
@@ -269,9 +191,7 @@ export default function ResultsWizard({
           />
         )}
         {activeTab === 'modeling' &&
-          (hasStep('model') ||
-            hasStep('timeseries') ||
-            hasStep('timeseries_multivariate')) && (
+          (hasStep('model') || hasStep('timeseries') || hasStep('timeseries_multivariate')) && (
             <ModelingTab
               result={
                 (getStepResult('model') ||
@@ -283,11 +203,7 @@ export default function ResultsWizard({
             />
           )}
         {activeTab === 'shap' && (hasStep('explainability') || hasStep('shap')) && (
-          <ShapTab
-            result={
-              (getStepResult('explainability') || getStepResult('shap')) as ShapResult
-            }
-          />
+          <ShapTab result={(getStepResult('explainability') || getStepResult('shap')) as ShapResult} />
         )}
         {activeTab === 'insights' && hasStep('insights') && (
           <InsightsTab result={getStepResult('insights') as InsightsResult} />
@@ -303,14 +219,13 @@ export default function ResultsWizard({
         )}
       </div>
 
-      {/* Global errors */}
       {execError && (
-        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium text-red-300">Erreur globale</p>
-            <p className="text-sm text-red-200/70 mt-1">{execError}</p>
-          </div>
+        <div
+          className="ui-panel p-3 flex items-start gap-2 text-xs ui-t-danger"
+          style={{ background: 'var(--ui-danger-soft)', borderColor: 'var(--ui-danger)' }}
+        >
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{execError}</span>
         </div>
       )}
     </div>

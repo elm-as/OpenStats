@@ -53,7 +53,7 @@ export function CardBody({ className = '', children, ...rest }: HTMLAttributes<H
 
 export function CardFooter({ className = '', children, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`mt-4 pt-3 border-t border-white/5 flex items-center justify-between gap-2 ${className}`} {...rest}>
+    <div className={`mt-4 pt-3 border-t border-ui-border flex items-center justify-between gap-2 ${className}`} {...rest}>
       {children}
     </div>
   );

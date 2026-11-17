@@ -7,7 +7,7 @@ import {
   TrendingUp,
   Hash,
 } from 'lucide-react';
-import { Section, KpiCard, DataTable, fmt } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable, fmt } from './ResultAtoms';
 import { PlotlyChart } from '../../viz/PlotlyBase';
 
 export const StatisticalTestsResultView = ({
@@ -26,7 +26,7 @@ export const StatisticalTestsResultView = ({
             t.column,
             t.statistic,
             t.p_value,
-            t.is_normal ? '✅ Normal (p > 0.05)' : '⚠️ Non-normal (p <= 0.05)',
+            t.is_normal ? 'Normal (p > 0.05)' : 'Non-normal (p <= 0.05)',
           ])}
         />
       </Section>
@@ -37,20 +37,14 @@ export const StatisticalTestsResultView = ({
     return (
       <div className="space-y-4">
         <Section title="Résultat ANOVA & Kruskal-Wallis" icon={GitCompare} color="#ef4444">
-          <div className="grid grid-cols-2 gap-3">
-            <KpiCard label="ANOVA (F-stat)" value={resultData.anova_f} color="#3b82f6" />
-            <KpiCard
-              label="p-value (F-test)"
-              value={resultData.anova_p}
-              color={resultData.anova_p < 0.05 ? '#10b981' : '#f59e0b'}
-            />
-            <KpiCard label="Kruskal-Wallis (H-stat)" value={resultData.kruskal_h} color="#8b5cf6" />
-            <KpiCard
-              label="p-value (H-test)"
-              value={resultData.kruskal_p}
-              color={resultData.kruskal_p < 0.05 ? '#10b981' : '#f59e0b'}
-            />
-          </div>
+        <SummaryStrip
+          items={[
+            { label: 'ANOVA (F-stat)', value: resultData.anova_f },
+            { label: 'p-value (F-test)', value: resultData.anova_p, tone: resultData.anova_p < 0.05 ? 'success' : 'warning' },
+            { label: 'Kruskal-Wallis (H-stat)', value: resultData.kruskal_h },
+            { label: 'p-value (H-test)', value: resultData.kruskal_p, tone: resultData.kruskal_p < 0.05 ? 'success' : 'warning' },
+          ]}
+        />
         </Section>
         <div
           className={`p-3.5 rounded-xl border text-xs font-semibold ${
@@ -161,26 +155,26 @@ export const StatisticalTestsResultView = ({
   return (
     <div className="space-y-4">
       <Section title="Résultat du test" icon={CheckCircle2} color="#8b5cf6">
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard label="Test" value={testName} color="#8b5cf6" />
-          {stat !== undefined && <KpiCard label="Statistique" value={stat} icon={Hash} color="#3b82f6" />}
-          {pValue !== undefined && (
-            <KpiCard
-              label="p-value"
-              value={typeof pValue === 'number' ? (pValue < 0.001 ? pValue.toExponential(3) : pValue.toFixed(4)) : pValue}
-              icon={TrendingUp}
-              color={typeof pValue === 'number' && pValue < 0.05 ? '#10b981' : '#f59e0b'}
-            />
-          )}
-          {significant !== undefined && (
-            <KpiCard
-              label="Significatif"
-              value={significant ? 'Oui (p < 0.05)' : 'Non (p >= 0.05)'}
-              icon={significant ? CheckCircle2 : AlertCircle}
-              color={significant ? '#10b981' : '#f59e0b'}
-            />
-          )}
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Test', value: testName },
+            ...(stat !== undefined ? [{ label: 'Statistique', value: stat }] : []),
+            ...(pValue !== undefined
+              ? [{
+                  label: 'p-value',
+                  value: typeof pValue === 'number' ? (pValue < 0.001 ? pValue.toExponential(3) : pValue.toFixed(4)) : pValue,
+                  tone: (typeof pValue === 'number' && pValue < 0.05 ? 'success' : 'warning') as 'success' | 'warning',
+                }]
+              : []),
+            ...(significant !== undefined
+              ? [{
+                  label: 'Significatif',
+                  value: significant ? 'Oui (p < 0.05)' : 'Non (p >= 0.05)',
+                  tone: (significant ? 'success' : 'warning') as 'success' | 'warning',
+                }]
+              : []),
+          ]}
+        />
       </Section>
       {conclusion && (
         <div className="p-3 bg-surface-800/40 rounded-xl border border-white/[0.04] text-sm text-surface-200">
@@ -218,12 +212,14 @@ export const BootstrapResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-4">
       <Section title={`Bootstrap (95% IC) sur '${resultData.column}'`} icon={TrendingUp} color="#06b6d4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
-          <KpiCard label="Estimation" value={resultData.point_estimate} color="#06b6d4" />
-          <KpiCard label="Borne Inf (2.5%)" value={resultData.ci_lower} color="#3b82f6" />
-          <KpiCard label="Borne Sup (97.5%)" value={resultData.ci_upper} color="#10b981" />
-          <KpiCard label="Erreur Type (SE)" value={resultData.se} color="#f59e0b" />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Estimation', value: resultData.point_estimate },
+            { label: 'Borne Inf (2.5%)', value: resultData.ci_lower },
+            { label: 'Borne Sup (97.5%)', value: resultData.ci_upper },
+            { label: 'Erreur Type (SE)', value: resultData.se },
+          ]}
+        />
       </Section>
       <div className="p-3 bg-accent-500/10 border border-accent-500/25 rounded-lg text-xs text-surface-200">
         Intervalle de confiance à 95% obtenu par 1 000 tirages bootstrap non-paramétriques.
@@ -243,28 +239,28 @@ export const CausalResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-4">
       <Section title={`Inférence Causale (${resultData.method})`} icon={GitCompare} color="#0284c7">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
-          <KpiCard label="Traitement (X)" value={resultData.treatment_column} color="#0284c7" />
-          <KpiCard label="Résultat (Y)" value={resultData.outcome_column} color="#0d9488" />
-          <KpiCard
-            label={isPsm ? 'Effet Traitement (ATT)' : 'Effet Causal / Coef'}
-            value={effect !== undefined ? Number(effect).toFixed(4) : '—'}
-            color="#059669"
-          />
-          <KpiCard
-            label="p-value"
-            value={resultData.p_value}
-            color={resultData.is_significant ? '#059669' : '#d97706'}
-          />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Traitement (X)', value: resultData.treatment_column },
+            { label: 'Résultat (Y)', value: resultData.outcome_column },
+            { label: isPsm ? 'Effet Traitement (ATT)' : 'Effet Causal / Coef', value: effect !== undefined ? Number(effect).toFixed(4) : '—' },
+            {
+              label: 'p-value',
+              value: resultData.p_value,
+              tone: resultData.is_significant ? 'success' : 'warning',
+            },
+          ]}
+        />
       </Section>
 
       {isPsm && (
-        <div className="grid grid-cols-3 gap-3 ui-num">
-          <KpiCard label="Paires Appariées (1:1)" value={resultData.n_matched_pairs} color="#0284c7" />
-          <KpiCard label="Traités Totaux" value={resultData.n_treated_total} color="#0d9488" />
-          <KpiCard label="Témoins Totaux" value={resultData.n_control_total} color="#059669" />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Paires Appariées (1:1)', value: resultData.n_matched_pairs },
+            { label: 'Traités Totaux', value: resultData.n_treated_total },
+            { label: 'Témoins Totaux', value: resultData.n_control_total },
+          ]}
+        />
       )}
 
       {lovePlot.length > 0 && (

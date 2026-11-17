@@ -8,12 +8,8 @@ interface PythonFullscreenModalProps {
   onUpdate: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-export function PythonFullscreenModal({
-  isOpen,
-  onClose,
-  code,
-  onUpdate,
-}: PythonFullscreenModalProps) {
+export function PythonFullscreenModal(props: PythonFullscreenModalProps) {
+  const { isOpen, onClose, code, onUpdate } = props;
   if (!isOpen) return null;
 
   return (

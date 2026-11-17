@@ -13,7 +13,13 @@ export function PipelineStepOptions({
   onUpdateStepParam,
 }: PipelineStepOptionsProps) {
   return (
-    <div className="mt-3.5 pt-3.5 border-t border-white/10 space-y-3 animate-fade-in bg-black/30 p-4 rounded-xl">
+    <div
+      className="mt-3 pt-3 border-t space-y-3 p-3 rounded-md border"
+      style={{
+        background: 'var(--ui-bg-sunken)',
+        borderColor: 'var(--ui-border)',
+      }}
+    >
       {step.operation === 'model' && (
         <div className="space-y-3">
           <div>
@@ -70,7 +76,7 @@ export function PipelineStepOptions({
                       : 'bg-white/5 border-white/10 text-surface-400'
                   }`}
                 >
-                  ⏱️ TimeSeriesSplit
+                  Chronologique (TimeSeriesSplit)
                 </button>
                 <button
                   type="button"
@@ -81,7 +87,7 @@ export function PipelineStepOptions({
                       : 'bg-white/5 border-white/10 text-surface-400'
                   }`}
                 >
-                  🎯 K-Fold
+                  Validation croisée (K-Fold)
                 </button>
               </div>
             </div>
@@ -145,7 +151,7 @@ export function PipelineStepOptions({
             </label>
             <div className="flex flex-wrap gap-2">
               {[
-                { key: 'auto', label: '🤖 Auto-Sélection' },
+                { key: 'auto', label: 'Auto-sélection' },
                 { key: 'var', label: 'VAR (Vecteur Auto-régressif)' },
                 { key: 'vecm', label: 'VECM (Cointégration)' },
                 { key: 'ardl', label: 'ARDL (Ordres Mixtes)' },
@@ -205,8 +211,8 @@ export function PipelineStepOptions({
           </label>
           <div className="flex gap-2">
             {[
-              { key: 'pdf', label: '📑 Document PDF Haute Définition' },
-              { key: 'docx', label: '📝 Document Microsoft Word (.docx)' },
+              { key: 'pdf', label: 'Document PDF' },
+              { key: 'docx', label: 'Document Word (.docx)' },
             ].map(m => (
               <button
                 key={m.key}

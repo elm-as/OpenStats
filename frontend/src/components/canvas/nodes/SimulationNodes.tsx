@@ -1,17 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import { NodeProps, Node } from '@xyflow/react';
 import { PlayCircle } from 'lucide-react';
-import { apiFetch } from '../../../lib/apiBase';
-import { 
+import {
+  fetchSimulationFeatureRanges,
+  runSimulationPrediction,
+  type SimulationFeatureRange,
+} from './canvasColumnResolver';
+import {
   CanvasNodeData, NodeShell, NodeLabel, NodeSelect, NodeNumberInput,
   useNodeUpdate, NodeToggle, NodeCollapsible, NodeSeedInput, useConnectedColumns
 } from './_shared';
-
-interface FeatureRange {
-  min: number;
-  mean: number;
-  max: number;
-}
 
 export function SimulationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const handleChange = useNodeUpdate(id, data);
@@ -19,8 +17,8 @@ export function SimulationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const isAdvanced = mode === 'advanced';
   const simType = (data.simulationType as string) || 'prediction';
   const { dsId } = useConnectedColumns(id);
-  
-  const [featureRanges, setFeatureRanges] = useState<Record<string, FeatureRange> | null>(null);
+
+  const [featureRanges, setFeatureRanges] = useState<Record<string, SimulationFeatureRange> | null>(null);
   const [featureValues, setFeatureValues] = useState<Record<string, string>>({});
   const [excludedFeatures, setExcludedFeatures] = useState<Set<string>>(new Set());
   const [predictResult, setPredictResult] = useState<any>(null);
@@ -28,18 +26,10 @@ export function SimulationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
   const [loadingPrediction, setLoadingPrediction] = useState(false);
 
   useEffect(() => {
-    if (simType === 'prediction' && dsId) {
-      const fetchRanges = async () => {
-        try {
-          const response = await apiFetch(`/datasets/${dsId}/model/feature-ranges`);
-          if (response.ok) {
-            const result = await response.json();
-            setFeatureRanges(result.ranges || {});
-          }
-        } catch { /* silencieux */ }
-      };
-      fetchRanges();
-    }
+    if (simType !== 'prediction' || !dsId) return;
+    fetchSimulationFeatureRanges(dsId).then(ranges => {
+      if (ranges) setFeatureRanges(ranges);
+    });
   }, [simType, dsId]);
 
   const handleInitializeMeans = useCallback(() => {
@@ -85,17 +75,7 @@ export function SimulationNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
     }
 
     try {
-      const response = await apiFetch(`/datasets/${dsId}/model/predict`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ features }),
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Erreur de prédiction');
-      }
-      const result = await response.json();
-      setPredictResult(result);
+      setPredictResult(await runSimulationPrediction(dsId, features));
     } catch (err: any) {
       setPredictError(err.message || 'Erreur de prédiction');
     } finally {

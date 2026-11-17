@@ -61,9 +61,9 @@ export default function FeatureImportance({
     const computedH = height ?? Math.max(280, sorted.length * 28 + 60);
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: xLabel }, zeroline: true },
+      xaxis: { title: { text: xLabel }, zeroline: true, automargin: true },
       yaxis: { automargin: true },
-      margin: { l: 140, r: 20, t: 40, b: 50 },
+      margin: { l: 80, r: 20, t: 40, b: 50 },
       showlegend: false,
     };
 

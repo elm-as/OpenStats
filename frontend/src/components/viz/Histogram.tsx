@@ -105,11 +105,11 @@ export default function Histogram({
 
     const lay: Partial<Layout> = {
       title: title ? { text: title, font: { size: 14 } } : undefined,
-      xaxis: { title: { text: xLabel } },
-      yaxis: { title: { text: yLabel } },
+      xaxis: { title: { text: xLabel }, automargin: true },
+      yaxis: { title: { text: yLabel }, automargin: true },
       barmode,
       showlegend: norm.length > 1,
-      legend: { orientation: 'h', y: -0.15 },
+      legend: { orientation: 'h', y: -0.22, x: 0.5, xanchor: 'center' },
     };
 
     return { traces: tr, layout: lay };

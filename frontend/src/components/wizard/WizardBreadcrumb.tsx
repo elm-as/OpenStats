@@ -11,49 +11,46 @@ interface WizardBreadcrumbProps {
   onGoToSelect: (cat?: string) => void;
 }
 
-export function WizardBreadcrumb({
-  wizardStep,
-  selectedCategory,
-  selectedAnalysis,
-  onReset,
-  onGoToSelect,
-}: WizardBreadcrumbProps) {
+export function WizardBreadcrumb(props: WizardBreadcrumbProps) {
+  if (props.wizardStep === 'overview') return null;
+
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <button onClick={onReset} className="text-primary-600 hover:underline font-medium">
-        Analyses
+    <div className="flex items-center gap-2 text-xs">
+      <button onClick={props.onReset} className="ui-t-accent hover:underline font-semibold">
+        Catalogue d&apos;analyses
       </button>
-      {wizardStep === 'select' && (
+      {props.wizardStep === 'select' && (
         <>
-          <ChevronRight className="w-3 h-3 text-surface-500" />
-          <span className="text-surface-50 font-medium">
-            {selectedCategory ? (CATEGORY_META[selectedCategory]?.label ?? 'Sélection') : 'Sélection'}
+          <ChevronRight className="w-3 h-3 ui-t-faint" />
+          <span className="font-medium" style={{ color: 'var(--ui-text)' }}>
+            {props.selectedCategory
+              ? (CATEGORY_META[props.selectedCategory]?.label ?? 'Sélection')
+              : 'Sélection'}
           </span>
         </>
       )}
-      {(wizardStep === 'configure' || wizardStep === 'results') && !selectedCategory && (
+      {(props.wizardStep === 'configure' || props.wizardStep === 'results') && !props.selectedCategory && (
         <>
-          <ChevronRight className="w-3 h-3 text-surface-500" />
-          <button onClick={() => onGoToSelect()} className="text-primary-600 hover:underline">
+          <ChevronRight className="w-3 h-3 ui-t-faint" />
+          <button onClick={() => props.onGoToSelect()} className="ui-t-accent hover:underline">
             Sélection
           </button>
         </>
       )}
-      {(wizardStep === 'configure' || wizardStep === 'results') && selectedAnalysis && (
+      {(props.wizardStep === 'configure' || props.wizardStep === 'results') && props.selectedAnalysis && (
         <>
-          <ChevronRight className="w-3 h-3 text-surface-500" />
+          <ChevronRight className="w-3 h-3 ui-t-faint" />
           <span
             className="font-medium"
             style={{
-              color: wizardStep === 'configure' ? 'var(--ui-text)' : 'var(--ui-accent-text)',
-              cursor: wizardStep === 'configure' ? 'default' : 'pointer',
+              color: props.wizardStep === 'configure' ? 'var(--ui-text)' : 'var(--ui-accent-text)',
             }}
           >
-            {selectedAnalysis.label}
+            {props.selectedAnalysis.label}
           </span>
         </>
       )}
-      {wizardStep === 'results' && (
+      {props.wizardStep === 'results' && (
         <>
           <ChevronRight className="w-3 h-3 ui-t-faint" />
           <span className="font-medium" style={{ color: 'var(--ui-text)' }}>Résultats</span>

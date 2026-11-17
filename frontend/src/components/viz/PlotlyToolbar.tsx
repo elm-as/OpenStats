@@ -1,28 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { SlidersHorizontal, Info, Download, FileSpreadsheet, FileCode, Image as ImageIcon, FileImage } from 'lucide-react';
+import { SlidersHorizontal, Download, FileSpreadsheet, FileCode, Image as ImageIcon, FileImage } from 'lucide-react';
+
+export interface PlotlyToolbarSettingsState {
+  open: boolean;
+  onToggle: () => void;
+}
+
+export interface PlotlyToolbarExportHandlers {
+  onPng: () => void;
+  onSvg: () => void;
+  onCsv: () => void;
+  onJson: () => void;
+}
 
 interface PlotlyToolbarProps {
   chartTitle: string;
-  showSettings: boolean;
-  showInterpretation: boolean;
-  onToggleSettings: () => void;
-  onToggleInterpretation: () => void;
-  onExportPng: () => void;
-  onExportSvg: () => void;
-  onExportCsv: () => void;
-  onExportJson: () => void;
+  settingsState: PlotlyToolbarSettingsState;
+  exportHandlers: PlotlyToolbarExportHandlers;
 }
 
 export function PlotlyToolbar({
   chartTitle,
-  showSettings,
-  showInterpretation,
-  onToggleSettings,
-  onToggleInterpretation,
-  onExportPng,
-  onExportSvg,
-  onExportCsv,
-  onExportJson,
+  settingsState,
+  exportHandlers,
 }: PlotlyToolbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -62,44 +62,24 @@ export function PlotlyToolbar({
             {chartTitle}
           </span>
         ) : (
-          <span
-            className="text-[11px] font-medium"
-            style={{ color: 'var(--ui-text-faint)' }}
-          >
-            Outils du graphique
-          </span>
+          <span />
         )}
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
         <button
           type="button"
-          onClick={onToggleSettings}
-          aria-pressed={showSettings}
+          onClick={settingsState.onToggle}
+          aria-pressed={settingsState.open}
           className="px-2 py-1 rounded-[var(--ui-radius-sm)] transition-colors flex items-center gap-1 text-[11px] font-medium ui-focusable"
           style={{
-            color: showSettings ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
-            background: showSettings ? 'var(--ui-accent-soft)' : 'transparent',
+            color: settingsState.open ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
+            background: settingsState.open ? 'var(--ui-accent-soft)' : 'transparent',
           }}
           title="Personnaliser le graphique"
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
           Style
-        </button>
-
-        <button
-          type="button"
-          onClick={onToggleInterpretation}
-          aria-pressed={showInterpretation}
-          className="px-2 py-1 rounded-[var(--ui-radius-sm)] transition-colors flex items-center gap-1 text-[11px] font-medium ui-focusable"
-          style={{
-            color: showInterpretation ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
-            background: showInterpretation ? 'var(--ui-accent-soft)' : 'transparent',
-          }}
-          title="Comprendre le graphique"
-        >
-          <Info className="w-3.5 h-3.5" />
-          Interpréter
         </button>
 
         <div className="relative" ref={menuRef}>
@@ -132,8 +112,8 @@ export function PlotlyToolbar({
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => runAndClose(onExportPng)}
-                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-white/5 ui-focusable"
+                onClick={() => runAndClose(exportHandlers.onPng)}
+                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-[var(--ui-accent-soft)] ui-focusable"
                 style={{ color: 'var(--ui-text-secondary)' }}
               >
                 <ImageIcon className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
@@ -142,8 +122,8 @@ export function PlotlyToolbar({
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => runAndClose(onExportSvg)}
-                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-white/5 ui-focusable"
+                onClick={() => runAndClose(exportHandlers.onSvg)}
+                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-[var(--ui-accent-soft)] ui-focusable"
                 style={{ color: 'var(--ui-text-secondary)' }}
               >
                 <FileImage className="w-3.5 h-3.5" style={{ color: 'var(--ui-info)' }} />
@@ -153,8 +133,8 @@ export function PlotlyToolbar({
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => runAndClose(onExportCsv)}
-                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-white/5 ui-focusable"
+                onClick={() => runAndClose(exportHandlers.onCsv)}
+                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-[var(--ui-accent-soft)] ui-focusable"
                 style={{ color: 'var(--ui-text-secondary)' }}
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" style={{ color: 'var(--ui-success)' }} />
@@ -163,8 +143,8 @@ export function PlotlyToolbar({
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => runAndClose(onExportJson)}
-                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-white/5 ui-focusable"
+                onClick={() => runAndClose(exportHandlers.onJson)}
+                className="w-full text-left px-2.5 py-1.5 rounded-[var(--ui-radius-sm)] text-[11px] flex items-center gap-2 hover:bg-[var(--ui-accent-soft)] ui-focusable"
                 style={{ color: 'var(--ui-text-secondary)' }}
               >
                 <FileCode className="w-3.5 h-3.5" style={{ color: 'var(--ui-warning)' }} />

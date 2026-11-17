@@ -189,7 +189,7 @@ Dans OpenStats :
 
 ## 5. Chaîne de Compilation & Packaging Windows
 
-Pour fonctionner sur n'importe quel PC Windows sans exiger l'installation préalable de Python, Node.js ou de bibliothèques tierces, OpenStats est distribué sous la forme d'un installeur Windows tout-en-un (`OpenStats_Setup_v1.0.0.exe`).
+Pour fonctionner sur n'importe quel PC Windows sans exiger l'installation préalable de Python, Node.js ou de bibliothèques tierces, OpenStats est distribué sous la forme d'un installeur Windows tout-en-un (`OpenStats_Setup_v1.0.0-rc.1.exe`).
 
 ### 5.1 Compilation du Backend via PyInstaller
 
@@ -216,7 +216,7 @@ Le script `backend/build_backend.py` compile le serveur Python en un répertoire
 L'orchestrateur `scripts/build_installer.py` assemble la distribution finale :
 1. Détection automatique du compilateur Inno Setup 6 (`ISCC.exe`) dans les chemins standards système (`LOCALAPPDATA`, `Program Files`).
 2. Lecture du script de configuration `installer.iss`.
-3. Compression **`lzma2/max`** (`SolidCompression=yes`) produisant l'installeur Windows autonome `OpenStats_Setup_v1.0.0.exe` embarquant l'interpréteur Python compilé, les bibliothèques scientifiques (DuckDB, Scikit-Learn, Statsmodels, Plotly) et le shell Electron.
+3. Compression **`lzma2/max`** (`SolidCompression=yes`) produisant l'installeur Windows autonome `OpenStats_Setup_v1.0.0-rc.1.exe` embarquant l'interpréteur Python compilé, les bibliothèques scientifiques (DuckDB, Scikit-Learn, Statsmodels, Plotly) et le shell Electron.
 
 ---
 
@@ -259,4 +259,4 @@ python -m pytest backend/tests/ -q --tb=short -p no:qt
 
 ---
 
-*OpenStats — Architecture Technique v1.0.0 — Document établi sous la charte de qualité logicielle ElmasCore.*
+*OpenStats — Architecture Technique v1.0.0-rc.1 — Document établi sous la charte de qualité logicielle ElmasCore.*

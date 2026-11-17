@@ -9,4 +9,4 @@ nom de l'installeur dans DESKTOP_GUIDE.md) en derivent ; leur coherence est
 verifiee par `tests/core/test_coherence_version.py`.
 """
 
-VERSION = "1.3.0"
+VERSION = "1.0.0-rc.1"

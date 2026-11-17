@@ -1,6 +1,5 @@
 import React, { lazy, Suspense, useState, useMemo, useRef } from 'react';
 import type { Layout, Config } from 'plotly.js';
-import { Info } from 'lucide-react';
 
 import {
   DARK_TEMPLATE,
@@ -16,7 +15,6 @@ import {
 } from './plotlyTheme';
 import {
   getLinearRegression,
-  getChartInterpretation,
   exportChartDataToCsv,
   exportChartSpecToJson,
 } from './chartAnalyticsExport';
@@ -70,6 +68,44 @@ export function PlotlySkeleton({
   );
 }
 
+function appendTrendlineTrace(traces: any[], data: any[]): any[] {
+  const targetTrace = data.find(t => Array.isArray(t.x) && Array.isArray(t.y));
+  if (!targetTrace) return traces;
+  const reg = getLinearRegression(targetTrace.x as number[], targetTrace.y as number[]);
+  if (!reg) return traces;
+  return [
+    ...traces,
+    {
+      x: [reg.minX, reg.maxX],
+      y: [reg.slope * reg.minX + reg.intercept, reg.slope * reg.maxX + reg.intercept],
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Tendance linéaire',
+      line: { color: '#ef4444', width: 2, dash: 'dash' },
+      hovertemplate: `y = ${reg.slope.toFixed(3)}x + ${reg.intercept.toFixed(3)}<extra></extra>`,
+    },
+  ];
+}
+
+function readSavedChartPrefs(): Record<string, any> {
+  try {
+    const item = localStorage.getItem('openstats_chart_prefs');
+    return item ? JSON.parse(item) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSavedChartPref(key: string, val: any): void {
+  try {
+    const curr = JSON.parse(localStorage.getItem('openstats_chart_prefs') || '{}');
+    curr[key] = val;
+    localStorage.setItem('openstats_chart_prefs', JSON.stringify(curr));
+  } catch {
+    // noop
+  }
+}
+
 /** Wrapper Plotly avec thème Dark/Light dynamique, lazy-load, personnalisation et exports HD. */
 export function PlotlyChart({
   data,
@@ -79,19 +115,9 @@ export function PlotlyChart({
   className = '',
 }: PlotlyChartProps) {
   const theme = useCurrentTheme();
-
-  // États de personnalisation locale avec chargement depuis localStorage
-  const savedPrefs = useMemo(() => {
-    try {
-      const item = localStorage.getItem('openstats_chart_prefs');
-      return item ? JSON.parse(item) : {};
-    } catch {
-      return {};
-    }
-  }, []);
+  const savedPrefs = useMemo(readSavedChartPrefs, []);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [showInterpretation, setShowInterpretation] = useState(false);
   const [palette, setPalette] = useState<string>(() => savedPrefs.palette || 'default');
   const [showGrid, setShowGrid] = useState<boolean>(() => savedPrefs.showGrid ?? true);
   const [legendPos, setLegendPos] = useState<'right' | 'bottom' | 'none'>(() => savedPrefs.legendPos || 'bottom');
@@ -103,30 +129,19 @@ export function PlotlyChart({
   const [userTouchedStyle, setUserTouchedStyle] = useState(false);
   const graphDivRef = useRef<any>(null);
 
-  const savePref = (key: string, val: any) => {
-    try {
-      const curr = JSON.parse(localStorage.getItem('openstats_chart_prefs') || '{}');
-      curr[key] = val;
-      localStorage.setItem('openstats_chart_prefs', JSON.stringify(curr));
-    } catch {
-      // noop
-    }
-  };
-
-  // Sauvegarde des préférences lors des modifications
-  const handleSetPalette = (p: string) => { setPalette(p); savePref('palette', p); setUserTouchedStyle(true); };
-  const handleSetShowGrid = (g: boolean) => { setShowGrid(g); savePref('showGrid', g); };
-  const handleSetLegendPos = (pos: 'right' | 'bottom' | 'none') => { setLegendPos(pos); savePref('legendPos', pos); setUserTouchedStyle(true); };
-  const handleSetPointSize = (s: number) => { setPointSize(s); savePref('pointSize', s); setUserTouchedStyle(true); };
-  const handleSetLineWidth = (w: number) => { setLineWidth(w); savePref('lineWidth', w); setUserTouchedStyle(true); };
-  const handleSetOpacity = (o: number) => { setOpacity(o); savePref('opacity', o); setUserTouchedStyle(true); };
-  const handleSetTrendline = (t: boolean) => { setTrendline(t); savePref('trendline', t); };
-  const handleSetShowLabels = (l: boolean) => { setShowLabels(l); savePref('showLabels', l); };
+  const handleSetPalette = (p: string) => { setPalette(p); writeSavedChartPref('palette', p); setUserTouchedStyle(true); };
+  const handleSetShowGrid = (g: boolean) => { setShowGrid(g); writeSavedChartPref('showGrid', g); };
+  const handleSetLegendPos = (pos: 'right' | 'bottom' | 'none') => { setLegendPos(pos); writeSavedChartPref('legendPos', pos); setUserTouchedStyle(true); };
+  const handleSetPointSize = (s: number) => { setPointSize(s); writeSavedChartPref('pointSize', s); setUserTouchedStyle(true); };
+  const handleSetLineWidth = (w: number) => { setLineWidth(w); writeSavedChartPref('lineWidth', w); setUserTouchedStyle(true); };
+  const handleSetOpacity = (o: number) => { setOpacity(o); writeSavedChartPref('opacity', o); setUserTouchedStyle(true); };
+  const handleSetTrendline = (t: boolean) => { setTrendline(t); writeSavedChartPref('trendline', t); };
+  const handleSetShowLabels = (l: boolean) => { setShowLabels(l); writeSavedChartPref('showLabels', l); };
 
   const handleExportImage = async (format: 'png' | 'svg') => {
     if (!graphDivRef.current) return;
     const { exportPlotlyFigure } = await import('./PlotlyHeavy');
-    await exportPlotlyFigure(graphDivRef.current, format, chartTitle, theme);
+    await exportPlotlyFigure({ graphDiv: graphDivRef.current, format, chartTitle, theme });
   };
 
   const handleResetDefaults = () => {
@@ -146,11 +161,9 @@ export function PlotlyChart({
     }
   };
 
-  // Type générique du graphique d'après la première trace
   const detectedChartType = data?.[0]?.type || 'scatter';
   const chartTitle = (layout?.title as any)?.text || '';
 
-  // Vérifier si le trendline est applicable (Scatter numérique uniquement)
   const isScatterNumeric = useMemo(() => {
     return data?.some(t => {
       const isTypeOk = t.type === 'scatter' || !t.type;
@@ -160,7 +173,6 @@ export function PlotlyChart({
     });
   }, [data]);
 
-  // Appliquer les surcharges dynamiques sur les données et la mise en page
   const { customizedData, customizedLayout } = useMemo(() => {
     const opts = {
       data,
@@ -174,45 +186,19 @@ export function PlotlyChart({
       opacity,
       showLabels,
       userTouchedStyle,
+      colors: PALETTES[palette]?.colors || SCI_COLORS,
+      template: theme === 'light' ? LIGHT_TEMPLATE : DARK_TEMPLATE,
     };
     const finalData = customizePlotTraces(opts);
-
-    if (trendline && isScatterNumeric) {
-      const targetTrace = data.find(t => Array.isArray(t.x) && Array.isArray(t.y));
-      if (targetTrace) {
-        const reg = getLinearRegression(targetTrace.x as number[], targetTrace.y as number[]);
-        if (reg) {
-          finalData.push({
-            x: [reg.minX, reg.maxX],
-            y: [reg.slope * reg.minX + reg.intercept, reg.slope * reg.maxX + reg.intercept],
-            type: 'scatter',
-            mode: 'lines',
-            name: 'Tendance linéaire',
-            line: { color: '#ef4444', width: 2, dash: 'dash' },
-            hovertemplate: `y = ${reg.slope.toFixed(3)}x + ${reg.intercept.toFixed(3)}<extra></extra>`,
-          } as any);
-        }
-      }
-    }
-
+    const traces = trendline && isScatterNumeric ? appendTrendlineTrace(finalData, data) : finalData;
     return {
-      customizedData: finalData,
+      customizedData: traces,
       customizedLayout: customizePlotLayout(opts),
     };
   }, [
-    data,
-    layout,
-    palette,
-    showGrid,
-    legendPos,
-    pointSize,
-    lineWidth,
-    opacity,
-    trendline,
-    isScatterNumeric,
-    showLabels,
-    userTouchedStyle,
-    theme,
+    data, layout, palette, showGrid, legendPos, pointSize,
+    lineWidth, opacity, trendline, isScatterNumeric, showLabels,
+    userTouchedStyle, theme,
   ]);
 
   return (
@@ -222,37 +208,30 @@ export function PlotlyChart({
     >
       <PlotlyToolbar
         chartTitle={chartTitle}
-        showSettings={showSettings}
-        showInterpretation={showInterpretation}
-        onToggleSettings={() => setShowSettings(!showSettings)}
-        onToggleInterpretation={() => setShowInterpretation(!showInterpretation)}
-        onExportPng={() => { void handleExportImage('png'); }}
-        onExportSvg={() => { void handleExportImage('svg'); }}
-        onExportCsv={() => exportChartDataToCsv(data, chartTitle)}
-        onExportJson={() => exportChartSpecToJson(data, layout, config, chartTitle)}
+        settingsState={{ open: showSettings, onToggle: () => setShowSettings(s => !s) }}
+        exportHandlers={{
+          onPng: () => { void handleExportImage('png'); },
+          onSvg: () => { void handleExportImage('svg'); },
+          onCsv: () => exportChartDataToCsv(data, chartTitle),
+          onJson: () => exportChartSpecToJson({ data, layout, config, chartTitle }),
+        }}
       />
 
       {showSettings && (
         <PlotlySettingsPanel
-          palette={palette}
-          setPalette={handleSetPalette}
-          showGrid={showGrid}
-          setShowGrid={handleSetShowGrid}
-          legendPos={legendPos}
-          setLegendPos={handleSetLegendPos}
-          showLabels={showLabels}
-          setShowLabels={handleSetShowLabels}
-          pointSize={pointSize}
-          setPointSize={handleSetPointSize}
-          lineWidth={lineWidth}
-          setLineWidth={handleSetLineWidth}
-          opacity={opacity}
-          setOpacity={handleSetOpacity}
-          trendline={trendline}
-          setTrendline={handleSetTrendline}
-          onResetDefaults={handleResetDefaults}
-          detectedChartType={detectedChartType}
-          isScatterNumeric={isScatterNumeric}
+          values={{ palette, showGrid, legendPos, showLabels, pointSize, lineWidth, opacity, trendline }}
+          actions={{
+            setPalette: handleSetPalette,
+            setShowGrid: handleSetShowGrid,
+            setLegendPos: handleSetLegendPos,
+            setShowLabels: handleSetShowLabels,
+            setPointSize: handleSetPointSize,
+            setLineWidth: handleSetLineWidth,
+            setOpacity: handleSetOpacity,
+            setTrendline: handleSetTrendline,
+            onResetDefaults: handleResetDefaults,
+          }}
+          meta={{ detectedChartType, isScatterNumeric }}
         />
       )}
 
@@ -266,23 +245,6 @@ export function PlotlyChart({
           onGraphDiv={gd => { graphDivRef.current = gd; }}
         />
       </Suspense>
-
-      {showInterpretation && (
-        <div
-          className="rounded-[var(--ui-radius)] p-3 flex gap-2.5 animate-fadeIn"
-          style={{ background: 'var(--ui-accent-soft)', border: '1px solid var(--ui-border-strong)' }}
-        >
-          <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: 'var(--ui-accent)' }} />
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: 'var(--ui-accent-text)' }}>
-              Comprendre la visualisation
-            </span>
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--ui-text-secondary)' }}>
-              {getChartInterpretation(detectedChartType, chartTitle, data)}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

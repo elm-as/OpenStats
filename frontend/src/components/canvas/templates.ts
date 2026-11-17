@@ -132,13 +132,21 @@ export const getUserTemplates = (): CanvasTemplate[] => {
   return [];
 };
 
-export const saveUserTemplate = (name: string, description: string, nodes: Node[], edges: Edge[]) => {
+export interface SaveUserTemplateOptions {
+  name: string;
+  description: string;
+  nodes: Node[];
+  edges: Edge[];
+}
+
+export const saveUserTemplate = (opts: SaveUserTemplateOptions) => {
+  const { name, description, nodes, edges } = opts;
   const existing = getUserTemplates();
   const newTemplate: CanvasTemplate = {
     id: `custom_${Date.now()}`,
     name,
     description,
-    icon: '✨',
+    icon: '',
     nodes,
     edges,
   };

@@ -43,10 +43,10 @@ export function MCAResultView({
 
   return (
     <div className="space-y-4">
-      <div className="card">
+      <div className="ui-panel p-4">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="font-semibold text-[var(--ui-text-primary)]">Résumé ACM</h4>
-          <span className="text-sm ui-num text-[var(--ui-text-muted)]">
+          <h4 className="font-semibold text-[var(--ui-text)]">Résumé ACM</h4>
+          <span className="text-sm ui-num ui-t-muted">
             {result.n_observations} obs. — {result.n_modalities} modalités —{' '}
             {result.n_variables} var.
           </span>
@@ -59,8 +59,8 @@ export function MCAResultView({
         />
       </div>
 
-      <div className="card">
-        <h5 className="text-sm font-medium text-[var(--ui-text-secondary)] mb-2">
+      <div className="ui-panel p-4">
+        <h5 className="text-sm font-medium ui-t-secondary mb-2">
           Nuage des modalités ({dim1} vs {dim2})
         </h5>
         <MCAModalityMap
@@ -73,17 +73,17 @@ export function MCAResultView({
       </div>
 
       {result.eta2 && (
-        <div className="card">
-          <h5 className="text-sm font-medium text-[var(--ui-text-secondary)] mb-2">
+        <div className="ui-panel p-4">
+          <h5 className="text-sm font-medium ui-t-secondary mb-2">
             Rapport de corrélation η²
           </h5>
           <div className="overflow-x-auto">
-            <table className="min-w-full text-xs">
+            <table className="ui-table min-w-full text-xs">
               <thead>
-                <tr className="bg-[var(--ui-bg-elevated)] text-[var(--ui-text-secondary)]">
+                <tr>
                   <th className="px-3 py-1.5 text-left">Variable</th>
                   {result.component_labels.slice(0, 5).map((c: string) => (
-                    <th key={c} className="px-3 py-1.5 text-right ui-num">
+                    <th key={c} className="px-3 py-1.5 text-right ui-th-num">
                       {c}
                     </th>
                   ))}
@@ -91,12 +91,12 @@ export function MCAResultView({
               </thead>
               <tbody>
                 {result.variables.map((v: string) => (
-                  <tr key={v} className="border-t border-[var(--ui-border-subtle)]">
+                  <tr key={v}>
                     <td className="px-3 py-1" style={{ color: varColorMap[v] }}>
                       {v}
                     </td>
                     {result.component_labels.slice(0, 5).map((c: string) => (
-                      <td key={c} className="px-3 py-1 text-right ui-num text-[var(--ui-text-primary)]">
+                      <td key={c} className="px-3 py-1 ui-td-num">
                         {result.eta2[c]?.[v]?.toFixed(3)}
                       </td>
                     ))}
@@ -108,23 +108,23 @@ export function MCAResultView({
         </div>
       )}
 
-      <div className="card">
+      <div className="ui-panel p-4">
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="flex items-center gap-2 text-sm font-medium text-[var(--ui-text-secondary)] hover:text-[var(--ui-text-primary)]"
+          className="flex items-center gap-2 text-sm font-medium ui-t-secondary"
         >
           {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           Détails des contributions
         </button>
         {showDetails && (
           <div className="mt-3 overflow-x-auto">
-            <table className="min-w-full text-xs">
+            <table className="ui-table min-w-full text-xs">
               <thead>
-                <tr className="bg-[var(--ui-bg-elevated)] text-[var(--ui-text-secondary)]">
+                <tr>
                   <th className="px-3 py-1.5 text-left">Variable</th>
                   <th className="px-3 py-1.5 text-left">Modalité</th>
                   {result.component_labels.slice(0, 5).map((c: string) => (
-                    <th key={c} className="px-3 py-1.5 text-right ui-num">
+                    <th key={c} className="px-3 py-1.5 text-right ui-th-num">
                       Contrib% {c}
                     </th>
                   ))}
@@ -132,13 +132,13 @@ export function MCAResultView({
               </thead>
               <tbody>
                 {result.modality_info.map((info: any) => (
-                  <tr key={info.full} className="border-t border-[var(--ui-border-subtle)]">
+                  <tr key={info.full}>
                     <td className="px-3 py-1" style={{ color: varColorMap[info.variable] }}>
                       {info.variable}
                     </td>
-                    <td className="px-3 py-1 text-[var(--ui-text-primary)]">{info.modality}</td>
+                    <td className="px-3 py-1">{info.modality}</td>
                     {result.component_labels.slice(0, 5).map((c: string) => (
-                      <td key={c} className="px-3 py-1 text-right ui-num text-[var(--ui-text-primary)]">
+                      <td key={c} className="px-3 py-1 ui-td-num">
                         {result.modality_contrib[info.full]?.[c]?.toFixed(1)}
                       </td>
                     ))}
@@ -153,19 +153,14 @@ export function MCAResultView({
   );
 }
 
-function MCAModalityMap({
-  modalityPoints,
-  variables,
-  varColorMap,
-  dim1,
-  dim2,
-}: {
+function MCAModalityMap(props: {
   modalityPoints: any[];
   variables: string[];
   varColorMap: Record<string, string>;
   dim1: string;
   dim2: string;
 }) {
+  const { modalityPoints, variables, varColorMap, dim1, dim2 } = props;
   const traces: Data[] = variables.map(v => {
     const pts = modalityPoints.filter(p => p.variable === v);
     return {

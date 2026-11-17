@@ -16,27 +16,27 @@ interface PerModelConfigFormProps {
   ) => void;
 }
 
-export function PerModelConfigForm({
-  activeModelTab,
-  activeConfig,
-  valueCols,
-  runningModel,
-  onRunSingleModel,
-  onUpdateModelConfig,
-}: PerModelConfigFormProps) {
+export function PerModelConfigForm(props: PerModelConfigFormProps) {
+  const {
+    activeModelTab,
+    activeConfig,
+    valueCols,
+    runningModel,
+    onRunSingleModel,
+    onUpdateModelConfig,
+  } = props;
   const modelDef = MODEL_DEFS.find(m => m.key === activeModelTab);
 
   return (
-    <div className="card">
+    <div className="ui-panel p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h4 className="font-semibold">{modelDef?.label}</h4>
-          <p className="text-xs text-surface-400">{modelDef?.desc}</p>
+          <h4 className="font-semibold text-sm text-[var(--ui-text)]">{modelDef?.label}</h4>
         </div>
         <button
           onClick={() => onRunSingleModel(activeModelTab)}
           disabled={!!runningModel}
-          className="btn-primary flex items-center gap-2 text-sm"
+          className="ui-btn ui-btn-primary text-xs"
         >
           {runningModel === activeModelTab ? (
             <>

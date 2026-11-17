@@ -45,8 +45,8 @@ export default function ViolinPlot({
 
     const lay: Partial<Layout> = {
       title: title ? { text: title, font: { size: 14 } } : undefined,
-      yaxis: { title: { text: yLabel } },
-      xaxis: { tickangle: -20 },
+      yaxis: { title: { text: yLabel }, automargin: true },
+      xaxis: { tickangle: -20, automargin: true },
       showlegend: false,
     };
 

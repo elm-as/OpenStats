@@ -14,12 +14,12 @@ export interface NavEntry {
 }
 
 export const NAV_ENTRIES: NavEntry[] = [
-  { label: 'Accueil', hint: 'Console de données & bibliothèque', icon: Home, path: '/', match: p => p === '/', shortcut: '1' },
-  { label: 'Ingestion', hint: 'Charger et profiler des fichiers', icon: Play, path: '/workflow', match: p => p.startsWith('/workflow'), shortcut: '2' },
-  { label: 'Explorateur', hint: 'Recherche adaptative & contrôle FDR', icon: Compass, path: '/explorer', match: p => p.startsWith('/explorer'), shortcut: '3' },
-  { label: 'Méthodologie', hint: 'Processus méthodique en 11 étapes', icon: Workflow, path: '/analyzer', match: p => p.startsWith('/analyzer'), shortcut: '4' },
-  { label: 'Canvas', hint: 'Studio nodal & export de code', icon: Network, path: '/canvas', match: p => p.startsWith('/canvas'), shortcut: '5' },
-  { label: 'Recettes', hint: 'Modèles de pipelines & extensions', icon: Store, path: '/marketplace', match: p => p.startsWith('/marketplace'), shortcut: '6' },
+  { label: 'Données', hint: 'Tableur & variables du jeu actif', icon: Home, path: '/', match: p => p === '/', shortcut: '1' },
+  { label: 'Typage & Nettoyage', hint: 'Profilage, types statistiques & versions', icon: Play, path: '/workflow', match: p => p.startsWith('/workflow'), shortcut: '2' },
+  { label: 'Explorateur FDR', hint: 'Sondes adaptatives & contrôle Benjamini-Hochberg', icon: Compass, path: '/explorer', match: p => p.startsWith('/explorer'), shortcut: '3' },
+  { label: 'Méthodologie (11 ét.)', hint: 'Pipeline guidé, remédiations & benchmark', icon: Workflow, path: '/analyzer', match: p => p.startsWith('/analyzer'), shortcut: '4' },
+  { label: 'Canvas Nodal', hint: 'Graphe visuel DuckDB & export code', icon: Network, path: '/canvas', match: p => p.startsWith('/canvas'), shortcut: '5' },
+  { label: 'Recettes', hint: 'Modèles réutilisables & extensions', icon: Store, path: '/marketplace', match: p => p.startsWith('/marketplace'), shortcut: '6' },
 ];
 
 const FOOTER_ENTRIES: NavEntry[] = [

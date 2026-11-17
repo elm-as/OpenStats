@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Sparkles, History, Loader2, Play } from 'lucide-react';
+import { BookOpen, Wand2, History, Loader2, Play } from 'lucide-react';
 
 interface ExtensionSidebarProps {
   templates?: any[];
@@ -13,38 +13,40 @@ interface ExtensionSidebarProps {
   onRunExtension: (id: string) => void;
 }
 
-export function ExtensionSidebar({
-  templates,
-  extensions,
-  prompt,
-  setPrompt,
-  isGenerating,
-  onGenerate,
-  onApplyTemplate,
-  onSelectExtension,
-  onRunExtension,
-}: ExtensionSidebarProps) {
+export function ExtensionSidebar(props: ExtensionSidebarProps) {
+  const {
+    templates,
+    extensions,
+    prompt,
+    setPrompt,
+    isGenerating,
+    onGenerate,
+    onApplyTemplate,
+    onSelectExtension,
+    onRunExtension,
+  } = props;
+
   return (
-    <div className="lg:col-span-4 space-y-5 overflow-y-auto max-h-[800px] pr-2 ui-scroll">
+    <div className="lg:col-span-4 space-y-4 overflow-y-auto max-h-[800px] pr-2 ui-scroll">
       {/* Template Library */}
       <div className="ui-panel border-accent-500/25">
-        <div className="p-3.5 border-b border-white/10 flex items-center gap-2">
+        <div className="p-3 border-b border-white/10 flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-accent-400" />
           <h3 className="font-bold text-surface-100 text-xs uppercase tracking-wider">
-            Bibliothèque de Modèles
+            Modèles d'extension
           </h3>
         </div>
-        <div className="p-2 space-y-1.5">
+        <div className="p-2 space-y-1">
           {templates?.map((tpl, i) => (
             <button
               key={i}
               onClick={() => onApplyTemplate(tpl)}
-              className="w-full text-left p-2.5 rounded-lg hover:bg-accent-500/10 border border-transparent hover:border-accent-500/25 transition-colors group"
+              title={tpl.description}
+              className="w-full text-left px-2.5 py-2 rounded hover:bg-accent-500/10 border border-transparent hover:border-accent-500/25 transition-colors group"
             >
-              <p className="text-xs font-bold text-surface-100 group-hover:text-accent-400 transition-colors">
+              <p className="text-xs font-semibold text-surface-100 group-hover:text-accent-400 transition-colors">
                 {tpl.name}
               </p>
-              <p className="text-[11px] text-surface-400 mt-0.5 line-clamp-2">{tpl.description}</p>
             </button>
           ))}
         </div>
@@ -52,31 +54,31 @@ export function ExtensionSidebar({
 
       {/* AI Assistant Card */}
       <div className="ui-panel overflow-hidden border-accent-500/25">
-        <div className="p-3.5 border-b border-white/10 flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-accent-400" />
+        <div className="p-3 border-b border-white/10 flex items-center gap-2">
+          <Wand2 className="w-4 h-4 text-accent-400" />
           <h3 className="font-bold text-surface-100 text-xs uppercase tracking-wider">
-            Générateur IA
+            Générateur de script
           </h3>
         </div>
-        <div className="p-3.5 space-y-3">
+        <div className="p-3 space-y-2.5">
           <textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
-            placeholder="Décrivez l'analyse souhaitée en français..."
-            className="ui-input w-full rounded-lg p-2.5 text-sm"
+            placeholder="Décrivez l'analyse souhaitée..."
+            className="ui-input w-full rounded p-2 text-xs"
             rows={4}
           />
           <button
             onClick={onGenerate}
             disabled={isGenerating || !prompt}
-            className="ui-btn ui-btn-primary w-full py-2.5 text-xs justify-center"
+            className="ui-btn ui-btn-primary w-full py-2 text-xs justify-center"
           >
             {isGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <Wand2 className="w-4 h-4" />
             )}
-            Générer avec l'IA
+            Générer le script
           </button>
         </div>
       </div>

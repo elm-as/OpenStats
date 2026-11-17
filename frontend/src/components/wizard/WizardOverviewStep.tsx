@@ -1,43 +1,11 @@
 import React from 'react';
 import {
-  Sparkles,
   ListFilter,
   Settings2,
   EyeOff,
-  Hash,
-  Tag,
-  ToggleLeft,
-  Clock,
   ChevronRight,
 } from 'lucide-react';
 import { CATEGORY_META } from './WizardTypes';
-
-export function TypeSummaryCard({
-  icon: Icon,
-  label,
-  count,
-  color,
-}: {
-  icon: typeof Hash;
-  label: string;
-  count: number;
-  color: string;
-}) {
-  const colors: Record<string, string> = {
-    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/25',
-    cyan: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/25',
-    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
-    green: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-    purple: 'bg-teal-500/10 text-teal-400 border-teal-500/25',
-  };
-  return (
-    <div className={`rounded-lg border p-3 text-center ui-num ${colors[color] || colors.blue}`}>
-      <Icon className="w-5 h-5 mx-auto mb-1" />
-      <p className="text-2xl font-bold">{count}</p>
-      <p className="text-xs">{label}</p>
-    </div>
-  );
-}
 
 interface WizardOverviewStepProps {
   capabilities: any;
@@ -55,82 +23,68 @@ interface WizardOverviewStepProps {
   onViewAllAnalyses: () => void;
 }
 
-export function WizardOverviewStep({
-  capabilities,
-  availableCount,
-  totalCount,
-  showColumnFilter,
-  setShowColumnFilter,
-  allColumns,
-  excludedSet,
-  onToggleColumn,
-  onIncludeAll,
-  onExcludeAll,
-  grouped,
-  onGoToCategory,
-  onViewAllAnalyses,
-}: WizardOverviewStepProps) {
+export function WizardOverviewStep(props: WizardOverviewStepProps) {
+  const { summary } = props.capabilities;
+  const excludedCount: number = summary.excluded_count ?? 0;
+
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
-            <Sparkles className="w-5 h-5 text-primary-600" />
-            Assistant d'Analyse
-          </h2>
-          <p className="text-sm ui-t-muted mt-1">
-            {availableCount} analyse(s) disponible(s) sur {totalCount} — basé sur vos types de données
-            {(capabilities.summary.excluded_count ?? 0) > 0 && (
-              <span className="text-amber-500 ml-1">
-                ({capabilities.summary.excluded_count} colonne(s) exclue(s))
-              </span>
-            )}
-          </p>
-        </div>
-        <button
-          onClick={() => setShowColumnFilter(!showColumnFilter)}
-          className={`btn-secondary flex items-center gap-2 text-sm ${
-            showColumnFilter ? 'bg-primary-50 border-primary-300' : ''
-          }`}
-        >
-          <ListFilter className="w-4 h-4" />
-          Filtrer les colonnes
-          {(capabilities.summary.excluded_count ?? 0) > 0 && (
-            <span className="bg-amber-100 text-amber-700 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-              {capabilities.summary.excluded_count}
+      <div
+        className="ui-panel px-3 py-1.5 flex flex-wrap items-center justify-between gap-2"
+        style={{ minHeight: 38 }}
+      >
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
+          <span className="font-semibold" style={{ color: 'var(--ui-text)' }}>
+            Catalogue d&apos;analyses
+          </span>
+          <span className="ui-sep" aria-hidden />
+          <span className="ui-num font-semibold" style={{ color: 'var(--ui-accent-text)' }}>
+            {props.availableCount}/{props.totalCount} disponibles
+          </span>
+          <span className="ui-num ui-t-muted">
+            · {summary.numeric_count} num. · {summary.discrete_count ?? 0} discr. · {summary.categorical_count} catég. · {summary.binary_count} bin. · {summary.temporal_count} temp.
+          </span>
+          {excludedCount > 0 && (
+            <span className="ui-tag ui-tag-warning ui-num">
+              {excludedCount} exclue(s)
             </span>
           )}
+        </div>
+
+        <button
+          onClick={() => props.setShowColumnFilter(!props.showColumnFilter)}
+          className={`ui-btn ui-focusable text-xs ${props.showColumnFilter ? 'ui-btn-primary' : ''}`}
+        >
+          <ListFilter className="w-3.5 h-3.5" />
+          Filtrer les colonnes
+          {excludedCount > 0 && <span className="ui-num">({excludedCount})</span>}
         </button>
       </div>
 
-      {/* Column Filter Panel */}
-      {showColumnFilter && (
-        <div className="card" style={{ borderColor: 'var(--ui-border-strong)' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold flex items-center gap-2" style={{ color: 'var(--ui-text)' }}>
-              <Settings2 className="w-4 h-4 text-primary-600" />
+      {props.showColumnFilter && (
+        <div className="ui-panel p-3" style={{ borderColor: 'var(--ui-border-strong)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-xs flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+              <Settings2 className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent-text)' }} />
               Sélection des colonnes
             </h3>
-            <div className="flex gap-2">
-              <button onClick={onIncludeAll} className="text-xs text-accent-400 hover:underline">
+            <div className="flex items-center gap-2">
+              <button onClick={props.onIncludeAll} className="text-xs ui-t-accent hover:underline">
                 Tout inclure
               </button>
               <span className="ui-t-faint">|</span>
-              <button onClick={onExcludeAll} className="text-xs text-red-500 hover:underline">
+              <button onClick={props.onExcludeAll} className="text-xs ui-t-danger hover:underline">
                 Tout exclure
               </button>
             </div>
           </div>
-          <p className="text-xs ui-t-muted mb-3">
-            Décochez les colonnes que vous souhaitez exclure des analyses et de la modélisation.
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
-            {allColumns.map(col => {
-              const isExcluded = excludedSet.has(col);
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-1.5 max-h-56 overflow-y-auto ui-scroll">
+            {props.allColumns.map(col => {
+              const isExcluded = props.excludedSet.has(col);
               return (
                 <label
                   key={col}
-                  className="flex items-center gap-2 text-sm p-2 rounded-[var(--ui-radius-sm)] cursor-pointer transition-colors hover:bg-white/5"
+                  className="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded-[var(--ui-radius-sm)] cursor-pointer transition-colors"
                   style={{
                     background: isExcluded ? 'var(--ui-bg-sunken)' : 'var(--ui-bg-raised)',
                     color: isExcluded ? 'var(--ui-text-faint)' : 'var(--ui-text)',
@@ -139,11 +93,10 @@ export function WizardOverviewStep({
                   <input
                     type="checkbox"
                     checked={!isExcluded}
-                    onChange={() => onToggleColumn(col)}
-                    className="rounded border-gray-300 text-primary-600"
+                    onChange={() => props.onToggleColumn(col)}
                   />
                   <span className="truncate">{col}</span>
-                  {isExcluded && <EyeOff className="w-3 h-3 text-surface-500 flex-shrink-0" />}
+                  {isExcluded && <EyeOff className="w-3 h-3 shrink-0 ui-t-faint" />}
                 </label>
               );
             })}
@@ -151,96 +104,61 @@ export function WizardOverviewStep({
         </div>
       )}
 
-      {/* Data Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <TypeSummaryCard
-          icon={Hash}
-          label="Numériques"
-          count={capabilities.summary.numeric_count}
-          color="blue"
-        />
-        <TypeSummaryCard
-          icon={Hash}
-          label="Discrètes"
-          count={capabilities.summary.discrete_count ?? 0}
-          color="cyan"
-        />
-        <TypeSummaryCard
-          icon={Tag}
-          label="Catégorielles"
-          count={capabilities.summary.categorical_count}
-          color="amber"
-        />
-        <TypeSummaryCard
-          icon={ToggleLeft}
-          label="Binaires"
-          count={capabilities.summary.binary_count}
-          color="green"
-        />
-        <TypeSummaryCard
-          icon={Clock}
-          label="Temporelles"
-          count={capabilities.summary.temporal_count}
-          color="purple"
-        />
-      </div>
-
-      {/* Categories overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {Object.entries(CATEGORY_META).map(([catKey, meta]) => {
-          const analyses = grouped[catKey] || [];
+          const analyses = props.grouped[catKey] || [];
           const availableInCat = analyses.filter(a => a.available).length;
           const Icon = meta.icon;
 
           return (
             <button
               key={catKey}
-              onClick={() => onGoToCategory(catKey)}
+              onClick={() => props.onGoToCategory(catKey)}
               disabled={availableInCat === 0}
-              className={`card text-left transition-all hover:shadow-md ${
+              className={`ui-panel text-left overflow-hidden flex flex-col transition-colors ${
                 availableInCat > 0
-                  ? 'cursor-pointer hover:border-primary-300'
+                  ? 'cursor-pointer hover:border-[var(--ui-accent)]'
                   : 'opacity-50 cursor-not-allowed'
               }`}
             >
-              <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg ${meta.bg}`}>
-                  <Icon className={`w-5 h-5 ${meta.color}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm" style={{ color: 'var(--ui-text)' }}>{meta.label}</h3>
-                  <p className="text-xs text-surface-400 mt-1">
-                    {availableInCat}/{analyses.length} analyse(s) disponible(s)
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {analyses.map(a => (
-                      <span
-                        key={a.key}
-                        className={
-                          a.available
-                            ? 'ui-tag ui-tag-ok'
-                            : 'ui-tag line-through opacity-60'
-                        }
-                      >
-                        {a.available ? 'OK' : 'N/A'}{' '}
-                        {a.label.split('(')[0].split('—')[0].trim().slice(0, 25)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {availableInCat > 0 && <ChevronRight className="w-4 h-4 text-surface-500 mt-1" />}
+              <div className="ui-panel-header w-full">
+                <span className="flex items-center gap-1.5 min-w-0 truncate" style={{ color: 'var(--ui-text)' }}>
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${meta.color}`} />
+                  <span className="truncate">{meta.label}</span>
+                </span>
+                <span className="flex items-center gap-1 shrink-0 ui-num">
+                  {availableInCat}/{analyses.length}
+                  {availableInCat > 0 && <ChevronRight className="w-3.5 h-3.5 ui-t-faint" />}
+                </span>
+              </div>
+
+              <div className="p-2.5 flex flex-wrap gap-1.5">
+                {analyses.map(a => (
+                  <span
+                    key={a.key}
+                    className={
+                      a.available
+                        ? 'ui-tag ui-tag-ok text-[11px]'
+                        : 'ui-tag text-[11px] line-through opacity-55'
+                    }
+                  >
+                    {a.label.split('(')[0].split('—')[0].trim()}
+                  </span>
+                ))}
               </div>
             </button>
           );
         })}
       </div>
 
-      <button
-        onClick={onViewAllAnalyses}
-        className="btn-primary flex items-center gap-2 w-full justify-center"
-      >
-        Voir toutes les analyses disponibles <ChevronRight className="w-4 h-4" />
-      </button>
+      <div className="flex justify-end">
+        <button
+          onClick={props.onViewAllAnalyses}
+          className="ui-btn ui-btn-primary ui-focusable text-xs"
+        >
+          Voir toutes les analyses ({props.availableCount}) <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
     </>
   );
 }

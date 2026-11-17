@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { NodeProps, Node } from '@xyflow/react';
-import { TerminalSquare, Sparkles, Code2, Plus, Maximize2, Check } from 'lucide-react';
+import { TerminalSquare, Wand2, Code2, Plus, Maximize2, Check } from 'lucide-react';
 import { CanvasNodeData, NodeShell, useNodeUpdate, useConnectedColumns } from './_shared';
 import {
   PythonFullscreenModal,
@@ -129,7 +129,7 @@ export function PythonNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
                   : 'text-surface-400 hover:text-surface-200'
               }`}
             >
-              <Sparkles size={13} className="text-accent-400" /> Assistant Visuel
+              <Wand2 size={13} className="text-accent-400" /> Assistant Visuel
             </button>
             <button
               type="button"
@@ -318,7 +318,7 @@ export function PythonNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
                 onClick={generateBuilderCode}
                 className="w-full py-2 rounded-lg bg-accent-500/20 hover:bg-accent-500/30 text-accent-200 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border border-accent-500/30 mt-2"
               >
-                <Sparkles size={13} /> Générer &amp; basculer vers l'éditeur
+                <Wand2 size={13} /> Générer &amp; basculer vers l'éditeur
               </button>
             </div>
           )}

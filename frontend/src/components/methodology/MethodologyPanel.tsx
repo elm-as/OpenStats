@@ -17,6 +17,9 @@ const EXPECTED = [
   'Modélisation', 'Validation', 'Interprétation',
 ];
 
+const REMEDY_STAGE_KEYS = new Set(['diagnostics', 'correction', 'univariate_after', 'interpretation']);
+const ACTIONS_STAGE_KEYS = new Set(['modeling', 'validation', 'interpretation']);
+
 interface Props {
   datasetId: string;
   datasetName?: string;
@@ -106,6 +109,9 @@ export default function MethodologyPanel({ datasetId, datasetName }: Props) {
   };
 
   const started = stages.length > 0;
+  const activeStageKey = stages[active]?.key ?? '';
+  const showActions = done && ACTIONS_STAGE_KEYS.has(activeStageKey);
+  const showRemedies = done && acceptedRemedies.length > 0 && REMEDY_STAGE_KEYS.has(activeStageKey);
 
   return (
     <div className="flex flex-col" style={{ gap: 'var(--ui-gap-3)' }}>
@@ -215,8 +221,8 @@ export default function MethodologyPanel({ datasetId, datasetName }: Props) {
                 </div>
               )}
 
-            {/* ── Application définitive des corrections ── */}
-            {done && (
+            {/* ── Prolongement & application des corrections (étapes pertinentes) ── */}
+            {showActions && (
               <ResultActions
                 datasetId={datasetId}
                 datasetName={datasetName}
@@ -231,7 +237,7 @@ export default function MethodologyPanel({ datasetId, datasetName }: Props) {
               />
             )}
 
-            {done && acceptedRemedies.length > 0 && (
+            {showRemedies && (
               <RemedyApplication
                 remedies={acceptedRemedies}
                 selected={selected}

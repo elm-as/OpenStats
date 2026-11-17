@@ -61,10 +61,10 @@ export default function TornadoChart({
     const computedH = height ?? Math.max(300, names.length * 32 + 80);
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14 } },
-      xaxis: { title: { text: xLabel }, zeroline: true },
+      xaxis: { title: { text: xLabel }, zeroline: true, automargin: true },
       yaxis: { automargin: true },
       barmode: 'overlay',
-      margin: { l: 160, r: 20, t: 40, b: 50 },
+      margin: { l: 100, r: 20, t: 64, b: 50 },
       shapes: [{
         type: 'line', xref: 'x', yref: 'paper',
         x0: baseline, x1: baseline, y0: 0, y1: 1,

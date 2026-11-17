@@ -9,12 +9,8 @@ interface CanvasSearchBarProps {
   onSelectNode: (node: Node) => void;
 }
 
-export function CanvasSearchBar({
-  nodes,
-  isOpen,
-  onClose,
-  onSelectNode,
-}: CanvasSearchBarProps) {
+export function CanvasSearchBar(props: CanvasSearchBarProps) {
+  const { nodes, isOpen, onClose, onSelectNode } = props;
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 

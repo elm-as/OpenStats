@@ -27,7 +27,7 @@ export default function RemedyApplication({
       <button
         onClick={() => setOpen(o => !o)}
         className="ui-panel-header ui-focusable w-full"
-        style={{ border: 0, borderBottom: '1px solid var(--ui-border)', cursor: 'pointer' }}
+        style={{ border: 0, borderBottom: open ? '1px solid var(--ui-border)' : 'none', cursor: 'pointer' }}
         aria-expanded={open}
       >
         <span className="flex items-center gap-1.5">
@@ -42,13 +42,11 @@ export default function RemedyApplication({
 
       {open && (
         <div style={{ padding: 'var(--ui-gap-2) var(--ui-pad-x)' }}>
-          <p className="ui-t-muted" style={{ fontSize: 'var(--ui-fs-xs)', marginBottom: 8, lineHeight: 1.6 }}>
-            Ces corrections ont été retenues par la boucle. Décochez celles que vous ne
-            souhaitez pas conserver. L’application crée une <strong>nouvelle version</strong> du
-            dataset : l’originale reste intacte et reste restaurable.
+          <p className="ui-t-muted" style={{ fontSize: 'var(--ui-fs-xs)', marginBottom: 8 }}>
+            Crée une nouvelle version du dataset (l’originale reste intacte).
           </p>
 
-          <ul className="flex flex-col" style={{ gap: 2, marginBottom: 10 }}>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5" style={{ marginBottom: 10 }}>
             {remedies.map(remedy => {
               const key = `${remedy.action}::${remedy.columns.join(',')}`;
               return (

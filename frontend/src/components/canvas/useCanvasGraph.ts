@@ -173,70 +173,44 @@ export function useCanvasGraph({ onResetPipeline }: UseCanvasGraphProps) {
     }
   }, [searchParams, getConnectedDatasetId, onNodeDataChange, onNodeDelete, setEdges, setNodes, nodes.length]);
 
+function resolveEdgeStyle(sourceType?: string): { color: string; speed: string; speedOffset: string } {
+  if (['dataset', 'cleaning', 'transform', 'computeVariable', 'typing'].includes(sourceType || '')) {
+    return { color: '#38bdf8', speed: '2s', speedOffset: '1s' };
+  }
+  if ([
+    'descriptiveNumeric',
+    'descriptiveCategorical',
+    'correlation',
+    'vif',
+    'pca',
+    'ca',
+    'mca',
+    'clustering',
+  ].includes(sourceType || '')) {
+    return { color: '#8b5cf6', speed: '3s', speedOffset: '1.5s' };
+  }
+  if (['regression', 'classification', 'timeseries', 'multivariateTimeseries', 'simulation'].includes(sourceType || '')) {
+    return { color: '#10b981', speed: '1.5s', speedOffset: '0.75s' };
+  }
+  return { color: '#f59e0b', speed: '2.5s', speedOffset: '1.25s' };
+}
+
   const onConnect = useCallback(
-    (params: Connection) =>
-      setEdges(eds => {
-        let color = '#38bdf8';
-        let speed = '2.5s';
-        let speedOffset = '1.25s';
-
-        setNodes(currentNodes => {
-          const sourceNode = currentNodes.find(n => n.id === params.source);
-          if (sourceNode) {
-            if (
-              ['dataset', 'cleaning', 'transform', 'computeVariable', 'typing'].includes(
-                sourceNode.type as string
-              )
-            ) {
-              color = '#38bdf8';
-              speed = '2s';
-              speedOffset = '1s';
-            } else if (
-              [
-                'descriptiveNumeric',
-                'descriptiveCategorical',
-                'correlation',
-                'vif',
-                'pca',
-                'ca',
-                'mca',
-                'clustering',
-              ].includes(sourceNode.type as string)
-            ) {
-              color = '#8b5cf6';
-              speed = '3s';
-              speedOffset = '1.5s';
-            } else if (
-              [
-                'regression',
-                'classification',
-                'timeseries',
-                'multivariateTimeseries',
-                'simulation',
-              ].includes(sourceNode.type as string)
-            ) {
-              color = '#10b981';
-              speed = '1.5s';
-              speedOffset = '0.75s';
-            } else {
-              color = '#f59e0b';
-              speed = '2.5s';
-              speedOffset = '1.25s';
-            }
-          }
-          return currentNodes;
-        });
-
-        return addEdge(
+    (params: Connection) => {
+      const sourceNode = nodes.find(n => n.id === params.source);
+      const edgeStyle = resolveEdgeStyle(sourceNode?.type);
+      setEdges(eds =>
+        addEdge(
           {
             ...params,
             type: 'animatedDataEdge',
-            data: { color, speed, speedOffset },
+            data: edgeStyle,
           },
           eds
-        );
-      }),
-    [setEdges, setNodes]
+        )
+      );
+    },
+    [nodes, setEdges]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { NodeProps, Node } from '@xyflow/react';
-import { Database, Sparkles, Code2, Plus, Maximize2, Check } from 'lucide-react';
+import { Database, Wand2, Code2, Plus, Maximize2, Check } from 'lucide-react';
 import { CanvasNodeData, NodeShell, useNodeUpdate, useConnectedColumns } from './_shared';
 import { SqlFullscreenModal, SqlSnippetsList } from './SqlNodeSubComponents';
 
@@ -145,7 +145,7 @@ export function SqlNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
                   : 'text-surface-400 hover:text-surface-200'
               }`}
             >
-              <Sparkles size={13} className="text-cyan-400" /> Assistant Visuel
+              <Wand2 size={13} className="text-cyan-400" /> Assistant Visuel
             </button>
             <button
               type="button"
@@ -293,7 +293,7 @@ export function SqlNode({ id, data }: NodeProps<Node<CanvasNodeData>>) {
                 onClick={generateBuilderSql}
                 className="w-full py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 border border-cyan-500/30 mt-2"
               >
-                <Sparkles size={13} /> Générer et remplacer la requête
+                <Wand2 size={13} /> Générer et remplacer la requête
               </button>
             </div>
           )}

@@ -26,15 +26,15 @@ export function useAutoPipeline(datasetId: string, onComplete?: (execution?: any
 
   const selection = usePipelineSelection(profile);
 
-  const recipe = usePipelineRecipe(
+  const recipe = usePipelineRecipe({
     datasetId,
-    selection.selectedTarget,
-    selection.selectedTaskType,
-    selection.selectedAnalyses,
-    selection.availableAnalyses,
+    selectedTarget: selection.selectedTarget,
+    selectedTaskType: selection.selectedTaskType,
+    selectedAnalyses: selection.selectedAnalyses,
+    availableAnalyses: selection.availableAnalyses,
     profile,
-    setWorkflowStage
-  );
+    setWorkflowStage,
+  });
 
   const handleExecute = async () => {
     setExecError(null);

@@ -48,13 +48,13 @@ export default function FEVDStacked({ fevd, height, title = 'Décomposition de l
       grid: { rows: nrow, columns: 1, pattern: 'independent', roworder: 'top to bottom' },
       barmode: 'stack',
       showlegend: true,
-      legend: { orientation: 'h', y: -0.1 },
-      margin: { l: 60, r: 20, t: 50, b: 60 },
+      legend: { orientation: 'h', y: -0.2, x: 0.5, xanchor: 'center' },
+      margin: { l: 84, r: 20, t: 50, b: 78 },
     };
 
     // Annotations latérales (nom de la variable)
     const annotations: any[] = fevd.map((row, idx) => ({
-      x: -0.04, y: 1 - (idx + 0.5) / nrow, xref: 'paper', yref: 'paper',
+      x: -0.09, y: 1 - (idx + 0.5) / nrow, xref: 'paper', yref: 'paper',
       text: row.variable, showarrow: false, textangle: -90,
       font: { size: 11, color: theme === 'light' ? '#334155' : '#cbd5e1' },
     }));
@@ -63,9 +63,11 @@ export default function FEVDStacked({ fevd, height, title = 'Décomposition de l
     // Configure y axes en %
     for (let i = 1; i <= nrow; i++) {
       const key = i === 1 ? 'yaxis' : `yaxis${i}`;
-      (lay as any)[key] = { range: [0, 100], ticksuffix: '%' };
+      (lay as any)[key] = { range: [0, 100], ticksuffix: '%', automargin: true };
       const xkey = i === 1 ? 'xaxis' : `xaxis${i}`;
-      (lay as any)[xkey] = i === nrow ? { title: { text: 'Horizon' } } : { showticklabels: false };
+      (lay as any)[xkey] = i === nrow
+        ? { title: { text: 'Horizon' }, automargin: true }
+        : { showticklabels: false, automargin: true };
     }
 
     return { traces: tr, layout: lay, h: computedH, n: nrow };

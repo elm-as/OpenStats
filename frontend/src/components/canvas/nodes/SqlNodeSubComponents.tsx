@@ -8,12 +8,8 @@ interface SqlFullscreenModalProps {
   onUpdate: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-export function SqlFullscreenModal({
-  isOpen,
-  onClose,
-  query,
-  onUpdate,
-}: SqlFullscreenModalProps) {
+export function SqlFullscreenModal(props: SqlFullscreenModalProps) {
+  const { isOpen, onClose, query, onUpdate } = props;
   if (!isOpen) return null;
 
   return (

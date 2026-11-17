@@ -8,6 +8,7 @@ Etape 7/8 : Corrections et boucle de re-diagnostic
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import numpy as np
@@ -133,6 +134,30 @@ def stage_bivariate(df: pd.DataFrame, target: str | None) -> StageResult:
     )
 
 
+def _short_issue_label(title: str) -> str:
+    """Condense un intitulé de problème pour l'axe du graphique sans couper un mot."""
+    label = (
+        title.replace(" : distribution asymétrique", " — asymétrie")
+        .replace("de valeurs extrêmes", "val. extrêmes")
+        .replace(" sont redondantes", " (redondantes)")
+        .replace("skew = ", "")
+        .replace(" |r| = ", " r=")
+    )
+    if len(label) <= 52:
+        return label
+    base = re.sub(r"\s*\([^)]*\)\s*$", "", label).strip()
+    if len(base) <= 52:
+        return base
+    words = base.replace(" et ", " × ").split()
+    acc = ""
+    for word in words:
+        candidate = f"{acc} {word}".strip()
+        if len(candidate) > 49:
+            break
+        acc = candidate
+    return f"{acc}…" if acc else f"{base[:49]}…"
+
+
 def stage_diagnostics(df: pd.DataFrame, target: str | None, is_timeseries: bool) -> StageResult:
     issues = diagnose(df, target=target, is_timeseries=is_timeseries, kinds=_kinds())
     counts = summarize(issues)
@@ -152,23 +177,15 @@ def stage_diagnostics(df: pd.DataFrame, target: str | None, is_timeseries: bool)
                 {
                     "title": "Problèmes détectés et remèdes proposés",
                     "columns": [
-                        "Problème",
-                        "Variables",
-                        "Mesure",
+                        "Problème détecté",
                         "Gravité",
-                        "Remède proposé",
+                        "Correction proposée",
                     ],
                     "rows": [
                         [
                             i.title,
-                            ", ".join(i.columns[:3]),
-                            (
-                                f"{i.metric:.4g} ({i.metric_label})"
-                                if i.metric is not None
-                                else "—"
-                            ),
-                            f"{i.severity:.2f}",
-                            i.remedies[0].label if i.remedies else "aucun",
+                            round(float(i.severity), 2),
+                            i.remedies[0].label if i.remedies else "Aucune",
                         ]
                         for i in issues
                     ],
@@ -182,7 +199,7 @@ def stage_diagnostics(df: pd.DataFrame, target: str | None, is_timeseries: bool)
                 _chart(
                     "severity_bar",
                     "Gravité par problème",
-                    labels=[i.title[:44] for i in issues[:12]],
+                    labels=[_short_issue_label(i.title) for i in issues[:12]],
                     values=[round(i.severity, 3) for i in issues[:12]],
                 )
             ]

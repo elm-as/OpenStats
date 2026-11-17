@@ -5,7 +5,7 @@ import {
   BarChart3, TrendingUp, PieChart as PieIcon, Maximize2,
   Play, ArrowLeft, Box as BoxIcon, Activity, AreaChart as AreaIcon, GitBranch,
 } from 'lucide-react';
-import { Card, Button, Badge } from '../ui';
+import { Card, Button } from '../ui';
 import { CHART_TYPES, AGGREGATIONS, type ChartType } from './chartBuilderConstants';
 import { ChartRenderer } from './ChartRenderers';
 
@@ -127,11 +127,10 @@ export default function ChartBuilder({ datasetId, capabilities, onBack }: Props)
               <button
                 key={ct.key}
                 onClick={() => setChartType(ct.key)}
-                className="card text-left p-4 hover:border-accent-500/40 hover:bg-accent-500/5 transition-all focus-ring group"
+                className="ui-panel text-left px-3 py-2.5 flex items-center gap-2.5 hover:border-accent-500/40 hover:bg-accent-500/5 transition-all focus-ring group"
               >
-                <Icon className="w-5 h-5 text-accent-400 mb-2 group-hover:scale-110 transition-transform" />
-                <h4 className="text-strong text-sm font-semibold">{ct.label}</h4>
-                <p className="text-xs text-muted mt-1 line-clamp-2">{ct.desc}</p>
+                <Icon className="w-4 h-4 text-accent-400 shrink-0" />
+                <span className="text-strong text-xs font-semibold">{ct.label}</span>
               </button>
             );
           })}
@@ -145,10 +144,7 @@ export default function ChartBuilder({ datasetId, capabilities, onBack }: Props)
   return (
     <div className="section">
       <div className="section-header">
-        <div className="flex items-center gap-2">
-          <h3 className="section-title">{currentLabel}</h3>
-          <Badge variant="info">configuration</Badge>
-        </div>
+        <h3 className="section-title">{currentLabel}</h3>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={() => { setChartType(null); setChartData(null); }}>
             Changer de type

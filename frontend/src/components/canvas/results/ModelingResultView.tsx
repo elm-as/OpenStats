@@ -8,7 +8,7 @@ import {
   Database,
   Grid3X3,
 } from 'lucide-react';
-import { Section, KpiCard, DataTable, Badge, pctBar, fmt } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable, Badge, pctBar, fmt } from './ResultAtoms';
 import { SvgScatterPlot, SvgHeatmap } from './ResultCharts';
 
 export const ExplainabilityResultView = ({ resultData }: { resultData: any }) => {
@@ -48,11 +48,13 @@ export const ManifoldResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-4">
       <Section title="Projection t-SNE 2D & DBSCAN" icon={Layers} color="#8b5cf6">
-        <div className="grid grid-cols-3 gap-3">
-          <KpiCard label="Observations" value={resultData.n_observations} color="#8b5cf6" />
-          <KpiCard label="Clusters Densité" value={resultData.n_clusters} color="#06b6d4" />
-          <KpiCard label="Points de Bruit" value={resultData.n_noise_points} color="#f59e0b" />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Observations', value: resultData.n_observations },
+            { label: 'Clusters Densité', value: resultData.n_clusters },
+            { label: 'Points de Bruit', value: resultData.n_noise_points },
+          ]}
+        />
       </Section>
 
       {points.length > 0 && (
@@ -79,23 +81,22 @@ export const ClusteringResultView = ({ resultData }: { resultData: any }) => {
   return (
     <div className="space-y-5">
       <Section title={`Clustering ${resultData.method || ''}`} icon={Layers} color="#06b6d4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {resultData.k && <KpiCard label="Nombre de clusters" value={resultData.k} icon={Layers} color="#06b6d4" />}
-          {resultData.n_clusters !== undefined && (
-            <KpiCard label="Clusters détectés" value={resultData.n_clusters} icon={Layers} color="#06b6d4" />
-          )}
-          {resultData.silhouette !== undefined && (
-            <KpiCard
-              label="Score Silhouette"
-              value={resultData.silhouette}
-              icon={BarChart2}
-              color={resultData.silhouette > 0.5 ? '#10b981' : resultData.silhouette > 0.25 ? '#f59e0b' : '#ef4444'}
-            />
-          )}
-          {resultData.noise_points !== undefined && (
-            <KpiCard label="Points de bruit" value={resultData.noise_points} icon={AlertCircle} color="#ef4444" />
-          )}
-        </div>
+        <SummaryStrip
+          items={[
+            ...(resultData.k ? [{ label: 'Clusters', value: resultData.k }] : []),
+            ...(resultData.n_clusters !== undefined ? [{ label: 'Clusters détectés', value: resultData.n_clusters }] : []),
+            ...(resultData.silhouette !== undefined
+              ? [{
+                  label: 'Score Silhouette',
+                  value: resultData.silhouette,
+                  tone: (resultData.silhouette > 0.5 ? 'success' : resultData.silhouette > 0.25 ? 'warning' : 'danger') as 'success' | 'warning' | 'danger',
+                }]
+              : []),
+            ...(resultData.noise_points !== undefined
+              ? [{ label: 'Points de bruit', value: resultData.noise_points, tone: 'danger' as const }]
+              : []),
+          ]}
+        />
         {resultData.cluster_sizes && (
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
             {Object.entries(resultData.cluster_sizes).map(([k, v]) => {
@@ -182,12 +183,14 @@ export const RegressionClassificationResultView = ({
       )}
 
       {dataSplit && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard label="Train" value={dataSplit.train_size ?? '\u2014'} icon={Database} color="#3b82f6" />
-          <KpiCard label="Test" value={dataSplit.test_size ?? '\u2014'} icon={Database} color="#f59e0b" />
-          <KpiCard label="Features" value={dataSplit.features?.length ?? '\u2014'} icon={Layers} color="#8b5cf6" />
-          <KpiCard label="Stratégie" value={dataSplit.strategy ?? 'random'} color="#06b6d4" />
-        </div>
+        <SummaryStrip
+          items={[
+            { label: 'Train', value: dataSplit.train_size ?? '—' },
+            { label: 'Test', value: dataSplit.test_size ?? '—' },
+            { label: 'Features', value: dataSplit.features?.length ?? '—' },
+            { label: 'Stratégie', value: dataSplit.strategy ?? 'random' },
+          ]}
+        />
       )}
 
       {ranking.length > 0 && (() => {

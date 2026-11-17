@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Activity, Sparkles, Settings2, Database, Upload, Workflow, Sliders,
+  Activity, BarChart2, Database, Upload, Sliders,
 } from 'lucide-react';
 import AutoPipelinePanel from '../components/pipeline/AutoPipelinePanel';
 import InsightsPanel from '../components/results/InsightsPanel';
@@ -11,18 +11,17 @@ import { useWorkspace } from '../components/shell/useWorkspace';
 
 const AnalysisWizard = lazy(() => import('../components/wizard/AnalysisWizard'));
 
-const TABS = [
-  { key: 'methodology', label: 'Analyse méthodique', icon: Workflow },
-  { key: 'studio', label: 'Atelier statistique libre', icon: Sliders },
+const STUDIO_TABS = [
+  { key: 'studio', label: 'Tests & Modèles à la carte', icon: Sliders },
   { key: 'overview', label: 'Pipeline automatique', icon: Activity },
-  { key: 'insights', label: 'Insights & corrélations', icon: Sparkles },
-  { key: 'prep', label: 'Préparation', icon: Settings2 },
+  { key: 'insights', label: "Synthèse d'insights", icon: BarChart2 },
 ] as const;
 
-type AnalyzerTab = (typeof TABS)[number]['key'];
+type AnalyzerTab = 'methodology' | 'prep' | (typeof STUDIO_TABS)[number]['key'];
+const STUDIO_KEYS = new Set<string>(STUDIO_TABS.map(t => t.key));
 
 function isAnalyzerTab(value: string | null): value is AnalyzerTab {
-  return value !== null && TABS.some(t => t.key === value);
+  return value === 'methodology' || value === 'prep' || (value !== null && STUDIO_KEYS.has(value));
 }
 
 function StudioFallback() {
@@ -91,34 +90,38 @@ export default function AnalyzerPage() {
 
   return (
     <div className="flex flex-col" style={{ gap: 'var(--ui-gap-3)' }}>
-      <div
-        className="ui-panel flex items-center overflow-x-auto no-scrollbar"
-        style={{ padding: '0 var(--ui-pad-x)', gap: 'var(--ui-gap-1)', minHeight: 40 }}
-        role="tablist"
-      >
-        {TABS.map(entry => {
-          const selected = tab === entry.key;
-          return (
-            <button
-              key={entry.key}
-              role="tab"
-              aria-selected={selected}
-              onClick={() => handleSelectTab(entry.key)}
-              className="ui-focusable flex items-center gap-1.5 px-2.5 rounded-[var(--ui-radius-sm)] shrink-0"
-              style={{
-                height: 'var(--ui-control-h)',
-                fontSize: 'var(--ui-fs-sm)',
-                fontWeight: 600,
-                background: selected ? 'var(--ui-accent-soft)' : 'transparent',
-                color: selected ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
-              }}
-            >
-              <entry.icon className="w-3.5 h-3.5" />
-              {entry.label}
-            </button>
-          );
-        })}
-      </div>
+      {tab !== 'methodology' && tab !== 'prep' && (
+        <div
+          className="ui-panel flex items-center overflow-x-auto no-scrollbar"
+          style={{ padding: '0 var(--ui-pad-x)', gap: 'var(--ui-gap-2)', minHeight: 36 }}
+          role="tablist"
+        >
+          <span className="ui-label shrink-0">Mode</span>
+          <span className="ui-sep" aria-hidden />
+          {STUDIO_TABS.map(entry => {
+            const selected = tab === entry.key;
+            return (
+              <button
+                key={entry.key}
+                role="tab"
+                aria-selected={selected}
+                onClick={() => handleSelectTab(entry.key)}
+                className="ui-focusable flex items-center gap-1.5 px-2.5 rounded-[var(--ui-radius-sm)] shrink-0"
+                style={{
+                  height: 'var(--ui-control-h)',
+                  fontSize: 'var(--ui-fs-sm)',
+                  fontWeight: 600,
+                  background: selected ? 'var(--ui-accent-soft)' : 'transparent',
+                  color: selected ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
+                }}
+              >
+                <entry.icon className="w-3.5 h-3.5" />
+                {entry.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {tab === 'methodology' && (
         <MethodologyPanel key={active.id} datasetId={active.id} datasetName={active.name} />

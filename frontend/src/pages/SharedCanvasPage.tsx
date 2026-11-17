@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ReactFlow, ReactFlowProvider, Background, MiniMap, Controls, Node, Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Loader2, AlertCircle, Home, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertCircle, Home } from 'lucide-react';
 import { nodeTypes, edgeTypes } from '../components/canvas/CanvasFlow';
 import CanvasResultModal from '../components/canvas/CanvasResultModal';
+import { SharedResultsPanel } from '../components/canvas/SharedResultsPanel';
 import { apiFetch } from '../lib/apiBase';
 
 export default function SharedCanvasPage() {
@@ -33,7 +34,7 @@ export default function SharedCanvasPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center ui-t-muted" style={{ background: 'var(--ui-bg-app)' }}>
-        <Loader2 className="animate-spin mb-3 ui-t-accent w-7 h-7" />
+        <Loader2 className="animate-spin mb-3 ui-t-accent w-6 h-6" />
         <p className="text-xs">Chargement du workflow partagé…</p>
       </div>
     );
@@ -42,9 +43,9 @@ export default function SharedCanvasPage() {
   if (error || !data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 ui-t-muted" style={{ background: 'var(--ui-bg-app)' }}>
-        <AlertCircle className="ui-t-danger mb-3 w-10 h-10" />
-        <h2 className="text-lg font-bold ui-t mb-1">Lien introuvable</h2>
-        <p className="text-xs mb-5">{error}</p>
+        <AlertCircle className="ui-t-danger mb-3 w-8 h-8" />
+        <h2 className="text-base font-bold ui-t mb-1">Lien introuvable</h2>
+        <p className="text-xs mb-4">{error}</p>
         <Link to="/" className="ui-btn ui-focusable">
           <Home className="w-4 h-4" /> Retour à l’accueil
         </Link>
@@ -77,84 +78,56 @@ export default function SharedCanvasPage() {
   return (
     <div className="h-screen w-full flex flex-col" style={{ background: 'var(--ui-bg-app)', color: 'var(--ui-text)' }}>
       <header
-        className="h-12 flex items-center justify-between px-4 z-10 shrink-0"
+        className="h-11 flex items-center justify-between px-4 z-10 shrink-0"
         style={{ background: 'var(--ui-bg-panel)', borderBottom: '1px solid var(--ui-border)' }}
       >
         <div className="flex items-center gap-2.5">
-          <span className="px-2 py-1 rounded-[var(--ui-radius-sm)] ui-mono text-xs font-bold" style={{ background: 'var(--ui-accent)', color: 'var(--ui-on-accent)' }}>
-            OS
-          </span>
           <span className="font-bold text-xs ui-t">OpenStats Studio</span>
           <span className="ui-tag ui-tag-accent uppercase">Lecture seule</span>
         </div>
-        <Link to="/" className="ui-btn ui-focusable">
-          Ouvrir mon espace de travail
+        <Link to="/" className="ui-btn ui-focusable text-xs">
+          Ouvrir l'espace de travail
         </Link>
       </header>
 
-      <div className="flex-1 relative">
-        <ReactFlowProvider>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes as any}
-            edgeTypes={edgeTypes as any}
-            fitView
-            nodesDraggable={false}
-            nodesConnectable={false}
-            elementsSelectable
-            onNodeClick={(_event, node) => {
-              if (data.results && data.results[node.id]) {
-                setSelectedResultNode({
-                  id: node.id,
-                  type: node.type || '',
-                  title: getNodeLabel(node.id),
-                  result: data.results[node.id].result,
-                });
-              }
-            }}
-            style={{ background: 'var(--ui-bg-app)' }}
-          >
-            <Background color="var(--ui-border-strong)" gap={24} size={1.2} />
-            <Controls showInteractive={false} />
-            <MiniMap maskColor="rgba(15,23,42,0.45)" style={{ right: 16, bottom: 16 }} />
-          </ReactFlow>
-        </ReactFlowProvider>
+      <div className="flex-1 flex min-h-0 relative">
+        <div className="flex-1 min-w-0 relative">
+          <ReactFlowProvider>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes as any}
+              edgeTypes={edgeTypes as any}
+              fitView
+              nodesDraggable={false}
+              nodesConnectable={false}
+              elementsSelectable
+              onNodeClick={(_event, node) => {
+                if (data.results && data.results[node.id]) {
+                  setSelectedResultNode({
+                    id: node.id,
+                    type: node.type || '',
+                    title: getNodeLabel(node.id),
+                    result: data.results[node.id].result,
+                  });
+                }
+              }}
+              style={{ background: 'var(--ui-bg-app)' }}
+            >
+              <Background color="var(--ui-border-strong)" gap={24} size={1.2} />
+              <Controls showInteractive={false} />
+              <MiniMap maskColor="rgba(15,23,42,0.45)" style={{ right: 16, bottom: 16 }} />
+            </ReactFlow>
+          </ReactFlowProvider>
+        </div>
 
         {data.results && (
-          <div
-            className="ui-panel absolute top-4 right-4 w-[310px] max-h-[calc(100vh-96px)] overflow-auto ui-scroll z-20 pointer-events-auto"
-            style={{ boxShadow: 'var(--ui-shadow-lg)' }}
-          >
-            <div className="px-4 py-3" style={{ borderBottom: '1px solid var(--ui-border)', background: 'var(--ui-bg-raised)' }}>
-              <h3 className="text-xs font-bold ui-t flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 ui-t-success" />
-                Pipeline complété
-              </h3>
-              <p className="text-[11px] ui-t-muted mt-0.5">Sélectionnez un nœud pour inspecter ses sorties.</p>
-            </div>
-            <div className="divide-y divide-[var(--ui-border)]">
-              {Object.entries(data.results).filter(([k]) => k !== '_global').map(([nodeId, res]: [string, any]) => {
-                if (!res || res.status !== 'success' || res.result === undefined) return null;
-                return (
-                  <div key={nodeId} className="px-4 py-2.5 flex items-center justify-between hover:bg-[var(--ui-bg-raised)]">
-                    <span className="text-xs font-semibold ui-t">{getNodeLabel(nodeId)}</span>
-                    <button
-                      onClick={() => setSelectedResultNode({
-                        id: nodeId,
-                        type: data.nodes.find((n: any) => n.id === nodeId)?.type || '',
-                        title: getNodeLabel(nodeId),
-                        result: res.result,
-                      })}
-                      className="ui-btn text-[11px] h-7"
-                    >
-                      Voir
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <SharedResultsPanel
+            nodes={data.nodes}
+            results={data.results}
+            getNodeLabel={getNodeLabel}
+            onSelectResult={setSelectedResultNode}
+          />
         )}
 
         <CanvasResultModal

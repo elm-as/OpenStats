@@ -53,7 +53,7 @@ export function PCAResultView({
       </div>
 
       {Object.keys(variableCoords).length > 0 && (
-        <div className="card">
+        <div className="ui-panel p-4">
           <PCACorrelationCircle
             coords={variableCoords}
             explainedVariance={result.explained_variance_ratio.map((v: any) => v ?? NaN)}
@@ -63,7 +63,7 @@ export function PCAResultView({
       )}
 
       {individualCoords.length > 0 && Object.keys(biplotVariables).length > 0 && (
-        <div className="card">
+        <div className="ui-panel p-4">
           <PCABiplot
             individuals={individualCoords}
             variables={biplotVariables}
@@ -73,10 +73,11 @@ export function PCAResultView({
         </div>
       )}
 
-      <div className="card">
+      <div className="ui-panel p-4">
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700"
+          className="flex items-center gap-2 text-sm font-medium ui-focusable"
+          style={{ color: 'var(--ui-text)' }}
         >
           {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           Détails (contributions, cos²)
@@ -257,17 +258,13 @@ export function CAResultView({
   );
 }
 
-function CABiplotPlotly({
-  rowPoints,
-  colPoints,
-  dim1,
-  dim2,
-}: {
+function CABiplotPlotly(props: {
   rowPoints: any[];
   colPoints: any[];
   dim1: string;
   dim2: string;
 }) {
+  const { rowPoints, colPoints, dim1, dim2 } = props;
   const theme = useCurrentTheme();
   const rowTextColor = theme === 'light' ? '#0369a1' : '#38bdf8';
   const colTextColor = theme === 'light' ? '#b45309' : '#fcd34d';

@@ -7,7 +7,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { MODEL_DEFS } from './constants';
-import { InfoCard } from './InfoCard';
 import type { MultivariateTimeSeriesResults } from '../../types';
 
 interface MultivariateOverviewTabProps {
@@ -18,81 +17,76 @@ interface MultivariateOverviewTabProps {
   onQuickRerun: (overrides: Record<string, any>) => void;
 }
 
-export function MultivariateOverviewTab({
-  results,
-  forcedModel,
-  integrationOrders,
-  isLoading,
-  onQuickRerun,
-}: MultivariateOverviewTabProps) {
+export function MultivariateOverviewTab(props: MultivariateOverviewTabProps) {
+  const {
+    results,
+    forcedModel,
+    integrationOrders,
+    isLoading,
+    onQuickRerun,
+  } = props;
+
   return (
     <div className="space-y-4">
-      {/* Best model banner */}
-      <div className="ui-panel p-4 border-l-4 border-l-accent-500">
-        <div className="flex items-center justify-between">
+      <div className="ui-panel px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-accent-400 shrink-0" />
           <div>
-            <p className="text-xs text-accent-400 font-semibold uppercase tracking-wide">
-              Modèle sélectionné
-            </p>
-            <h4 className="text-xl font-bold text-surface-100 mt-1">
+            <span className="text-[11px] ui-t-muted uppercase tracking-wide mr-2">Modèle sélectionné :</span>
+            <strong className="text-sm text-[var(--ui-text)]">
               {results.best_model?.toUpperCase() || 'Aucun'}
-            </h4>
-            <p className="text-sm text-surface-400 mt-1">
-              {results.best_model && MODEL_DEFS.find(m => m.key === results.best_model)?.desc}
-            </p>
+            </strong>
           </div>
-          <CheckCircle2 className="w-7 h-7 text-accent-400" />
         </div>
-      </div>
-
-      {/* Metrics grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 ui-num">
-        <InfoCard label="Observations" value={String(results.n_observations)} />
-        <InfoCard
-          label="Stationnarité"
-          value={results.all_stationary ? 'Oui' : 'Non'}
-          color={results.all_stationary ? 'text-emerald-400' : 'text-amber-400'}
-        />
-        <InfoCard label="Variables" value={String(results.n_variables)} />
-        <InfoCard
-          label="Forçage"
-          value={forcedModel === 'auto' ? 'Auto' : forcedModel.toUpperCase()}
-        />
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs ui-num">
+          <span><span className="ui-t-muted">Obs :</span> <strong>{results.n_observations}</strong></span>
+          <span>
+            <span className="ui-t-muted">Stationnarité :</span>{' '}
+            <strong className={results.all_stationary ? 'text-emerald-400' : 'text-amber-400'}>
+              {results.all_stationary ? 'Oui' : 'Non'}
+            </strong>
+          </span>
+          <span><span className="ui-t-muted">Variables :</span> <strong>{results.n_variables}</strong></span>
+          <span>
+            <span className="ui-t-muted">Forçage :</span>{' '}
+            <strong>{forcedModel === 'auto' ? 'Auto' : forcedModel.toUpperCase()}</strong>
+          </span>
+        </div>
       </div>
 
       {/* Model comparison */}
       {results.ranking && results.ranking.length > 0 && (
         <div className="ui-panel p-4">
-          <h4 className="font-semibold text-surface-100 mb-3">Comparaison des modèles</h4>
-          <div className="overflow-x-auto border border-white/10 rounded-lg">
-            <table className="ui-table text-sm w-full">
+          <h4 className="font-semibold text-[var(--ui-text)] mb-3 text-sm">Comparaison des modèles</h4>
+          <div className="overflow-x-auto border rounded" style={{ borderColor: 'var(--ui-border)' }}>
+            <table className="ui-table text-xs w-full">
               <thead>
-                <tr className="bg-surface-700/60 text-surface-300 text-xs uppercase">
+                <tr>
                   <th className="p-2 text-left">Modèle</th>
-                  <th className="p-2 text-right">AIC</th>
-                  <th className="p-2 text-right">BIC</th>
-                  <th className="p-2 text-right">HQIC</th>
-                  <th className="p-2 text-center">Lag</th>
+                  <th className="p-2 ui-th-num">AIC</th>
+                  <th className="p-2 ui-th-num">BIC</th>
+                  <th className="p-2 ui-th-num">HQIC</th>
+                  <th className="p-2 ui-th-num">Lag</th>
                   <th className="p-2 text-center">Sélectionné</th>
                 </tr>
               </thead>
-              <tbody className="ui-num divide-y divide-white/10">
+              <tbody className="ui-num">
                 {results.ranking.map(model => (
-                  <tr key={model.model} className="hover:bg-white/[0.03]">
-                    <td className="p-2 font-medium text-surface-100">{model.model.toUpperCase()}</td>
-                    <td className="p-2 text-right font-mono">{model.aic?.toFixed(1) ?? '—'}</td>
-                    <td className="p-2 text-right font-mono">{model.bic?.toFixed(1) ?? '—'}</td>
-                    <td className="p-2 text-right font-mono">
+                  <tr key={model.model}>
+                    <td className="p-2 font-medium">{model.model.toUpperCase()}</td>
+                    <td className="p-2 ui-td-num">{model.aic?.toFixed(1) ?? '—'}</td>
+                    <td className="p-2 ui-td-num">{model.bic?.toFixed(1) ?? '—'}</td>
+                    <td className="p-2 ui-td-num">
                       {'hqic' in model ? (model as any).hqic?.toFixed(1) : '—'}
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="p-2 ui-td-num">
                       {'lag_order' in model ? (model as any).lag_order : '—'}
                     </td>
                     <td className="p-2 text-center">
                       {model.model === results.best_model ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 inline" />
                       ) : (
-                        <span className="text-surface-500">—</span>
+                        <span className="ui-t-muted">—</span>
                       )}
                     </td>
                   </tr>

@@ -4,13 +4,12 @@ import {
   Target,
   Check,
   SlidersHorizontal,
-  Sparkles,
   CheckSquare,
   Square,
   Loader2,
   ChevronRight,
 } from 'lucide-react';
-import { DatasetProfileCards } from './DatasetProfileCards';
+import { DatasetProfileStrip } from './DatasetProfileCards';
 
 interface AutoPipelineConfigStageProps {
   profile: any;
@@ -39,31 +38,32 @@ interface AutoPipelineConfigStageProps {
   onGeneratePipeline: () => void;
 }
 
-export function AutoPipelineConfigStage({
-  profile,
-  allColumns,
-  smartFeedback,
-  selectedTarget,
-  onSelectTarget,
-  selectedTaskType,
-  onSelectTaskType,
-  availableAnalyses,
-  selectedAnalyses,
-  onToggleAnalysis,
-  onApplyPreset,
-  isBuilding,
-  onGeneratePipeline,
-}: AutoPipelineConfigStageProps) {
-  return (
-    <div className="space-y-6">
-      {/* Synthèse du dataset */}
-      <DatasetProfileCards profile={profile} allColumnsCount={allColumns.length} />
+export function AutoPipelineConfigStage(props: AutoPipelineConfigStageProps) {
+  const {
+    profile,
+    allColumns,
+    smartFeedback,
+    selectedTarget,
+    onSelectTarget,
+    selectedTaskType,
+    onSelectTaskType,
+    availableAnalyses,
+    selectedAnalyses,
+    onToggleAnalysis,
+    onApplyPreset,
+    isBuilding,
+    onGeneratePipeline,
+  } = props;
 
-      {/* Feedback interactif intelligent */}
+  return (
+    <div className="space-y-4">
+      {/* Synthèse du dataset */}
+      <DatasetProfileStrip profile={profile} allColumnsCount={allColumns.length} />
+
       {smartFeedback && (
-        <div className="ui-panel p-3.5 border-l-4 border-l-accent-500 flex items-start gap-2.5">
-          <Zap className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-surface-200 leading-relaxed">{smartFeedback}</p>
+        <div className="ui-panel px-3.5 py-2 flex items-center gap-2 text-xs text-surface-200">
+          <Zap className="w-3.5 h-3.5 text-accent-400 shrink-0" />
+          <span>{smartFeedback}</span>
         </div>
       )}
 
@@ -184,7 +184,7 @@ export function AutoPipelineConfigStage({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-surface-100 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-accent-400" />
+              <SlidersHorizontal className="w-4 h-4 text-accent-400" />
               3. Modules d'Analyses Activables
             </h3>
             <p className="text-xs text-surface-400 mt-0.5">
@@ -298,7 +298,6 @@ export function AutoPipelineConfigStage({
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4" />
               <span>Générer le Pipeline Personnalisé</span>
               <ChevronRight className="w-4 h-4" />
             </>

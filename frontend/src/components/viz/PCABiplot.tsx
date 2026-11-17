@@ -122,6 +122,7 @@ export default function PCABiplot({
           text: [v],
           textfont: { size: 11, color: arrowLabelColor },
           textposition: 'top right',
+          cliponaxis: false,
           hovertemplate: `<b>${v}</b><br>loading PC${pcX + 1}: ${extract(variables[v], pcX).toFixed(3)}<br>loading PC${pcY + 1}: ${extract(variables[v], pcY).toFixed(3)}<extra></extra>`,
           showlegend: false,
         } as Data);
@@ -134,11 +135,12 @@ export default function PCABiplot({
     const yLabel = explainedVariance[pcY] !== undefined
       ? `PC${pcY + 1} (${(explainedVariance[pcY] * 100).toFixed(1)}%)`
       : `PC${pcY + 1}`;
+    const padLimit = Math.max(indMax, varMax * scale, 0.1) * 1.18;
 
     const lay: Partial<Layout> = {
       title: { text: title, font: { size: 14, color: titleColor } },
-      xaxis: { title: { text: xLabel }, zeroline: true },
-      yaxis: { title: { text: yLabel }, zeroline: true },
+      xaxis: { title: { text: xLabel }, zeroline: true, automargin: true, range: [-padLimit, padLimit] },
+      yaxis: { title: { text: yLabel }, zeroline: true, automargin: true, range: [-padLimit, padLimit] },
       showlegend: uniqueGroups.length > 0,
     };
 

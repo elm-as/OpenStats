@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, AlertTriangle, AlertCircle, Info, Sparkles } from 'lucide-react';
+import { ChevronDown, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
 import { useGetDiagnosticsQuery } from '../../store/api';
 
 interface Advisory {
@@ -10,71 +10,40 @@ interface Advisory {
   suggestion?: string;
 }
 
-const severityConfig = {
-  critical: {
-    bg: 'bg-red-500/10 border-red-500/35 hover:bg-red-500/15',
-    icon: AlertCircle,
-    iconColor: 'text-red-400',
-    label: 'Critique',
-    labelColor: 'text-red-400 bg-red-500/15',
-    title: 'text-red-300',
-  },
-  warning: {
-    bg: 'bg-amber-500/10 border-amber-500/35 hover:bg-amber-500/15',
-    icon: AlertTriangle,
-    iconColor: 'text-amber-400',
-    label: 'Attention',
-    labelColor: 'text-amber-400 bg-amber-500/15',
-    title: 'text-amber-300',
-  },
-  info: {
-    bg: 'bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15',
-    icon: Info,
-    iconColor: 'text-blue-400',
-    label: 'Info',
-    labelColor: 'text-blue-400 bg-blue-500/15',
-    title: 'text-blue-300',
-  },
-  methodological: {
-    bg: 'bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/15',
-    icon: Sparkles,
-    iconColor: 'text-teal-400',
-    label: 'Méthodo',
-    labelColor: 'text-teal-400 bg-teal-500/15',
-    title: 'text-teal-300',
-  },
+const SEVERITY_MAP = {
+  critical: { icon: AlertCircle, tag: 'ui-tag ui-tag-danger', color: 'var(--ui-danger)', label: 'Critique' },
+  warning: { icon: AlertTriangle, tag: 'ui-tag ui-tag-warning', color: 'var(--ui-warning)', label: 'Attention' },
+  info: { icon: Info, tag: 'ui-tag ui-tag-info', color: 'var(--ui-info)', label: 'Info' },
+  methodological: { icon: CheckCircle2, tag: 'ui-tag ui-tag-ok', color: 'var(--ui-success)', label: 'Méthodo' },
 };
 
 function AdvisoryCard({ advisory }: { advisory: Advisory }) {
   const [expanded, setExpanded] = useState(false);
-  const config = severityConfig[advisory.severity] || severityConfig.info;
-  const Icon = config.icon;
+  const cfg = SEVERITY_MAP[advisory.severity] || SEVERITY_MAP.info;
+  const Icon = cfg.icon;
 
   return (
     <div
-      className={`border rounded-lg ${config.bg} cursor-pointer transition-colors`}
+      className="ui-panel cursor-pointer transition-colors"
       onClick={() => setExpanded(!expanded)}
     >
-      <div className="flex items-center gap-3 px-3 py-2">
-        <Icon className={`w-4 h-4 flex-shrink-0 ${config.iconColor}`} />
+      <div className="flex items-center gap-2.5 px-3 py-2">
+        <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: cfg.color }} />
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className={`text-sm font-medium truncate ${config.title}`}>{advisory.title}</span>
-          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${config.labelColor}`}>
-            {config.label}
+          <span className="text-xs font-semibold truncate" style={{ color: 'var(--ui-text)' }}>
+            {advisory.title}
           </span>
+          <span className={cfg.tag}>{cfg.label}</span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          className={`w-3.5 h-3.5 ui-t-faint shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
         />
       </div>
       {expanded && (
-        <div className="px-3 pb-3 pt-1.5 space-y-2 border-t border-white/10">
-          <p className="text-sm text-surface-200 leading-relaxed">{advisory.message}</p>
+        <div className="px-3 pb-2.5 pt-2 space-y-1.5" style={{ borderTop: '1px solid var(--ui-border)' }}>
+          <p className="text-xs ui-t-secondary leading-relaxed">{advisory.message}</p>
           {advisory.suggestion && (
-            <p className="text-sm text-surface-400 italic flex items-start gap-2">
-              <Sparkles className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-accent-400" />
-              <span>{advisory.suggestion}</span>
-            </p>
+            <p className="text-xs ui-t-muted italic">{advisory.suggestion}</p>
           )}
         </div>
       )}
@@ -87,11 +56,7 @@ export default function AdvisoryPanel({ datasetId }: { datasetId: string }) {
   const { data, isLoading } = useGetDiagnosticsQuery(datasetId);
 
   if (isLoading) {
-    return (
-      <div className="ui-panel p-3 text-sm text-surface-400">
-        Analyse des diagnostics en cours...
-      </div>
-    );
+    return <div className="ui-panel p-2.5 text-xs ui-t-muted">Analyse des diagnostics…</div>;
   }
   if (!data || data.advisories.length === 0) return null;
 
@@ -100,52 +65,36 @@ export default function AdvisoryPanel({ datasetId }: { datasetId: string }) {
   const warnings = advisories.filter(a => a.severity === 'warning');
   const infos = advisories.filter(a => a.severity === 'info' || a.severity === 'methodological');
 
-  const hasCritical = criticals.length > 0;
-
   return (
     <div className="ui-panel overflow-hidden">
-      {/* Header cliquable */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.03] transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/[0.02] transition-colors"
       >
-        <div className="flex items-center gap-3">
-          <AlertTriangle className={`w-4 h-4 ${hasCritical ? 'text-red-400' : 'text-amber-400'}`} />
-          <h3 className="text-sm font-semibold text-surface-100">
-            Diagnostics
-            <span className="ml-2 text-xs font-normal text-surface-400 ui-num">({data.count})</span>
-          </h3>
+        <div className="flex items-center gap-2">
+          <AlertTriangle
+            className="w-3.5 h-3.5"
+            style={{ color: criticals.length > 0 ? 'var(--ui-danger)' : 'var(--ui-warning)' }}
+          />
+          <span className="text-xs font-semibold" style={{ color: 'var(--ui-text)' }}>
+            Diagnostics <span className="ui-t-muted ui-num">({data.count})</span>
+          </span>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-2 text-xs ui-num">
-            {criticals.length > 0 && (
-              <span className="px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30">
-                {criticals.length} critique{criticals.length > 1 ? 's' : ''}
-              </span>
-            )}
-            {warnings.length > 0 && (
-              <span className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                {warnings.length} attention
-              </span>
-            )}
-            {infos.length > 0 && (
-              <span className="px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                {infos.length} info
-              </span>
-            )}
-          </div>
+        <div className="flex items-center gap-1.5 ui-num">
+          {criticals.length > 0 && <span className="ui-tag ui-tag-danger">{criticals.length} crit.</span>}
+          {warnings.length > 0 && <span className="ui-tag ui-tag-warning">{warnings.length} att.</span>}
+          {infos.length > 0 && <span className="ui-tag ui-tag-info">{infos.length} info</span>}
           <ChevronDown
-            className={`w-4 h-4 text-surface-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            className={`w-3.5 h-3.5 ui-t-faint transition-transform ${open ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
 
-      {/* Contenu déroulant */}
       {open && (
-        <div className="px-4 pb-4 pt-2 space-y-2 border-t border-white/10">
-          {criticals.map((a: Advisory, i: number) => <AdvisoryCard key={`c${i}`} advisory={a} />)}
-          {warnings.map((a: Advisory, i: number) => <AdvisoryCard key={`w${i}`} advisory={a} />)}
-          {infos.map((a: Advisory, i: number) => <AdvisoryCard key={`i${i}`} advisory={a} />)}
+        <div className="p-2.5 space-y-1.5" style={{ borderTop: '1px solid var(--ui-border)' }}>
+          {criticals.map((a, i) => <AdvisoryCard key={`c${i}`} advisory={a} />)}
+          {warnings.map((a, i) => <AdvisoryCard key={`w${i}`} advisory={a} />)}
+          {infos.map((a, i) => <AdvisoryCard key={`i${i}`} advisory={a} />)}
         </div>
       )}
     </div>

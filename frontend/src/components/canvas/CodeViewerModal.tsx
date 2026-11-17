@@ -10,14 +10,8 @@ interface CodeViewerModalProps {
   onExportNotebook?: () => void;
 }
 
-export default function CodeViewerModal({
-  isOpen,
-  onClose,
-  title,
-  pythonCode,
-  rCode,
-  onExportNotebook,
-}: CodeViewerModalProps) {
+export default function CodeViewerModal(props: CodeViewerModalProps) {
+  const { isOpen, onClose, title, pythonCode, rCode, onExportNotebook } = props;
   const [language, setLanguage] = useState<'python' | 'r'>('python');
   const [copied, setCopied] = useState(false);
 
@@ -33,107 +27,87 @@ export default function CodeViewerModal({
 
   const handleDownload = () => {
     const ext = language === 'python' ? 'py' : 'R';
-    const filename = `script_reproductible.${ext}`;
     const blob = new Blob([currentCode], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename;
+    link.download = `script_reproductible.${ext}`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 nodrag nopan nowheel">
-      <div className="ui-panel w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="ui-panel w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* En-tête */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 bg-surface-950/60">
+        <div
+          className="flex items-center justify-between px-4 py-3 border-b"
+          style={{ borderColor: 'var(--ui-border)' }}
+        >
           <div className="flex items-center gap-2.5">
-            <FileCode size={18} className="text-accent-400" />
+            <FileCode size={16} className="text-accent-400" />
             <div>
-              <h3 className="text-sm font-bold text-surface-100">{title}</h3>
-              <p className="text-[11px] text-surface-400">Code source reproductible (Python & R)</p>
+              <h3 className="text-sm font-bold text-[var(--ui-text)]">{title}</h3>
+              <p className="text-[11px] ui-t-muted">Script reproductible (Python &amp; R)</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-white/10 text-surface-400 hover:text-surface-100 transition-colors"
-          >
-            <X size={18} />
+          <button type="button" onClick={onClose} className="ui-btn ui-btn-ghost p-1">
+            <X size={16} />
           </button>
         </div>
 
         {/* Barre de contrôle des langages */}
-        <div className="flex items-center justify-between px-5 py-2.5 bg-surface-950/40 border-b border-white/[0.06]">
-          <div className="flex items-center gap-1.5 bg-surface-950 p-1 rounded-xl border border-white/[0.08]">
+        <div
+          className="flex items-center justify-between px-4 py-2 border-b"
+          style={{ borderColor: 'var(--ui-border)', background: 'var(--ui-bg-sunken)' }}
+        >
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setLanguage('python')}
-              className={`text-xs font-semibold py-1 px-3 rounded-lg transition-all flex items-center gap-1.5 ${
-                language === 'python'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                  : 'text-surface-400 hover:text-surface-200'
-              }`}
+              className={`ui-btn text-xs ${language === 'python' ? 'ui-btn-primary' : 'ui-btn-ghost'}`}
             >
-              <Terminal size={13} /> Python (pandas, statsmodels)
+              <Terminal size={13} /> Python
             </button>
             <button
               type="button"
               onClick={() => setLanguage('r')}
-              className={`text-xs font-semibold py-1 px-3 rounded-lg transition-all flex items-center gap-1.5 ${
-                language === 'r'
-                  ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm'
-                  : 'text-surface-400 hover:text-surface-200'
-              }`}
+              className={`ui-btn text-xs ${language === 'r' ? 'ui-btn-primary' : 'ui-btn-ghost'}`}
             >
-              <Code size={13} /> R (tidyverse, stats)
+              <Code size={13} /> R
             </button>
           </div>
 
           <div className="flex items-center gap-2">
             {onExportNotebook && (
-              <button
-                type="button"
-                onClick={onExportNotebook}
-                className="px-2.5 py-1 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/25 text-xs font-medium transition-colors flex items-center gap-1.5"
-              >
-                <FileCode size={13} /> Jupyter (.ipynb)
+              <button type="button" onClick={onExportNotebook} className="ui-btn text-xs">
+                <FileCode size={13} /> Notebook (.ipynb)
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-surface-200 border border-white/10 text-xs font-medium transition-colors flex items-center gap-1.5"
-            >
+            <button type="button" onClick={handleCopy} className="ui-btn text-xs">
               {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-              {copied ? 'Copié !' : 'Copier'}
+              {copied ? 'Copié' : 'Copier'}
             </button>
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="px-3 py-1 rounded-lg bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 border border-accent-500/30 text-xs font-semibold transition-colors flex items-center gap-1.5"
-            >
-              <Download size={13} /> Télécharger .{language === 'python' ? 'py' : 'R'}
+            <button type="button" onClick={handleDownload} className="ui-btn ui-btn-primary text-xs">
+              <Download size={13} /> .{language === 'python' ? 'py' : 'R'}
             </button>
           </div>
         </div>
 
         {/* Zone de Code */}
-        <div className="flex-1 p-4 overflow-y-auto bg-surface-950 font-mono text-xs leading-relaxed text-surface-200 custom-scrollbar">
-          <pre className="whitespace-pre-wrap selection:bg-accent-500/30">
-            {currentCode}
-          </pre>
+        <div
+          className="flex-1 p-4 overflow-y-auto font-mono text-xs leading-relaxed ui-scroll"
+          style={{ background: 'var(--ui-bg-sunken)', color: 'var(--ui-text)' }}
+        >
+          <pre className="whitespace-pre-wrap">{currentCode}</pre>
         </div>
 
         {/* Pied de page */}
-        <div className="px-5 py-2.5 border-t border-white/10 bg-surface-950/60 flex items-center justify-between text-[11px] text-surface-400">
-          <span>Reproductibilité scientifique garantie par <strong>OpenStats by Elmas</strong></span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-surface-300 text-xs transition-colors"
-          >
+        <div
+          className="px-4 py-2 border-t flex items-center justify-end"
+          style={{ borderColor: 'var(--ui-border)' }}
+        >
+          <button type="button" onClick={onClose} className="ui-btn text-xs">
             Fermer
           </button>
         </div>

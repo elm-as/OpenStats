@@ -15,26 +15,26 @@ export function PerModelSummaryTable({
   const resultKeys = Object.keys(perModelResults);
 
   return (
-    <div className="card">
-      <h4 className="font-semibold mb-3 flex items-center gap-2">
+    <div className="ui-panel p-4">
+      <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm text-[var(--ui-text)]">
         <BarChart3 className="w-4 h-4 text-amber-500" />
         Comparaison des modèles
       </h4>
       {resultKeys.length === 0 ? (
-        <p className="text-surface-400 text-sm">
+        <p className="ui-t-muted text-xs">
           Lancez au moins un modèle pour voir la comparaison.
         </p>
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="text-sm w-full">
+            <table className="ui-table text-xs w-full">
               <thead>
                 <tr>
                   <th className="p-2 text-left">Modèle</th>
-                  <th className="p-2 text-right">AIC</th>
-                  <th className="p-2 text-right">BIC</th>
-                  <th className="p-2 text-right">HQIC</th>
-                  <th className="p-2 text-right">Lag</th>
+                  <th className="p-2 ui-th-num">AIC</th>
+                  <th className="p-2 ui-th-num">BIC</th>
+                  <th className="p-2 ui-th-num">HQIC</th>
+                  <th className="p-2 ui-th-num">Lag</th>
                   <th className="p-2 text-center">Régime</th>
                   <th className="p-2 text-center">Statut</th>
                 </tr>
@@ -45,8 +45,8 @@ export function PerModelSummaryTable({
                   if (!run) {
                     return (
                       <tr key={key}>
-                        <td className="p-2 font-medium text-surface-500">{label}</td>
-                        <td colSpan={6} className="p-2 text-center text-surface-500 text-xs">
+                        <td className="p-2 font-medium ui-t-muted">{label}</td>
+                        <td colSpan={6} className="p-2 text-center ui-t-muted">
                           Non lancé
                         </td>
                       </tr>
@@ -57,7 +57,7 @@ export function PerModelSummaryTable({
                     return (
                       <tr key={key}>
                         <td className="p-2 font-medium text-red-400">{label}</td>
-                        <td colSpan={6} className="p-2 text-red-400 text-xs truncate max-w-xs">
+                        <td colSpan={6} className="p-2 text-red-400">
                           {run.error}
                         </td>
                       </tr>
@@ -66,22 +66,22 @@ export function PerModelSummaryTable({
                   return (
                     <tr
                       key={key}
-                      className="cursor-pointer hover:bg-surface-800/50"
+                      className="cursor-pointer"
                       onClick={() => onSelectModelTab(key)}
                     >
                       <td className="p-2 font-medium">{label}</td>
-                      <td className="p-2 text-right font-mono">{modelData?.aic?.toFixed(1) ?? '—'}</td>
-                      <td className="p-2 text-right font-mono">{modelData?.bic?.toFixed(1) ?? '—'}</td>
-                      <td className="p-2 text-right font-mono">{modelData?.hqic?.toFixed(1) ?? '—'}</td>
-                      <td className="p-2 text-right font-mono">{modelData?.lag_order ?? '—'}</td>
-                      <td className="p-2 text-center text-xs">{modelData?.data_regime ?? '—'}</td>
+                      <td className="p-2 ui-td-num">{modelData?.aic?.toFixed(1) ?? '—'}</td>
+                      <td className="p-2 ui-td-num">{modelData?.bic?.toFixed(1) ?? '—'}</td>
+                      <td className="p-2 ui-td-num">{modelData?.hqic?.toFixed(1) ?? '—'}</td>
+                      <td className="p-2 ui-td-num">{modelData?.lag_order ?? '—'}</td>
+                      <td className="p-2 text-center">{modelData?.data_regime ?? '—'}</td>
                       <td className="p-2 text-center">
                         {modelData?.error ? (
                           <AlertTriangle className="w-4 h-4 text-red-400 inline" />
                         ) : modelData ? (
-                          <CheckCircle2 className="w-4 h-4 text-green-500 inline" />
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 inline" />
                         ) : (
-                          <span className="text-surface-500">—</span>
+                          <span className="ui-t-muted">—</span>
                         )}
                       </td>
                     </tr>
@@ -105,11 +105,8 @@ export function PerModelSummaryTable({
 
             if (valid.length >= 2) {
               return (
-                <div className="mt-4 p-3 rounded-lg border border-green-500/20">
-                  <p className="text-sm text-green-300">
-                    <strong>Meilleur modèle (AIC) :</strong> {valid[0].label} — AIC ={' '}
-                    {valid[0].aic.toFixed(1)}
-                  </p>
+                <div className="mt-3 p-2.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-xs text-emerald-400 ui-num">
+                  <strong>Meilleur modèle (AIC) :</strong> {valid[0].label} — AIC = {valid[0].aic.toFixed(1)}
                 </div>
               );
             }

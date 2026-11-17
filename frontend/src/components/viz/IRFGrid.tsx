@@ -66,7 +66,7 @@ export default function IRFGrid({ cells, height, title = 'Fonctions de réponse 
       title: { text: title, font: { size: 14 } },
       grid: { rows: nrow, columns: ncol, pattern: 'independent' },
       showlegend: false,
-      margin: { l: 50, r: 20, t: 60, b: 40 },
+      margin: { l: 84, r: 20, t: 68, b: 48 },
     };
 
     // Titres de colonnes + axes
@@ -80,7 +80,7 @@ export default function IRFGrid({ cells, height, title = 'Fonctions de réponse 
     });
     responses.forEach((resp, r) => {
       annotations.push({
-        x: -0.04, y: 1 - (r + 0.5) / nrow, xref: 'paper', yref: 'paper',
+        x: -0.09, y: 1 - (r + 0.5) / nrow, xref: 'paper', yref: 'paper',
         text: resp, showarrow: false, textangle: -90,
         font: { size: 10, color: theme === 'light' ? '#334155' : '#cbd5e1' },
       });
@@ -90,8 +90,14 @@ export default function IRFGrid({ cells, height, title = 'Fonctions de réponse 
     // Ligne zéro sur chaque sous-graphe
     const nTotal = nrow * ncol;
     for (let i = 1; i <= nTotal; i++) {
+      const xkey = i === 1 ? 'xaxis' : `xaxis${i}`;
       const ykey = i === 1 ? 'yaxis' : `yaxis${i}`;
-      (lay as any)[ykey] = { zeroline: true, zerolinecolor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)' };
+      (lay as any)[xkey] = { automargin: true };
+      (lay as any)[ykey] = {
+        automargin: true,
+        zeroline: true,
+        zerolinecolor: theme === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)',
+      };
     }
 
     return { traces: tr, layout: lay, h: computedH, n: cells.length };

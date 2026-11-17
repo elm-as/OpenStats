@@ -1,36 +1,76 @@
 import React from 'react';
 import { BarChart3, Info } from 'lucide-react';
 
+function resolveStatValueColor(color?: string): string {
+  if (!color) return 'var(--ui-text)';
+  if (color.includes('emerald') || color.includes('green') || color.includes('success')) return 'var(--ui-success)';
+  if (color.includes('red') || color.includes('rose') || color.includes('danger')) return 'var(--ui-danger)';
+  if (color.includes('amber') || color.includes('yellow') || color.includes('warning')) return 'var(--ui-warning)';
+  if (color.includes('cyan') || color.includes('blue') || color.includes('info')) return 'var(--ui-info)';
+  return 'var(--ui-text)';
+}
+
 export function StatCard({
   icon: Icon,
   label,
   value,
   color,
-  bg,
+  bg: _bg,
 }: {
   icon: typeof BarChart3;
   label: string;
   value: React.ReactNode;
-  color: string;
-  bg: string;
+  color?: string;
+  bg?: string;
 }) {
   return (
-    <div className={`${bg} rounded-lg p-3 border border-white/10`}>
-      <div className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider ${color} mb-1`}>
-        <Icon className="w-3 h-3" />
-        <span className="font-semibold">{label}</span>
+    <div className="ui-panel px-3 py-2 flex items-start gap-2 min-w-0">
+      <Icon className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: 'var(--ui-text-faint)' }} />
+      <div className="min-w-0 flex-1">
+        <div className="ui-label truncate">{label}</div>
+        <div className="ui-num text-sm font-bold truncate" style={{ color: resolveStatValueColor(color) }}>
+          {value}
+        </div>
       </div>
-      <div className="text-lg font-semibold text-surface-50">{value}</div>
+    </div>
+  );
+}
+
+const SUMMARY_TONE: Record<'success' | 'warning' | 'danger' | 'neutral', string> = {
+  success: 'var(--ui-success)',
+  warning: 'var(--ui-warning)',
+  danger: 'var(--ui-danger)',
+  neutral: 'var(--ui-text)',
+};
+
+export function SummaryCell({
+  label,
+  value,
+  hint,
+  tone = 'neutral',
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  tone?: 'success' | 'warning' | 'danger' | 'neutral';
+}) {
+  return (
+    <div className="ui-panel px-3 py-2 min-w-0">
+      <div className="ui-label truncate">{label}</div>
+      <div className="ui-num text-sm font-bold truncate" style={{ color: SUMMARY_TONE[tone] }}>
+        {value}
+      </div>
+      {hint && <div className="ui-t-faint text-[11px] truncate">{hint}</div>}
     </div>
   );
 }
 
 export function StepStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    success: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    error: 'bg-red-500/20 text-red-300 border-red-500/30',
-    skipped: 'bg-surface-500/20 text-surface-300 border-gray-500/30',
-    running: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30 animate-pulse',
+    success: 'ui-tag ui-tag-success',
+    error: 'ui-tag ui-tag-danger',
+    skipped: 'ui-tag ui-tag-neutral',
+    running: 'ui-tag ui-tag-info',
   };
   const labels: Record<string, string> = {
     success: 'Réussi',
@@ -39,7 +79,7 @@ export function StepStatusBadge({ status }: { status: string }) {
     running: 'En cours',
   };
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full border ${styles[status] || styles.skipped}`}>
+    <span className={styles[status] || styles.skipped}>
       {labels[status] || status}
     </span>
   );
@@ -48,12 +88,19 @@ export function StepStatusBadge({ status }: { status: string }) {
 export function EmptyState({ message, icon: Icon }: { message: string; icon?: typeof Info }) {
   const DefaultIcon = Icon || Info;
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-surface-400">
-      <DefaultIcon className="w-12 h-12 mb-3 opacity-50" />
-      <p className="text-sm">{message}</p>
+    <div className="flex flex-col items-center justify-center py-8 ui-t-muted">
+      <DefaultIcon className="w-6 h-6 mb-2 opacity-60" />
+      <p className="text-xs">{message}</p>
     </div>
   );
 }
+
+const METRIC_TONE: Record<string, string> = {
+  blue: 'var(--ui-info)',
+  amber: 'var(--ui-warning)',
+  emerald: 'var(--ui-success)',
+  purple: 'var(--ui-accent-text)',
+};
 
 export function MetricBox({
   label,
@@ -61,26 +108,24 @@ export function MetricBox({
   color,
 }: {
   label: string;
-  value: number;
-  color: string;
+  value: number | string;
+  color?: string;
 }) {
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
-    amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
-    emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-    purple: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
-  };
-
   return (
-    <div className={`p-4 rounded-lg border ui-num ${colorClasses[color] || colorClasses.blue}`}>
-      <div className="text-2xl font-bold">{value}</div>
-      <div className="text-xs opacity-80 mt-1">{label}</div>
+    <div className="ui-panel px-3 py-2">
+      <div className="ui-label truncate">{label}</div>
+      <div
+        className="ui-num text-base font-bold mt-0.5"
+        style={{ color: (color && METRIC_TONE[color]) || 'var(--ui-text)' }}
+      >
+        {value}
+      </div>
     </div>
   );
 }
 
 export function formatNumber(val: number | undefined | null): string {
-  if (val === undefined || val === null) return '—';
+  if (val === undefined || val === null || !Number.isFinite(val)) return '—';
   if (Math.abs(val) >= 1000000) return (val / 1000000).toFixed(2) + 'M';
   if (Math.abs(val) >= 1000) return (val / 1000).toFixed(2) + 'k';
   if (Math.abs(val) >= 1) return val.toFixed(2);
@@ -89,14 +134,14 @@ export function formatNumber(val: number | undefined | null): string {
 }
 
 export function TypeBadge({ type }: { type: string }) {
-  const colors: Record<string, string> = {
-    numeric: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    categorical: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
-    datetime: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-    boolean: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  const tags: Record<string, string> = {
+    numeric: 'ui-tag ui-tag-info',
+    categorical: 'ui-tag ui-tag-accent',
+    datetime: 'ui-tag ui-tag-warning',
+    boolean: 'ui-tag ui-tag-success',
   };
   return (
-    <span className={`text-xs px-2 py-0.5 rounded border ${colors[type] || colors.numeric}`}>
+    <span className={tags[type] || 'ui-tag ui-tag-neutral'}>
       {type}
     </span>
   );

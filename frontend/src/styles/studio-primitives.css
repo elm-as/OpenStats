@@ -158,6 +158,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.ui-table th.ui-th-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Utilitaires texte ── */
 .ui-t           { color: var(--ui-text); }
 .ui-t-secondary { color: var(--ui-text-secondary); }

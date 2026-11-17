@@ -1,8 +1,9 @@
 import React from 'react';
-import { ArrowLeft, ChevronLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, Play, Loader2 } from 'lucide-react';
 import type { AnalysisCapability } from '../../types';
 import { StationarityBadge } from './HypothesisResultsView';
 import { getModelsForType } from './WizardTypes';
+import { HelpTip } from '../ui/Tooltip';
 
 interface WizardConfigureStepProps {
   selectedAnalysis: AnalysisCapability;
@@ -22,45 +23,38 @@ interface WizardConfigureStepProps {
   onRun: () => void;
 }
 
-export function WizardConfigureStep({
-  selectedAnalysis,
-  configValues,
-  setConfigValues,
-  selectedModels,
-  setSelectedModels,
-  candidateTargets,
-  capabilities,
-  allColumns,
-  excludedSet,
-  pipelineDetection,
-  error,
-  isLoading,
-  onBack,
-  onRun,
-}: WizardConfigureStepProps) {
+export function WizardConfigureStep(props: WizardConfigureStepProps) {
+  const { selectedAnalysis, configValues, setConfigValues } = props;
+
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold" style={{ color: 'var(--ui-text)' }}>{selectedAnalysis.label}</h2>
-          <p className="text-sm ui-t-muted mt-1">{selectedAnalysis.description}</p>
+    <div className="space-y-3">
+      <div className="ui-panel px-3 py-1.5 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <span className="text-xs font-semibold" style={{ color: 'var(--ui-text)' }}>
+            {selectedAnalysis.label}
+          </span>
+          {selectedAnalysis.description && (
+            <span className="text-xs ui-t-muted ml-2 hidden md:inline">
+              — {selectedAnalysis.description}
+            </span>
+          )}
         </div>
-        <button onClick={onBack} className="btn-secondary flex items-center gap-2 text-sm">
-          <ArrowLeft className="w-4 h-4" /> Retour
+        <button onClick={props.onBack} className="ui-btn ui-focusable text-xs shrink-0">
+          <ArrowLeft className="w-3.5 h-3.5" /> Retour
         </button>
       </div>
 
-      <div className="card">
-        <h3 className="font-semibold mb-4" style={{ color: 'var(--ui-text)' }}>Configuration</h3>
-
-        {/* Hypothesis / standard test config fields */}
+      <section className="ui-panel p-3 space-y-3">
         {selectedAnalysis.config_fields && selectedAnalysis.config_fields.length > 0 && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {selectedAnalysis.config_fields.map(field => (
               <div key={field.key}>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ui-text-secondary)' }}>{field.label}</label>
+                <label className="ui-label block mb-1">{field.label}</label>
                 {field.type === 'multiselect' ? (
-                  <div className="rounded-[var(--ui-radius-sm)] p-3 max-h-48 overflow-y-auto space-y-1" style={{ border: '1px solid var(--ui-border)' }}>
+                  <div
+                    className="ui-panel p-2 max-h-44 overflow-y-auto ui-scroll space-y-1"
+                    style={{ background: 'var(--ui-bg-sunken)' }}
+                  >
                     {field.options.length === 0 && (
                       <p className="text-xs ui-t-muted">Aucune option disponible</p>
                     )}
@@ -70,7 +64,7 @@ export function WizardConfigureStep({
                       return (
                         <label
                           key={opt}
-                          className="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded hover:bg-white/5"
+                          className="flex items-center gap-2 text-xs cursor-pointer px-1.5 py-1 rounded-[var(--ui-radius-sm)] hover:bg-white/5"
                           style={{ color: 'var(--ui-text)' }}
                         >
                           <input
@@ -82,14 +76,13 @@ export function WizardConfigureStep({
                                 : selected.filter(s => s !== opt);
                               setConfigValues({ ...configValues, [field.key]: next.join(',') });
                             }}
-                            className="rounded text-primary-600"
                           />
-                          {opt}
+                          <span>{opt}</span>
                         </label>
                       );
                     })}
                     {(configValues[field.key] || '').split(',').filter(Boolean).length > 0 && (
-                      <p className="text-xs text-primary-600 mt-1">
+                      <p className="text-xs ui-t-accent ui-num pt-1">
                         {(configValues[field.key] || '').split(',').filter(Boolean).length} sélectionnée(s)
                       </p>
                     )}
@@ -98,14 +91,12 @@ export function WizardConfigureStep({
                   <select
                     value={configValues[field.key] || ''}
                     onChange={e => setConfigValues({ ...configValues, [field.key]: e.target.value })}
-                    className="w-full"
+                    className="ui-select w-full"
                     title={field.key}
                   >
-                    <option value="">Sélectionner...</option>
+                    <option value="">Sélectionner…</option>
                     {field.options.map(opt => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
+                      <option key={opt} value={opt}>{opt}</option>
                     ))}
                   </select>
                 )}
@@ -114,37 +105,31 @@ export function WizardConfigureStep({
           </div>
         )}
 
-        {/* Stationarity insight badge for timeseries analyses */}
         {(selectedAnalysis.key === 'timeseries' || selectedAnalysis.key === 'timeseries_multivariate') &&
-          pipelineDetection?.profile?.stationarity_summary &&
-          pipelineDetection.profile.stationarity_summary !== 'unknown' && (
+          props.pipelineDetection?.profile?.stationarity_summary &&
+          props.pipelineDetection.profile.stationarity_summary !== 'unknown' && (
             <StationarityBadge
-              summary={pipelineDetection.profile.stationarity_summary}
-              orders={pipelineDetection.profile.integration_orders ?? {}}
-              cointegrationLikely={pipelineDetection.profile.cointegration_likely ?? false}
+              summary={props.pipelineDetection.profile.stationarity_summary}
+              orders={props.pipelineDetection.profile.integration_orders ?? {}}
+              cointegrationLikely={props.pipelineDetection.profile.cointegration_likely ?? false}
               configCol={configValues.value_col ?? configValues.value_cols?.split(',')[0]}
             />
           )}
 
-        {/* Modeling config */}
         {selectedAnalysis.key.startsWith('modeling_') && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ui-text-secondary)' }}>
-                Variable cible (Y)
-              </label>
-              {candidateTargets.length > 0 && (
+              <label className="ui-label block mb-1">Variable cible (Y)</label>
+              {props.candidateTargets.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-1.5">
-                  <span className="text-xs ui-t-muted self-center">Suggestions IA :</span>
-                  {candidateTargets.slice(0, 5).map(c => (
+                  <span className="text-xs ui-t-muted self-center">Suggestions :</span>
+                  {props.candidateTargets.slice(0, 5).map(c => (
                     <button
                       key={c.column}
                       type="button"
                       onClick={() => setConfigValues({ ...configValues, target_column: c.column })}
-                      className={`ui-tag ${
-                        configValues.target_column === c.column
-                          ? 'ui-tag-accent font-semibold'
-                          : 'ui-tag-neutral hover:opacity-80'
+                      className={`ui-tag cursor-pointer ${
+                        configValues.target_column === c.column ? 'ui-tag-accent font-semibold' : 'ui-tag-neutral'
                       }`}
                     >
                       {c.column}
@@ -156,20 +141,20 @@ export function WizardConfigureStep({
               <select
                 value={configValues.target_column || ''}
                 onChange={e => setConfigValues({ ...configValues, target_column: e.target.value })}
-                className="w-full"
+                className="ui-select w-full"
                 title="Variable cible"
               >
-                <option value="">Sélectionner la variable à prédire...</option>
+                <option value="">Sélectionner la variable à prédire…</option>
                 {Array.from(
                   new Set([
                     ...(selectedAnalysis.applicable_columns || []),
-                    ...allColumns.filter(c => !excludedSet.has(c)),
+                    ...props.allColumns.filter(c => !props.excludedSet.has(c)),
                   ])
                 ).map(col => (
                   <option key={col} value={col}>
                     {col}
-                    {capabilities?.column_groups[col]
-                      ? ` (${capabilities.column_groups[col]} classes)`
+                    {props.capabilities?.column_groups[col]
+                      ? ` (${props.capabilities.column_groups[col]} classes)`
                       : ''}
                   </option>
                 ))}
@@ -177,45 +162,43 @@ export function WizardConfigureStep({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--ui-text-secondary)' }}>
-                Stratégie de scission train / test
+              <label className="ui-label flex items-center gap-1.5 mb-1">
+                <span>Stratégie de séparation train / test</span>
+                <HelpTip
+                  label="Stratégie train/test"
+                  content="Automatique privilégie un découpage chronologique lorsqu'un axe temporel existe ; le découpage aléatoire évite les biais de dérive lorsque la série suit une tendance non stationnaire sans retards explicatifs."
+                />
               </label>
               <select
                 value={configValues.split_strategy || 'auto'}
                 onChange={e => setConfigValues({ ...configValues, split_strategy: e.target.value })}
-                className="w-full"
-                title="Stratégie de scission"
+                className="ui-select w-full"
+                title="Stratégie train/test"
               >
-                <option value="auto">Automatique (temporelle si index temporel détecté)</option>
-                <option value="time">Scission temporelle (out-of-time, données chronologiques)</option>
-                <option value="random">Scission aléatoire (cross-section standard / shuffle)</option>
+                <option value="auto">Automatique (temporelle si axe temps détecté)</option>
+                <option value="time">Chronologique (out-of-time)</option>
+                <option value="random">Mélange aléatoire (observations indépendantes)</option>
               </select>
-              <p className="text-xs ui-t-muted mt-1">
-                En présence d'une forte tendance ou d'une série sans retards explicatifs, la scission aléatoire permet d'évaluer la représentativité globale sans biais de dérive temporelle.
-              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--ui-text-secondary)' }}>
-                Algorithmes (vide = tous)
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <label className="ui-label block mb-1.5">Algorithmes (vide = tous)</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-1.5">
                 {getModelsForType(selectedAnalysis.key).map(m => (
                   <label
                     key={m.key}
-                    className="flex items-center gap-2 text-sm cursor-pointer p-1.5 rounded hover:bg-white/5"
+                    className="flex items-center gap-2 text-xs cursor-pointer p-1.5 rounded-[var(--ui-radius-sm)] hover:bg-white/5"
                     style={{ color: 'var(--ui-text)' }}
                   >
                     <input
                       type="checkbox"
-                      checked={selectedModels.includes(m.key)}
+                      checked={props.selectedModels.includes(m.key)}
                       onChange={e => {
-                        if (e.target.checked) setSelectedModels([...selectedModels, m.key]);
-                        else setSelectedModels(selectedModels.filter(k => k !== m.key));
+                        if (e.target.checked) props.setSelectedModels([...props.selectedModels, m.key]);
+                        else props.setSelectedModels(props.selectedModels.filter(k => k !== m.key));
                       }}
-                      className="rounded text-primary-600"
                     />
-                    {m.label}
+                    <span>{m.label}</span>
                   </label>
                 ))}
               </div>
@@ -223,38 +206,36 @@ export function WizardConfigureStep({
           </div>
         )}
 
-        {error && (
+        {props.error && (
           <div
-            className="mt-4 p-3 rounded-[var(--ui-radius-sm)] text-sm"
-            style={{ background: 'var(--ui-danger-soft)', border: '1px solid var(--ui-danger)', color: 'var(--ui-danger)' }}
+            className="p-2.5 rounded-[var(--ui-radius-sm)] text-xs ui-t-danger"
+            style={{ background: 'var(--ui-danger-soft)', border: '1px solid var(--ui-danger)' }}
           >
-            {error}
+            {props.error}
           </div>
         )}
 
-        <div className="mt-6 flex gap-3">
-          <button onClick={onBack} className="btn-secondary flex items-center gap-2">
-            <ChevronLeft className="w-4 h-4" /> Retour
+        <div className="pt-1 flex gap-2">
+          <button onClick={props.onBack} className="ui-btn ui-focusable text-xs">
+            <ChevronLeft className="w-3.5 h-3.5" /> Retour
           </button>
           <button
-            onClick={onRun}
-            disabled={isLoading}
-            className="btn-primary flex items-center gap-2"
+            onClick={props.onRun}
+            disabled={props.isLoading}
+            className="ui-btn ui-btn-primary ui-focusable text-xs"
           >
-            {isLoading ? (
+            {props.isLoading ? (
               <>
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                Calcul en cours...
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Calcul en cours…
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
-                Lancer l'analyse
+                <Play className="w-3.5 h-3.5" /> Exécuter l&apos;analyse
               </>
             )}
           </button>
         </div>
-      </div>
-    </>
+      </section>
+    </div>
   );
 }

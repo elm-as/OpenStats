@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Lock, Info, ChevronRight, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Lock, ChevronRight, BarChart3 } from 'lucide-react';
 import type { AnalysisCapability } from '../../types';
 import { CATEGORY_META, ICON_MAP } from './WizardTypes';
 
@@ -10,98 +10,78 @@ interface WizardSelectStepProps {
   onBack: () => void;
 }
 
-export function WizardSelectStep({
-  selectedCategory,
-  grouped,
-  onSelectAnalysis,
-  onBack,
-}: WizardSelectStepProps) {
+export function WizardSelectStep(props: WizardSelectStepProps) {
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold" style={{ color: 'var(--ui-text)' }}>Choisir une analyse</h2>
-          <p className="text-sm ui-t-muted mt-1">
-            Les analyses grisées ne sont pas applicables à vos données
-          </p>
-        </div>
-        <button onClick={onBack} className="btn-secondary flex items-center gap-2 text-sm">
-          <ArrowLeft className="w-4 h-4" /> Retour
+    <div className="space-y-3">
+      <div className="ui-panel px-3 py-1.5 flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold" style={{ color: 'var(--ui-text)' }}>
+          Sélection d&apos;une analyse
+        </span>
+        <button onClick={props.onBack} className="ui-btn ui-focusable text-xs">
+          <ArrowLeft className="w-3.5 h-3.5" /> Retour
         </button>
       </div>
 
       {Object.entries(CATEGORY_META).map(([catKey, meta]) => {
-        const analyses = grouped[catKey];
+        const analyses = props.grouped[catKey];
         if (!analyses || analyses.length === 0) return null;
-        if (selectedCategory && catKey !== selectedCategory) return null;
+        if (props.selectedCategory && catKey !== props.selectedCategory) return null;
         const Icon = meta.icon;
 
         return (
-          <div key={catKey}>
-            <div className="flex items-center gap-2 mb-3">
-              <Icon className={`w-4 h-4 ${meta.color}`} />
-              <h3 className="font-semibold text-surface-100">{meta.label}</h3>
+          <section key={catKey} className="space-y-2">
+            <div className="flex items-center gap-1.5 px-1">
+              <Icon className={`w-3.5 h-3.5 ${meta.color}`} />
+              <h3 className="text-xs font-bold uppercase tracking-wider ui-t-muted">{meta.label}</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               {analyses.map(analysis => {
                 const AIcon = ICON_MAP[analysis.icon] || BarChart3;
                 return (
                   <button
                     key={analysis.key}
-                    onClick={() => onSelectAnalysis(analysis)}
+                    onClick={() => props.onSelectAnalysis(analysis)}
                     disabled={!analysis.available}
-                    className={`card text-left transition-all p-4 ${
+                    className={`ui-panel text-left p-2.5 transition-colors flex items-start gap-2.5 ${
                       analysis.available
-                        ? 'hover:shadow-md hover:border-primary-300 cursor-pointer'
-                        : 'opacity-50 cursor-not-allowed bg-surface-900'
+                        ? 'hover:border-[var(--ui-accent)] cursor-pointer'
+                        : 'opacity-50 cursor-not-allowed'
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`p-1.5 rounded-lg ${
-                          analysis.available ? meta.bg : 'bg-surface-800 border-gray-200'
-                        }`}
+                    <span className="mt-0.5 shrink-0">
+                      {analysis.available ? (
+                        <AIcon className={`w-3.5 h-3.5 ${meta.color}`} />
+                      ) : (
+                        <Lock className="w-3.5 h-3.5 ui-t-faint" />
+                      )}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <h4
+                        className="font-semibold text-xs truncate"
+                        style={{ color: analysis.available ? 'var(--ui-text)' : 'var(--ui-text-faint)' }}
+                        title={analysis.label}
                       >
-                        {analysis.available ? (
-                          <AIcon className={`w-4 h-4 ${meta.color}`} />
-                        ) : (
-                          <Lock className="w-4 h-4 text-surface-500" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4
-                          className="font-medium text-sm"
-                          style={{ color: analysis.available ? 'var(--ui-text)' : 'var(--ui-text-faint)' }}
-                        >
-                          {analysis.label}
-                        </h4>
-                        <p className="text-xs text-surface-400 mt-1 line-clamp-2">
-                          {analysis.description}
+                        {analysis.label}
+                      </h4>
+                      <p className="text-[11px] ui-t-muted mt-0.5 line-clamp-2">
+                        {analysis.description}
+                      </p>
+                      {!analysis.available && (
+                        <p className="text-[10px] ui-t-danger mt-1 truncate" title={analysis.reason || analysis.requires}>
+                          {analysis.reason || `Requis : ${analysis.requires}`}
                         </p>
-                        <div className="mt-2 flex items-center gap-1.5">
-                          <Info className="w-3 h-3 text-surface-500 flex-shrink-0" />
-                          <span
-                            className={`text-xs ${
-                              analysis.available ? 'text-green-600' : 'text-red-500'
-                            }`}
-                          >
-                            {analysis.available
-                              ? `Prérequis remplis : ${analysis.requires}`
-                              : analysis.reason || `Prérequis non remplis : ${analysis.requires}`}
-                          </span>
-                        </div>
-                      </div>
-                      {analysis.available && (
-                        <ChevronRight className="w-4 h-4 text-surface-500 mt-0.5 flex-shrink-0" />
                       )}
                     </div>
+                    {analysis.available && (
+                      <ChevronRight className="w-3.5 h-3.5 ui-t-faint mt-0.5 shrink-0" />
+                    )}
                   </button>
                 );
               })}
             </div>
-          </div>
+          </section>
         );
       })}
-    </>
+    </div>
   );
 }

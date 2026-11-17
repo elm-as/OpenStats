@@ -1,6 +1,7 @@
 import {
   CheckCircle2, CircleDashed, Loader2, XCircle, MinusCircle, Lock, Unlock, Timer,
 } from 'lucide-react';
+import { HelpTip } from '../ui/Tooltip';
 import { factLabel, type CovariateScore, type ProbeInfo, type TraceStep } from './explorerTypes';
 
 /** Le raisonnement en direct : quelle sonde tourne, et pourquoi elle s'est débloquée. */
@@ -29,7 +30,7 @@ export function ReasoningTrace({ trace, running }: { trace: TraceStep[]; running
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-xs font-semibold ui-t">{step.label}</span>
                 {step.durationMs !== undefined && (
-                  <span className="text-[10px] ui-t-faint tabular-nums">{step.durationMs} ms</span>
+                  <span className="text-[10px] ui-t-faint ui-num">{step.durationMs} ms</span>
                 )}
                 {step.nFindings !== undefined && step.nFindings > 0 && (
                   <span className="text-[10px] font-semibold ui-t-success">
@@ -81,16 +82,16 @@ export function CovariateRanking({ ranking }: { ranking: CovariateScore[] }) {
     <ul className="space-y-2">
       {ranking.slice(0, 10).map(item => (
         <li key={item.column} className="flex items-center gap-2.5">
-          <span className="text-[11px] font-mono ui-t-secondary truncate w-28 shrink-0" title={item.column}>
+          <span className="text-[11px] ui-mono ui-t-secondary break-all shrink-0 max-w-[160px]" title={item.column}>
             {item.column}
           </span>
-          <span className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--ui-bg-raised)' }}>
+          <span className="flex-1 h-1.5 rounded-sm overflow-hidden" style={{ background: 'var(--ui-bg-raised)' }}>
             <span
-              className="block h-full rounded-full bg-[var(--ui-accent)] transition-all duration-500"
+              className="block h-full bg-[var(--ui-accent)] transition-all duration-500"
               style={{ width: `${Math.max(2, Math.round(item.mutual_info * 100))}%` }}
             />
           </span>
-          <span className="text-[10px] ui-t-muted tabular-nums w-9 text-right shrink-0">
+          <span className="text-[10px] ui-t-muted ui-num w-9 text-right shrink-0">
             {item.mutual_info.toFixed(2)}
           </span>
         </li>
@@ -146,11 +147,14 @@ export function ProbePlan({ probes }: { probes: ProbeInfo[] }) {
 }
 
 /** Le panneau d'honnêteté : combien de fois on a regardé. */
-export function HonestyPanel({
-  tested, surviving, descriptive, probesRun, probesAvailable, elapsed, budgetExhausted,
-}: {
-  tested: number; surviving: number; descriptive: number;
-  probesRun: number; probesAvailable: number; elapsed: number; budgetExhausted: boolean;
+export function HonestyPanel(props: {
+  tested: number;
+  surviving: number;
+  descriptive: number;
+  probesRun: number;
+  probesAvailable: number;
+  elapsed: number;
+  budgetExhausted: boolean;
 }) {
   return (
     <div
@@ -158,29 +162,31 @@ export function HonestyPanel({
       style={{ padding: 'var(--ui-gap-2) var(--ui-pad-x)' }}
     >
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-[13px] ui-t-secondary leading-relaxed">
-          <span className="font-bold ui-t tabular-nums">{tested}</span> hypothèse
-          {tested > 1 ? 's' : ''} testée{tested > 1 ? 's' : ''} sur{' '}
-          <span className="font-bold ui-t tabular-nums">{probesRun}</span>/{probesAvailable} sondes —{' '}
-          <span className="font-bold ui-t-success tabular-nums">{surviving}</span> survivent à un
-          contrôle FDR de 5 %
-          {descriptive > 0 && (
-            <span className="ui-t-muted">, plus {descriptive} mesure{descriptive > 1 ? 's' : ''} descriptive{descriptive > 1 ? 's' : ''}</span>
-          )}
-          .
+        <p className="text-[13px] ui-t-secondary flex items-center gap-1.5 flex-wrap">
+          <span>
+            <span className="font-bold ui-t ui-num">{props.tested}</span> hypothèse
+            {props.tested > 1 ? 's' : ''} testée{props.tested > 1 ? 's' : ''} sur{' '}
+            <span className="font-bold ui-t ui-num">{props.probesRun}/{props.probesAvailable}</span> sondes —{' '}
+            <span className="font-bold ui-t-success ui-num">{props.surviving}</span> retenue
+            {props.surviving > 1 ? 's' : ''} (FDR 5 %)
+            {props.descriptive > 0 && (
+              <span className="ui-t-muted ui-num">, +{props.descriptive} descriptive{props.descriptive > 1 ? 's' : ''}</span>
+            )}
+            .
+          </span>
+          <HelpTip
+            label="Contrôle FDR 5 %"
+            content={
+              'Correction de Benjamini-Hochberg appliquée à l’ensemble des tests exécutés durant la session.'
+              + (props.budgetExhausted ? ' Le budget temps a été atteint avant la fin.' : '')
+            }
+          />
         </p>
-        <span className="flex items-center gap-1.5 text-[11px] ui-t-muted tabular-nums shrink-0">
+        <span className="flex items-center gap-1.5 text-[11px] ui-t-muted ui-num shrink-0">
           <Timer className="w-3.5 h-3.5" />
-          {elapsed.toFixed(1)} s
+          {props.elapsed.toFixed(1)} s
         </span>
       </div>
-
-      <p className="text-[11px] ui-t-faint mt-2 leading-relaxed">
-        Chercher jusqu’à trouver produit mécaniquement des faux positifs. Le dénominateur ci-dessus
-        est le nombre réel de regards portés sur les données ; la correction de Benjamini-Hochberg
-        s’applique à l’ensemble de la session, pas à chaque test isolément.
-        {budgetExhausted && ' Le budget de temps a été atteint : des pistes restent inexplorées.'}
-      </p>
     </div>
   );
 }

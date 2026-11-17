@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlaskConical, ListChecks } from 'lucide-react';
-import { Section, KpiCard, DataTable } from './ResultAtoms';
+import { Section, SummaryStrip, DataTable } from './ResultAtoms';
 
 /**
  * Vue commune aux analyses inférentielles (comptage, diagnostics, puissance,
@@ -79,16 +79,12 @@ export const AnalyticResultView = ({
           <p className="text-xs text-[var(--ui-text-primary)] leading-relaxed mb-3">{donnees.interpretation}</p>
         )}
         {scalaires.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 ui-num">
-            {scalaires.map(([cle, valeur]) => (
-              <KpiCard
-                key={cle}
-                label={LIBELLES[cle] || cle}
-                value={typeof valeur === 'boolean' ? (valeur ? 'oui' : 'non') : (valeur as number)}
-                color={couleur}
-              />
-            ))}
-          </div>
+          <SummaryStrip
+            items={scalaires.map(([cle, valeur]) => ({
+              label: LIBELLES[cle] || cle,
+              value: typeof valeur === 'boolean' ? (valeur ? 'oui' : 'non') : (valeur as number),
+            }))}
+          />
         )}
       </Section>
 

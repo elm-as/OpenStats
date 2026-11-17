@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useComputeVariableMutation } from '../../store/api';
-import { Calculator, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Calculator, Play, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface Props {
   datasetId: string;
@@ -8,20 +8,18 @@ interface Props {
   onComputed?: () => void;
 }
 
-export default function ComputedVariableEditor({ datasetId, columns, onComputed }: Props) {
+const OPERATORS = ['+', '-', '*', '/', '(', ')'];
+const FUNCTIONS = ['log', 'exp', 'sqrt', 'sin', 'cos'];
+
+export default function ComputedVariableEditor(props: Props) {
   const [newColumn, setNewColumn] = useState('');
   const [formula, setFormula] = useState('');
   const [compute, { isLoading }] = useComputeVariableMutation();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const operators = ['+', '-', '*', '/', '(', ')'];
-  const functions = ['log', 'exp', 'sqrt', 'sin', 'cos'];
-
   const insertAtCursor = (text: string) => {
-    // Dans une version plus avancée on utiliserait une ref vers le textarea,
-    // mais pour faire simple on append à la fin.
-    setFormula((prev) => (prev ? `${prev} ${text}` : text));
+    setFormula(prev => (prev ? `${prev} ${text}` : text));
   };
 
   const handleCompute = async () => {
@@ -34,16 +32,16 @@ export default function ComputedVariableEditor({ datasetId, columns, onComputed 
 
     try {
       const res = await compute({
-        id: datasetId,
+        id: props.datasetId,
         new_column: newColumn,
-        formula: formula,
+        formula,
       }).unwrap();
 
       if (res.applied) {
-        setSuccess(`La variable ${newColumn} a été créée avec succès.`);
+        setSuccess(`Variable « ${newColumn} » ajoutée.`);
         setNewColumn('');
         setFormula('');
-        if (onComputed) onComputed();
+        props.onComputed?.();
       }
     } catch (err: any) {
       setError(err?.data?.error || 'Erreur lors du calcul de la variable.');
@@ -51,37 +49,36 @@ export default function ComputedVariableEditor({ datasetId, columns, onComputed 
   };
 
   return (
-    <div className="ui-panel p-5 mt-4 border border-accent-500/25">
-      <h3 className="text-base font-bold text-surface-100 flex items-center gap-2 mb-4">
-        <Calculator className="w-4 h-4 text-accent-400" />
-        Calculer une nouvelle variable
-      </h3>
+    <section className="ui-panel overflow-hidden">
+      <header className="ui-panel-header">
+        <span className="flex items-center gap-1.5" style={{ color: 'var(--ui-text)' }}>
+          <Calculator className="w-3.5 h-3.5" style={{ color: 'var(--ui-accent)' }} />
+          Calculer une variable
+        </span>
+      </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-4">
+      <div className="p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="md:col-span-2 space-y-2.5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom de la nouvelle variable
-            </label>
+            <label className="ui-label block mb-1">Nom de la nouvelle variable</label>
             <input
               type="text"
               value={newColumn}
-              onChange={(e) => setNewColumn(e.target.value)}
+              onChange={e => setNewColumn(e.target.value)}
               placeholder="Ex: familySize"
-              className="w-full"
+              className="ui-input w-full"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Expression mathématique
-            </label>
+            <label className="ui-label block mb-1">Expression mathématique</label>
             <textarea
               value={formula}
-              onChange={(e) => setFormula(e.target.value)}
+              onChange={e => setFormula(e.target.value)}
               rows={4}
               placeholder="Ex: childs + brothers  ou  log(income + 1)"
-              className="w-full font-mono text-sm p-3"
+              className="ui-input ui-mono w-full p-2.5"
+              style={{ height: 'auto' }}
             />
           </div>
 
@@ -89,14 +86,10 @@ export default function ComputedVariableEditor({ datasetId, columns, onComputed 
             <button
               onClick={handleCompute}
               disabled={isLoading || !newColumn || !formula}
-              className="btn-primary flex items-center gap-2"
+              className="ui-btn ui-btn-primary ui-focusable text-xs"
             >
-              {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-              Calculer et ajouter au Dataset
+              {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+              Calculer et ajouter
             </button>
             <button
               onClick={() => {
@@ -105,77 +98,72 @@ export default function ComputedVariableEditor({ datasetId, columns, onComputed 
                 setError(null);
                 setSuccess(null);
               }}
-              className="btn-secondary"
+              className="ui-btn ui-btn-ghost ui-focusable text-xs"
             >
               Effacer
             </button>
           </div>
 
           {error && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="ui-panel p-2 text-xs ui-t-danger flex items-center gap-2" style={{ background: 'var(--ui-danger-soft)' }}>
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-green-700">{success}</p>
+            <div className="ui-panel p-2 text-xs ui-t-success flex items-center gap-2" style={{ background: 'var(--ui-success-soft)' }}>
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span>{success}</span>
             </div>
           )}
         </div>
 
-        {/* Palette */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">Opérateurs</h4>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {operators.map((op) => (
-              <button
-                key={op}
-                onClick={() => insertAtCursor(op)}
-                className="px-2 py-1 bg-white border border-gray-300 rounded text-sm font-mono hover:bg-gray-100 transition-colors"
-              >
-                {op}
-              </button>
-            ))}
-          </div>
-
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">Fonctions</h4>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {functions.map((fn) => (
-              <button
-                key={fn}
-                onClick={() => insertAtCursor(`${fn}(`)}
-                className="px-2 py-1 bg-white border border-gray-300 rounded text-sm font-mono hover:bg-gray-100 transition-colors"
-              >
-                {fn}()
-              </button>
-            ))}
-          </div>
-
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">Colonnes existantes</h4>
-          <div className="max-h-60 overflow-y-auto pr-2 space-y-1">
-            {columns.map((col) => {
-              // Si la colonne contient des espaces ou des caractères spéciaux, 
-              // pandas requiert de l'entourer de backticks pour l'évaluer correctement.
-              const needsBackticks = !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col);
-              const insertText = needsBackticks ? `\`${col}\`` : col;
-              
-              return (
-                <button
-                  key={col}
-                  onClick={() => insertAtCursor(insertText)}
-                  className="w-full text-left px-2 py-1.5 bg-surface-900/50 border border-white/10 rounded text-xs font-mono text-surface-200 truncate hover:bg-accent-500/15 hover:text-accent-400 hover:border-accent-500/30 transition-colors"
-                  title={`Insérer ${col}`}
-                >
-                  {col}
+        <div className="ui-panel p-2.5 space-y-3" style={{ background: 'var(--ui-bg-sunken)' }}>
+          <div>
+            <h4 className="ui-label mb-1.5">Opérateurs</h4>
+            <div className="flex flex-wrap gap-1">
+              {OPERATORS.map(op => (
+                <button key={op} onClick={() => insertAtCursor(op)} className="ui-btn ui-mono text-xs px-2">
+                  {op}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="ui-label mb-1.5">Fonctions</h4>
+            <div className="flex flex-wrap gap-1">
+              {FUNCTIONS.map(fn => (
+                <button key={fn} onClick={() => insertAtCursor(`${fn}(`)} className="ui-btn ui-mono text-xs px-2">
+                  {fn}()
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 className="ui-label mb-1.5">Variables ({props.columns.length})</h4>
+            <div className="max-h-48 overflow-y-auto ui-scroll space-y-1">
+              {props.columns.map(col => {
+                const needsBackticks = !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col);
+                const insertText = needsBackticks ? `\`${col}\`` : col;
+                return (
+                  <button
+                    key={col}
+                    onClick={() => insertAtCursor(insertText)}
+                    className="w-full text-left px-2 py-1 rounded-[var(--ui-radius-sm)] ui-mono text-xs truncate transition-colors hover:text-[var(--ui-accent-text)]"
+                    style={{ background: 'var(--ui-bg-panel)', border: '1px solid var(--ui-border)', color: 'var(--ui-text-secondary)' }}
+                    title={`Insérer ${col}`}
+                  >
+                    {col}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

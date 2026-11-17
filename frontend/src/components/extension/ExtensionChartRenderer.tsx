@@ -90,6 +90,10 @@ export function ExtensionChartRenderer({ chart, index }: ExtensionChartRendererP
   if (chart.type !== 'pie') {
     layout.xaxis = {
       title: { text: xKey },
+      automargin: true,
+    };
+    layout.yaxis = {
+      automargin: true,
     };
   }
   layout.legend = { orientation: 'h', y: -0.2 };

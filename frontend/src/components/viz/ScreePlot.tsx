@@ -95,14 +95,15 @@ export default function ScreePlot({
 
     const lay: Partial<Layout> = {
       title: { text: title || (isRatio ? "Variance expliquée par composante" : 'Valeurs propres'), font: { size: 14 } },
-      xaxis: { title: { text: 'Composante' }, dtick: 1 },
-      yaxis: { title: { text: yLabel } },
+      xaxis: { title: { text: 'Composante' }, dtick: 1, automargin: true },
+      yaxis: { title: { text: yLabel }, automargin: true },
       yaxis2: showCumulative ? {
         title: { text: 'Cumulé (%)', font: { color: cumColor }, standoff: 10 },
         overlaying: 'y',
         side: 'right',
         range: [0, 105],
         showgrid: false,
+        automargin: true,
         tickfont: { color: cumColor },
       } as any : undefined,
       margin: { l: 58, r: showCumulative ? 68 : 24, t: 40, b: 64 },

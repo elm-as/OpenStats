@@ -23,42 +23,47 @@ interface AdvancedParametersFormProps {
   setMaxDiffOrder: (val: number) => void;
 }
 
-export function AdvancedParametersForm({
-  showAdvancedParams,
-  setShowAdvancedParams,
-  maxLag,
-  setMaxLag,
-  icCriterion,
-  setIcCriterion,
-  irfPeriods,
-  setIrfPeriods,
-  fevdPeriods,
-  setFevdPeriods,
-  confidenceLevel,
-  setConfidenceLevel,
-  bootstrapIrf,
-  setBootstrapIrf,
-  irfOrth,
-  setIrfOrth,
-  vecmDetOrder,
-  setVecmDetOrder,
-  maxDiffOrder,
-  setMaxDiffOrder,
-}: AdvancedParametersFormProps) {
+export function AdvancedParametersForm(props: AdvancedParametersFormProps) {
+  const {
+    showAdvancedParams,
+    setShowAdvancedParams,
+    maxLag,
+    setMaxLag,
+    icCriterion,
+    setIcCriterion,
+    irfPeriods,
+    setIrfPeriods,
+    fevdPeriods,
+    setFevdPeriods,
+    confidenceLevel,
+    setConfidenceLevel,
+    bootstrapIrf,
+    setBootstrapIrf,
+    irfOrth,
+    setIrfOrth,
+    vecmDetOrder,
+    setVecmDetOrder,
+    maxDiffOrder,
+    setMaxDiffOrder,
+  } = props;
+
   return (
     <div className="mb-4">
       <button
         onClick={() => setShowAdvancedParams(!showAdvancedParams)}
-        className="text-sm font-semibold text-primary-600 flex items-center gap-2 mb-2 hover:text-primary-700"
+        className="text-xs font-semibold text-accent-400 flex items-center gap-2 mb-2 hover:opacity-80"
       >
         {showAdvancedParams
-          ? '▼ Paramètres Avancés (Masquer)'
-          : '► Paramètres Avancés (Afficher)'}
+          ? '▼ Paramètres avancés (masquer)'
+          : '► Paramètres avancés (afficher)'}
       </button>
 
       {showAdvancedParams && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-          <label className="text-sm text-gray-600">
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 rounded border"
+          style={{ background: 'var(--ui-bg-sunken)', borderColor: 'var(--ui-border)' }}
+        >
+          <label className="text-xs ui-t-secondary">
             Lag Max (VAR/VECM)
             <input
               type="number"
@@ -66,15 +71,15 @@ export function AdvancedParametersForm({
               max={60}
               value={maxLag}
               onChange={e => setMaxLag(Number(e.target.value) || 12)}
-              className="mt-1 w-full"
+              className="ui-input mt-1 w-full ui-num"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-xs ui-t-secondary">
             Critère d'information
             <select
               value={icCriterion}
               onChange={e => setIcCriterion(e.target.value as any)}
-              className="mt-1 w-full"
+              className="ui-select mt-1 w-full"
             >
               <option value="aic">AIC</option>
               <option value="bic">BIC</option>
@@ -82,7 +87,7 @@ export function AdvancedParametersForm({
               <option value="fpe">FPE</option>
             </select>
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-xs ui-t-secondary">
             Périodes IRF
             <input
               type="number"
@@ -90,10 +95,10 @@ export function AdvancedParametersForm({
               max={100}
               value={irfPeriods}
               onChange={e => setIrfPeriods(Number(e.target.value) || 20)}
-              className="mt-1 w-full"
+              className="ui-input mt-1 w-full ui-num"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-xs ui-t-secondary">
             Périodes FEVD
             <input
               type="number"
@@ -101,22 +106,22 @@ export function AdvancedParametersForm({
               max={100}
               value={fevdPeriods}
               onChange={e => setFevdPeriods(Number(e.target.value) || 20)}
-              className="mt-1 w-full"
+              className="ui-input mt-1 w-full ui-num"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-xs ui-t-secondary">
             Niveau de confiance
             <select
               value={confidenceLevel}
               onChange={e => setConfidenceLevel(Number(e.target.value))}
-              className="mt-1 w-full"
+              className="ui-select mt-1 w-full ui-num"
             >
               <option value={0.9}>90%</option>
               <option value={0.95}>95%</option>
               <option value={0.99}>99%</option>
             </select>
           </label>
-          <label className="text-sm text-gray-600 flex items-center gap-2">
+          <label className="text-xs ui-t-secondary flex items-center gap-2">
             <input
               type="checkbox"
               checked={bootstrapIrf}
@@ -124,7 +129,7 @@ export function AdvancedParametersForm({
             />
             Bootstrap IRF
           </label>
-          <label className="text-sm text-gray-600 flex items-center gap-2">
+          <label className="text-xs ui-t-secondary flex items-center gap-2">
             <input
               type="checkbox"
               checked={irfOrth}
@@ -132,7 +137,7 @@ export function AdvancedParametersForm({
             />
             IRF orthogonalisées
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-xs ui-t-secondary">
             Ordre déterministe VECM
             <input
               type="number"
@@ -140,10 +145,10 @@ export function AdvancedParametersForm({
               max={2}
               value={vecmDetOrder}
               onChange={e => setVecmDetOrder(Number(e.target.value) || 0)}
-              className="mt-1 w-full"
+              className="ui-input mt-1 w-full ui-num"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-xs ui-t-secondary">
             Ordre max différenciation
             <input
               type="number"
@@ -151,7 +156,7 @@ export function AdvancedParametersForm({
               max={5}
               value={maxDiffOrder}
               onChange={e => setMaxDiffOrder(Number(e.target.value) || 2)}
-              className="mt-1 w-full"
+              className="ui-input mt-1 w-full ui-num"
             />
           </label>
         </div>

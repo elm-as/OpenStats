@@ -54,8 +54,8 @@ export default function ACFPlot({ values, sampleSize, type = 'ACF', height = 320
 
     const lay: Partial<Layout> = {
       title: { text: title || (type === 'ACF' ? "Autocorrélation (ACF)" : 'Autocorrélation partielle (PACF)'), font: { size: 14 } },
-      xaxis: { title: { text: 'Lag' }, dtick: Math.max(1, Math.floor(values.length / 15)) },
-      yaxis: { title: { text: type }, range: [-1.1, 1.1], zeroline: true },
+      xaxis: { title: { text: 'Lag' }, dtick: Math.max(1, Math.floor(values.length / 15)), automargin: true },
+      yaxis: { title: { text: type }, range: [-1.1, 1.1], zeroline: true, automargin: true },
       shapes,
       showlegend: false,
     };
