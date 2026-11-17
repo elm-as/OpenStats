@@ -8,8 +8,12 @@ import {
   Node,
 } from '@xyflow/react';
 import { useSearchParams } from 'react-router-dom';
+import {
+  getCanvasSessionSnapshot,
+  saveCanvasGraphState,
+  setCanvasLastTemplate,
+} from './canvasSessionStore';
 
-const initialNodes: Node[] = [];
 let idCounter = 1;
 const getNextId = () => `node_${idCounter++}`;
 
@@ -18,9 +22,10 @@ interface UseCanvasGraphProps {
 }
 
 export function useCanvasGraph({ onResetPipeline }: UseCanvasGraphProps) {
+  const initialSnapshot = getCanvasSessionSnapshot();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialSnapshot.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialSnapshot.edges);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
   const [, setLastDroppedId] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
@@ -73,10 +78,31 @@ export function useCanvasGraph({ onResetPipeline }: UseCanvasGraphProps) {
     [nodes, edges]
   );
 
-  const lastTemplateRef = useRef<string | null>(null);
+  const lastTemplateRef = useRef<string | null>(initialSnapshot.lastTemplateEncoded);
   // Vrai des qu'un graphe complet a ete importe : empeche le repli
   // "noeud dataset seul" de l'ecraser au second passage des effets.
-  const importedRef = useRef(false);
+  const importedRef = useRef(initialSnapshot.nodes.length > 0);
+
+  useEffect(() => {
+    saveCanvasGraphState(nodes, edges);
+  }, [nodes, edges]);
+
+  // Réattache les callbacks interactifs aux nœuds restaurés depuis la session.
+  useEffect(() => {
+    if (initialSnapshot.nodes.length === 0) return;
+    setNodes(nds =>
+      nds.map(n => ({
+        ...n,
+        data: {
+          ...n.data,
+          onChange: onNodeDataChange,
+          onDelete: onNodeDelete,
+          getConnectedDatasetId,
+        },
+      }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const applyGraph = useCallback((payload: any) => {
     if (!payload?.nodes) return false;
@@ -111,11 +137,12 @@ export function useCanvasGraph({ onResetPipeline }: UseCanvasGraphProps) {
     // Import depuis l'analyse methodique : le graphe transite par sessionStorage,
     // une URL ne pouvant pas porter un pipeline complet sans risque de troncature.
     if (searchParams.get('from') === 'methodology') {
-      if (importedRef.current) return;
       try {
         const raw = sessionStorage.getItem('openstats_canvas_import');
         if (raw && applyGraph(JSON.parse(raw))) {
+          sessionStorage.removeItem('openstats_canvas_import');
           lastTemplateRef.current = 'methodology';
+          setCanvasLastTemplate('methodology');
           return;
         }
       } catch (e) {
@@ -125,6 +152,7 @@ export function useCanvasGraph({ onResetPipeline }: UseCanvasGraphProps) {
 
     if (templateEncoded && templateEncoded !== lastTemplateRef.current) {
       lastTemplateRef.current = templateEncoded;
+      setCanvasLastTemplate(templateEncoded);
       try {
         const payload = JSON.parse(decodeURIComponent(templateEncoded));
         if (payload.nodes) {

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useSyncExternalStore } from 'react';
 import {
   useGetCapabilitiesQuery,
   useSetExcludedColumnsMutation,
@@ -11,6 +11,11 @@ import { WizardSelectStep } from './WizardSelectStep';
 import { WizardConfigureStep } from './WizardConfigureStep';
 import { WizardResultsStep } from './WizardResultsStep';
 import { useAnalysisExecutor } from './useAnalysisExecutor';
+import {
+  getWizardSnapshot,
+  subscribeWizardStore,
+  updateWizardSession,
+} from './wizardSessionStore';
 import type { WizardStep } from './WizardTypes';
 
 interface Props {
@@ -47,10 +52,26 @@ export default function AnalysisWizard({ datasetId }: Props) {
   } = useGetCapabilitiesQuery(datasetId);
   const [setExcludedColumns] = useSetExcludedColumnsMutation();
 
-  const [wizardStep, setWizardStep] = useState<WizardStep>('overview');
-  const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisCapability | null>(null);
-  const [configValues, setConfigValues] = useState<Record<string, string>>({});
-  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const wizardSession = useSyncExternalStore(
+    subscribeWizardStore,
+    () => getWizardSnapshot(datasetId),
+    () => getWizardSnapshot(undefined),
+  );
+  const { wizardStep, selectedAnalysis, configValues, selectedModels } = wizardSession;
+  const setWizardStep = (next: WizardStep) => updateWizardSession(datasetId, { wizardStep: next });
+  const setSelectedAnalysis = (next: AnalysisCapability | null) => updateWizardSession(datasetId, { selectedAnalysis: next });
+  const setConfigValues = (
+    updater: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>),
+  ) => {
+    const next = typeof updater === 'function' ? updater(getWizardSnapshot(datasetId).configValues) : updater;
+    updateWizardSession(datasetId, { configValues: next });
+  };
+  const setSelectedModels = (
+    updater: string[] | ((prev: string[]) => string[]),
+  ) => {
+    const next = typeof updater === 'function' ? updater(getWizardSnapshot(datasetId).selectedModels) : updater;
+    updateWizardSession(datasetId, { selectedModels: next });
+  };
   const [showColumnFilter, setShowColumnFilter] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 

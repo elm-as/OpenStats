@@ -1,48 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { apiFetch } from '../../lib/apiBase';
-import type {
-  Capabilities,
-  ExplorationResult,
-  ExplorerEvent,
-  Finding,
-  TraceStep,
-} from './explorerTypes';
+import type { Capabilities } from './explorerTypes';
+import {
+  getExplorerSnapshot,
+  resetExplorerSession,
+  runExplorerSession,
+  stopExplorerSession,
+  subscribeExplorerStore,
+  updateExplorerSession,
+} from './explorerSessionStore';
 
 /**
- * Pilote une session d'exploration.
- *
- * L'exploration est diffusée en SSE : les découvertes et le raisonnement
- * arrivent au fil de l'eau, ce qui permet d'afficher la recherche pendant
- * qu'elle a lieu plutôt qu'un spinner suivi d'un pavé de résultats.
+ * Pilote une session d'exploration adossée au store de session :
+ * changer d'onglet conserve les découvertes et la trace d'exécution.
  */
-function dispatchSseChunks(chunks: string[], handleEvent: (ev: ExplorerEvent) => void): void {
-  for (const chunk of chunks) {
-    const line = chunk.split('\n').find(l => l.startsWith('data: '));
-    if (!line) continue;
-    try {
-      handleEvent(JSON.parse(line.slice(6)) as ExplorerEvent);
-    } catch {
-      // Un événement illisible ne doit pas interrompre le flux.
-    }
-  }
-}
-
 export function useExplorer(datasetId: string | undefined) {
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
-  const [target, setTarget] = useState<string | null>(null);
+  const [capError, setCapError] = useState<string | null>(null);
 
-  const [running, setRunning] = useState(false);
-  const [trace, setTrace] = useState<TraceStep[]>([]);
-  const [liveFindings, setLiveFindings] = useState<Finding[]>([]);
-  const [facts, setFacts] = useState<string[]>([]);
-  const [result, setResult] = useState<ExplorationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [elapsed, setElapsed] = useState(0);
+  const session = useSyncExternalStore(
+    subscribeExplorerStore,
+    () => getExplorerSnapshot(datasetId),
+    () => getExplorerSnapshot(undefined),
+  );
 
-  const abortRef = useRef<AbortController | null>(null);
-
-  /** Ce que l'explorateur peut faire ici — recalculé à chaque changement de cible. */
   useEffect(() => {
     if (!datasetId) return;
     let cancelled = false;
@@ -50,13 +32,16 @@ export function useExplorer(datasetId: string | undefined) {
     const load = async () => {
       setLoadingCapabilities(true);
       try {
-        const query = target ? `?target=${encodeURIComponent(target)}` : '';
+        const query = session.target ? `?target=${encodeURIComponent(session.target)}` : '';
         const response = await apiFetch(`/datasets/${datasetId}/explore/capabilities${query}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data: Capabilities = await response.json();
-        if (!cancelled) setCapabilities(data);
+        if (!cancelled) {
+          setCapabilities(data);
+          setCapError(null);
+        }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Chargement impossible');
+        if (!cancelled) setCapError(err instanceof Error ? err.message : 'Chargement impossible');
       } finally {
         if (!cancelled) setLoadingCapabilities(false);
       }
@@ -66,137 +51,45 @@ export function useExplorer(datasetId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [datasetId, target]);
+  }, [datasetId, session.target]);
+
+  const setTarget = useCallback((target: string | null) => {
+    if (datasetId) updateExplorerSession(datasetId, { target });
+  }, [datasetId]);
+
+  const setBudget = useCallback((budget: number) => {
+    if (datasetId) updateExplorerSession(datasetId, { budget });
+  }, [datasetId]);
 
   const reset = useCallback(() => {
-    setTrace([]);
-    setLiveFindings([]);
-    setFacts([]);
-    setResult(null);
-    setError(null);
-    setElapsed(0);
-  }, []);
+    if (datasetId) resetExplorerSession(datasetId);
+  }, [datasetId]);
 
   const stop = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setRunning(false);
-  }, []);
+    if (datasetId) stopExplorerSession(datasetId);
+  }, [datasetId]);
 
-  const handleEvent = useCallback((event: ExplorerEvent) => {
-    switch (event.type) {
-      case 'context':
-        setFacts(event.initial_facts);
-        break;
-
-      case 'probe_start':
-        setTrace(prev => [
-          ...prev,
-          {
-            key: event.key,
-            label: event.label,
-            explains: event.explains,
-            triggeredBy: event.triggered_by,
-            status: 'running',
-          },
-        ]);
-        setElapsed(event.elapsed_sec);
-        break;
-
-      case 'finding':
-        setLiveFindings(prev => [...prev, event.finding]);
-        break;
-
-      case 'probe_done':
-        setTrace(prev =>
-          prev.map(step =>
-            step.key === event.key && step.status === 'running'
-              ? {
-                  ...step,
-                  status: event.status,
-                  durationMs: event.duration_ms,
-                  nFindings: event.n_findings,
-                  error: event.error,
-                }
-              : step,
-          ),
-        );
-        setFacts(event.new_facts);
-        setElapsed(event.elapsed_sec);
-        break;
-
-      case 'complete':
-        setResult(event.result);
-        setElapsed(event.result.elapsed_sec);
-        break;
-
-      case 'error':
-        setError(event.error);
-        break;
-    }
-  }, []);
-
-  /** Lance l'exploration et consomme le flux SSE ligne par ligne. */
   const run = useCallback(
-    async (budgetSec = 45) => {
-      if (!datasetId || running) return;
-      reset();
-      setRunning(true);
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      try {
-        const response = await apiFetch(`/datasets/${datasetId}/explore/stream`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ target, budget_sec: budgetSec }),
-          signal: controller.signal,
-        });
-        if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const chunks = buffer.split('\n\n');
-          buffer = chunks.pop() ?? '';
-          dispatchSseChunks(chunks, handleEvent);
-        }
-      } catch (err) {
-        if (!(err instanceof DOMException && err.name === 'AbortError')) {
-          setError(err instanceof Error ? err.message : 'Exploration interrompue');
-        }
-      } finally {
-        setRunning(false);
-        abortRef.current = null;
-      }
-    },
-    [datasetId, running, target, reset, handleEvent],
+    (budgetSec = session.budget) => (datasetId ? runExplorerSession(datasetId, budgetSec) : Promise.resolve()),
+    [datasetId, session.budget],
   );
 
-  useEffect(() => () => abortRef.current?.abort(), []);
-
-  // Pendant la recherche on montre les découvertes brutes ; à la fin, la
-  // liste classée et corrigée du FDR remplace l'affichage temps réel.
-  const findings = result ? result.findings : liveFindings;
+  const findings = session.result ? session.result.findings : session.liveFindings;
 
   return {
     capabilities,
     loadingCapabilities,
-    target,
+    target: session.target,
     setTarget,
-    running,
-    trace,
+    budget: session.budget,
+    setBudget,
+    running: session.running,
+    trace: session.trace,
     findings,
-    facts,
-    result,
-    error,
-    elapsed,
+    facts: session.facts,
+    result: session.result,
+    error: session.error ?? capError,
+    elapsed: session.elapsed,
     run,
     stop,
     reset,

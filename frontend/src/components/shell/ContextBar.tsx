@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Database, ChevronDown, Search, Check, Upload, Command, Sun, Moon,
-  Rows3, Rows4, RefreshCw, Monitor, Bookmark,
+  Rows3, Rows4, RefreshCw, Bookmark,
 } from 'lucide-react';
 import logoOS from '../../assets/logoOS.png';
 import type { DatasetSummary } from '../../types';
+import DesktopMenuBar from './DesktopMenuBar';
 
 interface Props {
   datasets: DatasetSummary[];
@@ -14,6 +15,7 @@ interface Props {
   onSelect: (id: string) => void;
   onRefresh: () => void;
   onOpenPalette: () => void;
+  onMenuAction: (action: string) => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
   density: 'compact' | 'comfortable';
@@ -22,19 +24,21 @@ interface Props {
   onTogglePinned?: () => void;
 }
 
+const NO_DRAG = { WebkitAppRegion: 'no-drag' } as React.CSSProperties;
+
 /**
- * Barre de contexte : elle répond en permanence à « sur quoi je travaille ? ».
- *
- * C'est le seul sélecteur de dataset de l'application ; les écrans consomment
- * le contexte au lieu de proposer chacun le leur.
+ * Barre de titre et de contexte unifiée (style logiciel natif).
+ * Regroupe menus applicatifs, dataset actif, outils rapides et zone de déplacement fenêtre.
  */
 export default function ContextBar({
-  datasets, active, isFetching, onSelect, onRefresh, onOpenPalette,
+  datasets, active, isFetching, onSelect, onRefresh, onOpenPalette, onMenuAction,
   theme, onToggleTheme, density, onToggleDensity, pinnedCount = 0, onTogglePinned,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const popoverRef = useRef<HTMLDivElement>(null);
+  const isDesktop = typeof window !== 'undefined'
+    && Boolean((window as unknown as { electronAPI?: { isDesktop?: boolean } }).electronAPI?.isDesktop);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -57,55 +61,82 @@ export default function ContextBar({
 
   return (
     <header
-      className="flex items-center gap-2 px-2 shrink-0"
+      className="flex items-center gap-1.5 pl-2 shrink-0"
       style={{
         height: 'var(--ui-topbar-h)',
-        background: 'var(--ui-bg-panel)',
+        paddingRight: isDesktop ? 142 : 8,
+        background: 'var(--ui-bg-sunken)',
         borderBottom: '1px solid var(--ui-border)',
+        ...(isDesktop ? ({ WebkitAppRegion: 'drag' } as React.CSSProperties) : undefined),
       }}
     >
-      <Link to="/" className="ui-focusable flex items-center gap-2 pl-1 pr-2 shrink-0" title="OpenStats">
-        <img src={logoOS} alt="" className="w-[18px] h-[18px] object-contain" />
-        <span className="hidden md:block" style={{ fontSize: 'var(--ui-fs-sm)', fontWeight: 800, letterSpacing: '-0.01em' }}>
-          OpenStats
-        </span>
+      <Link
+        to="/"
+        className="ui-focusable flex items-center gap-1.5 px-1 shrink-0"
+        title="OpenStats"
+        style={NO_DRAG}
+      >
+        <img src={logoOS} alt="OpenStats" className="w-4 h-4 object-contain" />
+        {!isDesktop && (
+          <span className="hidden md:block" style={{ fontSize: 'var(--ui-fs-sm)', fontWeight: 700 }}>
+            OpenStats
+          </span>
+        )}
       </Link>
 
-      <span className="ui-sep" aria-hidden />
+      <DesktopMenuBar isDesktop={isDesktop} onAction={onMenuAction} />
 
-      {/* ── Sélecteur de dataset : le contexte de travail ── */}
-      <div className="relative" ref={popoverRef}>
+      <span className="ui-sep mx-0.5" aria-hidden />
+
+      {/* ── Sélecteur de dataset actif ── */}
+      <div className="relative flex items-center gap-1" ref={popoverRef} style={NO_DRAG}>
         <button
           onClick={() => { setOpen(o => !o); setQuery(''); }}
-          className="ui-focusable flex items-center gap-2 rounded-[var(--ui-radius-sm)] px-2 max-w-[340px]"
+          className="ui-focusable flex items-center gap-1.5 rounded-[var(--ui-radius-sm)] px-2 max-w-[320px] hover:bg-[var(--ui-bg-raised)] transition-colors"
           style={{
-            height: 'var(--ui-control-h)',
+            height: 24,
             background: open ? 'var(--ui-bg-raised)' : 'transparent',
-            border: '1px solid var(--ui-border)',
+            border: open ? '1px solid var(--ui-border-strong)' : '1px solid var(--ui-border)',
           }}
           aria-haspopup="listbox"
           aria-expanded={open}
         >
-          <Database className="w-[13px] h-[13px] shrink-0" style={{ color: 'var(--ui-accent)' }} />
+          <Database className="w-3 h-3 shrink-0" style={{ color: 'var(--ui-accent)' }} />
           <span
             className="truncate"
-            style={{ fontSize: 'var(--ui-fs-sm)', fontWeight: 700, color: 'var(--ui-text)' }}
+            style={{ fontSize: 'var(--ui-fs-sm)', fontWeight: 600, color: 'var(--ui-text)' }}
           >
             {active?.name ?? 'Aucun dataset'}
           </span>
+          {active && (
+            <span className="hidden lg:inline ui-num shrink-0" style={{ fontSize: 'var(--ui-fs-xs)', color: 'var(--ui-text-faint)' }}>
+              · {active.shape.rows.toLocaleString('fr-FR')}×{active.shape.columns}
+              {active.versions_count != null && active.versions_count > 1 ? ` · v${active.versions_count}` : ''}
+            </span>
+          )}
           <ChevronDown
-            className="w-[13px] h-[13px] shrink-0"
+            className="w-3 h-3 shrink-0"
             style={{ color: 'var(--ui-text-faint)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 0.12s' }}
           />
         </button>
 
+        <button
+          onClick={onRefresh}
+          className="ui-btn ui-btn-ghost ui-focusable shrink-0"
+          style={{ width: 24, height: 24, padding: 0 }}
+          title="Rafraîchir les datasets"
+          aria-label="Rafraîchir"
+        >
+          <RefreshCw className={`w-3 h-3 ${isFetching ? 'animate-spin' : ''}`} />
+        </button>
+
         {open && (
           <div
-            className="absolute left-0 top-[calc(100%+4px)] w-[360px] rounded-[var(--ui-radius)] overflow-hidden z-50"
+            className="absolute left-0 top-[calc(100%+3px)] w-[350px] rounded-[var(--ui-radius)] overflow-hidden z-50"
             style={{
               background: 'var(--ui-bg-overlay)',
               border: '1px solid var(--ui-border-strong)',
-              boxShadow: 'var(--ui-shadow-lg)',
+              boxShadow: 'var(--ui-shadow-md)',
             }}
             role="listbox"
           >
@@ -123,7 +154,7 @@ export default function ContextBar({
               </div>
             </div>
 
-            <ul className="max-h-[320px] overflow-y-auto ui-scroll py-1">
+            <ul className="max-h-[300px] overflow-y-auto ui-scroll py-1">
               {filtered.length === 0 ? (
                 <li className="px-3 py-4 text-center ui-t-muted" style={{ fontSize: 'var(--ui-fs-sm)' }}>
                   Aucun dataset ne correspond
@@ -166,98 +197,59 @@ export default function ContextBar({
         )}
       </div>
 
-      {/* ── Métadonnées du dataset actif, toujours visibles ── */}
-      {active && (
-        <div className="hidden lg:flex items-center gap-2 shrink-0">
-          <span className="ui-tag ui-tag-neutral ui-num">
-            {active.shape.rows.toLocaleString('fr-FR')} × {active.shape.columns}
-          </span>
-          {active.versions_count != null && active.versions_count > 1 && (
-            <span className="ui-tag ui-tag-neutral">v{active.versions_count}</span>
-          )}
-        </div>
-      )}
+      <div className="flex-1 min-w-[24px]" />
 
-      <button
-        onClick={onRefresh}
-        className="ui-btn ui-btn-ghost ui-btn-icon ui-focusable shrink-0"
-        title="Rafraîchir la liste des datasets"
-        aria-label="Rafraîchir"
-      >
-        <RefreshCw className={`w-[13px] h-[13px] ${isFetching ? 'animate-spin' : ''}`} />
-      </button>
-
-      <div className="flex-1" />
-
-      {/* ── Commandes ── */}
-      <button
-        onClick={onOpenPalette}
-        className="ui-focusable hidden sm:flex items-center gap-1.5 rounded-[var(--ui-radius-sm)] px-2"
-        style={{
-          height: 'var(--ui-control-h)',
-          background: 'var(--ui-bg-input)',
-          border: '1px solid var(--ui-border)',
-          color: 'var(--ui-text-muted)',
-          fontSize: 'var(--ui-fs-sm)',
-        }}
-        title="Palette de commandes"
-      >
-        <Command className="w-3 h-3" />
-        <span>Commandes</span>
-        <kbd
-          className="ui-mono ml-1 px-1 rounded"
-          style={{ background: 'var(--ui-bg-raised)', border: '1px solid var(--ui-border)' }}
-        >
-          Ctrl K
-        </kbd>
-      </button>
-
-      <span className="ui-sep hidden sm:block" aria-hidden />
-
-      <button
-        onClick={onToggleDensity}
-        className="ui-btn ui-btn-ghost ui-btn-icon ui-focusable"
-        title={density === 'compact' ? 'Passer en densité confortable' : 'Passer en densité compacte'}
-        aria-label="Changer la densité"
-      >
-        {density === 'compact' ? <Rows4 className="w-[13px] h-[13px]" /> : <Rows3 className="w-[13px] h-[13px]" />}
-      </button>
-
-      <button
-        onClick={onToggleTheme}
-        className="ui-btn ui-btn-ghost ui-btn-icon ui-focusable"
-        title={theme === 'dark' ? 'Thème clair' : 'Thème sombre'}
-        aria-label="Changer de thème"
-      >
-        {theme === 'dark' ? <Sun className="w-[13px] h-[13px]" /> : <Moon className="w-[13px] h-[13px]" />}
-      </button>
-
-      {onTogglePinned && (
+      {/* ── Outils poste de travail ── */}
+      <div className="flex items-center gap-0.5 shrink-0" style={NO_DRAG}>
         <button
-          onClick={onTogglePinned}
-          className="ui-btn ui-btn-ghost ui-focusable px-2"
-          style={{
-            color: pinnedCount > 0 ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
-            background: pinnedCount > 0 ? 'var(--ui-accent-soft)' : 'transparent',
-          }}
-          title="Ouvrir le carnet de bord de l’analyste"
-          aria-label="Carnet de bord de l’analyste"
+          onClick={onOpenPalette}
+          className="ui-btn ui-btn-ghost ui-focusable hidden sm:inline-flex px-2"
+          style={{ height: 24 }}
+          title="Palette de commandes (Ctrl+K)"
         >
-          <Bookmark className="w-[13px] h-[13px]" />
-          <span className="hidden md:inline">Bloc-notes</span>
-          {pinnedCount > 0 && (
-            <span className="ui-tag ui-tag-accent ui-num px-1">{pinnedCount}</span>
-          )}
+          <Command className="w-3 h-3" />
+          <span className="hidden xl:inline">Commandes</span>
+          <kbd className="ui-mono" style={{ color: 'var(--ui-text-faint)' }}>Ctrl+K</kbd>
         </button>
-      )}
 
-      <span
-        className="ui-tag ui-tag-success hidden xl:inline-flex mr-1"
-        title="Traitement effectué sur cette machine"
-      >
-        <Monitor className="w-3 h-3" />
-        Local
-      </span>
+        <button
+          onClick={onToggleDensity}
+          className="ui-btn ui-btn-ghost ui-focusable"
+          style={{ width: 24, height: 24, padding: 0 }}
+          title={density === 'compact' ? 'Densité confortable' : 'Densité compacte'}
+          aria-label="Changer la densité"
+        >
+          {density === 'compact' ? <Rows4 className="w-3.5 h-3.5" /> : <Rows3 className="w-3.5 h-3.5" />}
+        </button>
+
+        <button
+          onClick={onToggleTheme}
+          className="ui-btn ui-btn-ghost ui-focusable"
+          style={{ width: 24, height: 24, padding: 0 }}
+          title={theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'}
+          aria-label="Changer de thème"
+        >
+          {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+        </button>
+
+        {onTogglePinned && (
+          <button
+            onClick={onTogglePinned}
+            className="ui-btn ui-btn-ghost ui-focusable px-2"
+            style={{
+              height: 24,
+              color: pinnedCount > 0 ? 'var(--ui-accent-text)' : 'var(--ui-text-muted)',
+              background: pinnedCount > 0 ? 'var(--ui-accent-soft)' : 'transparent',
+            }}
+            title="Carnet de bord de l’analyste"
+            aria-label="Carnet de bord de l’analyste"
+          >
+            <Bookmark className="w-3 h-3" />
+            <span className="hidden md:inline">Bloc-notes</span>
+            {pinnedCount > 0 && <span className="ui-mono ui-num">{pinnedCount}</span>}
+          </button>
+        )}
+      </div>
     </header>
   );
 }

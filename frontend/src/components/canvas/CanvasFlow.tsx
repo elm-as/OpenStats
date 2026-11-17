@@ -25,6 +25,7 @@ import { CanvasActionToolbar } from './CanvasActionToolbar';
 import { CanvasPipelineResultsPanel } from './CanvasPipelineResultsPanel';
 import { CanvasShareModal } from './CanvasShareModal';
 import { useCurrentTheme } from '../viz/PlotlyBase';
+import { getCanvasSessionSnapshot, saveCanvasLogs } from './canvasSessionStore';
 
 export { nodeTypes, edgeTypes };
 
@@ -37,9 +38,13 @@ function DnDFlow() {
     result: any;
   } | null>(null);
 
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>(() => getCanvasSessionSnapshot().logs);
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  useEffect(() => {
+    saveCanvasLogs(logs);
+  }, [logs]);
 
   const addLog = useCallback(
     (message: string, level: 'info' | 'success' | 'error' = 'info', nodeId?: string) => {

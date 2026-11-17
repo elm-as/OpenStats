@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import { apiFetch } from '../../lib/apiBase';
 import { getNodeLabel, type NodeResult } from './canvasGraphConfig';
+import { getCanvasSessionSnapshot, saveCanvasPipelineState } from './canvasSessionStore';
 
 interface UseCanvasPipelineProps {
   nodes: Node[];
@@ -78,9 +79,16 @@ function handleSseEvent(ctx: SseDispatchContext) {
 
 export function useCanvasPipeline(props: UseCanvasPipelineProps) {
   const { nodes, setNodes, edges, addLog, setSelectedResultNode } = props;
+  const cached = getCanvasSessionSnapshot();
   const [isRunning, setIsRunning] = useState(false);
-  const [pipelineResults, setPipelineResults] = useState<Record<string, NodeResult> | null>(null);
-  const [showResults, setShowResults] = useState(false);
+  const [pipelineResults, setPipelineResults] = useState<Record<string, NodeResult> | null>(
+    cached.pipelineResults,
+  );
+  const [showResults, setShowResults] = useState(cached.showResults);
+
+  useEffect(() => {
+    saveCanvasPipelineState(pipelineResults, showResults);
+  }, [pipelineResults, showResults]);
 
   const resolveNodeLabel = useCallback(
     (nodeId: string) => {
@@ -89,6 +97,33 @@ export function useCanvasPipeline(props: UseCanvasPipelineProps) {
     },
     [nodes]
   );
+
+  // Restaure le gestionnaire d'ouverture de résultat sur les nœuds conservés entre onglets.
+  useEffect(() => {
+    if (!pipelineResults) return;
+    setNodes(nds =>
+      nds.map(n => {
+        if (!n.data?.runResult || typeof n.data.onOpenResult === 'function') return n;
+        const storedResult = n.data.runResult;
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            onOpenResult: (targetId: string) => {
+              const targetNode = nds.find(tn => tn.id === targetId) || n;
+              setSelectedResultNode({
+                id: targetId,
+                type: targetNode.type || '',
+                title: getNodeLabel(targetId, targetNode.type),
+                result: storedResult,
+              });
+            },
+          },
+        };
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const dispatchChunks = (chunks: string[]) => {
     for (const chunk of chunks) {

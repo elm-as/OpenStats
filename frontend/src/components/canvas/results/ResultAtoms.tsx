@@ -13,7 +13,13 @@ export const fmt = (v: unknown): string => {
   }
   if (typeof v === 'string') return v;
   if (Array.isArray(v)) return v.map(fmt).join(', ');
-  if (typeof v === 'object') return JSON.stringify(v);
+  if (typeof v === 'object') {
+    const obj = v as Record<string, unknown>;
+    if ('lower' in obj && 'upper' in obj) {
+      return `[${fmt(obj.lower)} ; ${fmt(obj.upper)}]`;
+    }
+    return JSON.stringify(v);
+  }
   return String(v);
 };
 

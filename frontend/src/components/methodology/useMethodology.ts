@@ -1,143 +1,64 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { apiFetch } from '../../lib/apiBase';
-import type { MethodologyEvent, Remedy, Stage } from './methodologyTypes';
+import type { Remedy } from './methodologyTypes';
+import {
+  applyMethodologyRemedies,
+  getMethodologySnapshot,
+  resetMethodologySession,
+  runMethodologySession,
+  stopMethodologySession,
+  subscribeMethodologyStore,
+  updateMethodologySession,
+  type RunOptions,
+} from './methodologySessionStore';
 
-export interface RunOptions {
-  target: string | null;
-  maxIterations: number;
-  allowAggressive: boolean;
-}
-
-function dispatchMethodologyChunks(
-  chunks: string[],
-  setStages: React.Dispatch<React.SetStateAction<Stage[]>>,
-  onTerminal: { setDone: (done: boolean) => void; setError: (msg: string | null) => void },
-) {
-  for (const chunk of chunks) {
-    const line = chunk.split('\n').find(l => l.startsWith('data: '));
-    if (!line) continue;
-    try {
-      const event = JSON.parse(line.slice(6)) as MethodologyEvent;
-      if (event.type === 'stage') setStages(prev => [...prev, event.stage]);
-      else if (event.type === 'complete') onTerminal.setDone(true);
-      else if (event.type === 'error') onTerminal.setError(event.error);
-    } catch {
-      continue;
-    }
-  }
-}
+export type { RunOptions };
 
 /**
- * Pilote une exécution de la méthodologie.
- *
- * Le flux SSE délivre une étape à la fois : l'écran se remplit au fur et à
- * mesure au lieu d'afficher un spinner puis un pavé.
+ * Pilote une exécution de la méthodologie en s'appuyant sur un store de session
+ * persistant : changer d'onglet n'interrompt ni n'efface l'analyse en cours.
  */
 export function useMethodology(datasetId: string | undefined) {
   const [columns, setColumns] = useState<string[]>([]);
-  const [stages, setStages] = useState<Stage[]>([]);
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [applyResult, setApplyResult] = useState<string | null>(null);
-
-  const abortRef = useRef<AbortController | null>(null);
-
-  const reset = useCallback(() => {
-    setStages([]);
-    setError(null);
-    setDone(false);
-    setApplyResult(null);
-  }, []);
-
-  const stop = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setRunning(false);
-  }, []);
-
-  const run = useCallback(
-    async (options: RunOptions) => {
-      if (!datasetId || running) return;
-      reset();
-      setRunning(true);
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      try {
-        const response = await apiFetch(`/datasets/${datasetId}/methodology/stream`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            target: options.target,
-            max_iterations: options.maxIterations,
-            allow_aggressive: options.allowAggressive,
-          }),
-          signal: controller.signal,
-        });
-        if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        for (;;) {
-          const { done: finished, value } = await reader.read();
-          if (finished) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const chunks = buffer.split('\n\n');
-          buffer = chunks.pop() ?? '';
-          dispatchMethodologyChunks(chunks, setStages, { setDone, setError });
-        }
-      } catch (err) {
-        if (!(err instanceof DOMException && err.name === 'AbortError')) {
-          setError(err instanceof Error ? err.message : 'Exécution interrompue');
-        }
-      } finally {
-        setRunning(false);
-        abortRef.current = null;
-      }
-    },
-    [datasetId, running, reset],
+  const session = useSyncExternalStore(
+    subscribeMethodologyStore,
+    () => getMethodologySnapshot(datasetId),
+    () => getMethodologySnapshot(undefined),
   );
 
-  /** Applique les corrections retenues et enregistre une nouvelle version. */
+  const run = useCallback(
+    (options: RunOptions) => (datasetId ? runMethodologySession(datasetId, options) : Promise.resolve()),
+    [datasetId],
+  );
+
+  const stop = useCallback(() => {
+    if (datasetId) stopMethodologySession(datasetId);
+  }, [datasetId]);
+
+  const reset = useCallback(() => {
+    if (datasetId) resetMethodologySession(datasetId);
+  }, [datasetId]);
+
+  const setTarget = useCallback((target: string | null) => {
+    if (datasetId) updateMethodologySession(datasetId, { target });
+  }, [datasetId]);
+
+  const setMaxIterations = useCallback((maxIterations: number) => {
+    if (datasetId) updateMethodologySession(datasetId, { maxIterations });
+  }, [datasetId]);
+
+  const setAllowAggressive = useCallback((allowAggressive: boolean) => {
+    if (datasetId) updateMethodologySession(datasetId, { allowAggressive });
+  }, [datasetId]);
+
   const applyRemedies = useCallback(
     async (remedies: Remedy[], target: string | null, label?: string) => {
-      if (!datasetId || !remedies.length) return null;
-      setApplying(true);
-      setApplyResult(null);
-      try {
-        const response = await apiFetch(`/datasets/${datasetId}/methodology/apply`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ remedies, target, label, save_as_version: true }),
-        });
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload?.error ?? `HTTP ${response.status}`);
-
-        const version = payload.version?.version_number;
-        setApplyResult(
-          `${payload.applied.filter((a: { ok: boolean }) => a.ok).length} correction(s) appliquée(s)`
-          + (version ? ` — version ${version} enregistrée` : '')
-          + ` — ${payload.shape.rows} lignes × ${payload.shape.columns} colonnes.`,
-        );
-        return payload;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Application impossible');
-        return null;
-      } finally {
-        setApplying(false);
-      }
+      if (!datasetId) return null;
+      return applyMethodologyRemedies(datasetId, remedies, { target, label });
     },
     [datasetId],
   );
 
-  // Colonnes du dataset : le resume de la liste ne porte qu'un decompte,
-  // les noms viennent du detail.
   useEffect(() => {
     if (!datasetId) return;
     let cancelled = false;
@@ -147,8 +68,6 @@ export function useMethodology(datasetId: string | undefined) {
         const response = await apiFetch(`/datasets/${datasetId}`);
         if (!response.ok) return;
         const payload = await response.json();
-        // `active_columns` est un décompte, pas une liste : les noms de colonnes
-        // se trouvent dans le dictionnaire du profil.
         const fromProfile: string[] = (payload.profile?.dictionary ?? [])
           .map((entry: { nom_brut?: string }) => entry?.nom_brut)
           .filter((name: unknown): name is string => typeof name === 'string' && name.length > 0);
@@ -168,7 +87,23 @@ export function useMethodology(datasetId: string | undefined) {
     return () => { cancelled = true; };
   }, [datasetId]);
 
-  useEffect(() => () => abortRef.current?.abort(), []);
-
-  return { columns, stages, running, done, error, run, stop, reset, applyRemedies, applying, applyResult };
+  return {
+    columns,
+    stages: session.stages,
+    running: session.running,
+    done: session.done,
+    error: session.error,
+    applying: session.applying,
+    applyResult: session.applyResult,
+    target: session.target,
+    maxIterations: session.maxIterations,
+    allowAggressive: session.allowAggressive,
+    setTarget,
+    setMaxIterations,
+    setAllowAggressive,
+    run,
+    stop,
+    reset,
+    applyRemedies,
+  };
 }

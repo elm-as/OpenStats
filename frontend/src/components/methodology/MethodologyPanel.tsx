@@ -29,12 +29,10 @@ export default function MethodologyPanel({ datasetId, datasetName }: Props) {
   const {
     columns, stages, running, done, error, run, stop, reset,
     applyRemedies, applying, applyResult,
+    target, maxIterations, allowAggressive, setTarget, setMaxIterations, setAllowAggressive,
   } = useMethodology(datasetId);
   const { setStatus } = useStatus();
 
-  const [target, setTarget] = useState<string | null>(null);
-  const [maxIterations, setMaxIterations] = useState(5);
-  const [allowAggressive, setAllowAggressive] = useState(true);
   const [active, setActive] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 

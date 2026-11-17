@@ -2,7 +2,7 @@
 ; Charte ElmasCore - "From Data to Systems"
 
 #define MyAppName "OpenStats Desktop"
-#define MyAppVersion "1.0.0-rc.1"
+#define MyAppVersion "1.0.0-rc.2"
 #define MyAppPublisher "ElmasCore"
 #define MyAppURL "https://openstats.elmas.solutions"
 #define MyAppExeName "OpenStats Desktop.exe"

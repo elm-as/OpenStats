@@ -1,6 +1,6 @@
 # 🖥️ OpenStats Desktop — Guide de Démarrage & Compilation (.exe)
 
-Ce guide explique comment développer, tester et générer le fichier d'installation Windows autonome (`OpenStats_Setup_v1.0.0-rc.1.exe`).
+Ce guide explique comment développer, tester et générer le fichier d'installation Windows autonome (`OpenStats_Setup_v1.0.0-rc.2.exe`).
 
 ---
 
@@ -105,7 +105,7 @@ python scripts/build_installer.py
 ## 🎯 Résultat de la compilation
 
 Le fichier d'installation généré se trouve dans :
-`frontend/release/OpenStats_Setup_v1.0.0-rc.1.exe` (~315 Mo avec compression ultra LZMA2)
+`frontend/release/OpenStats_Setup_v1.0.0-rc.2.exe` (~315 Mo avec compression ultra LZMA2)
 
 Lorsque l'utilisateur exécute cet installateur :
 1. L'application s'installe proprement sans demander Python ou Node.

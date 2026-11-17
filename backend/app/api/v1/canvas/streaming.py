@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from flask import request, jsonify, current_app, Response, stream_with_context
 
 from app.api.v1 import api_v1_bp
-from app.api.v1.canvas.graph import _has_prep_ancestor
+from app.api.v1.canvas.graph import _resolve_cleaned_flag
 from app.api.v1.canvas.nodes import execute_node, _sanitize
 
 logger = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ def stream_canvas_pipeline():
             node_type = node.get("type", "")
             node_data = node.get("data", {})
             clean_data = {k: v for k, v in node_data.items() if k not in ("onChange", "onDelete")}
-            clean_data["_cleaned"] = _has_prep_ancestor(node_id, parents, node_map)
+            clean_data["_cleaned"] = _resolve_cleaned_flag(node_id, parents, node_map)
 
             can_use_cache = ("runResult" in clean_data and clean_data["runResult"]) and not _has_rerun_ancestor(node_id)
             if can_use_cache:

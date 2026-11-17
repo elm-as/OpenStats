@@ -32,6 +32,84 @@ def _baseline_scores(y: np.ndarray, problem: str, splits) -> float:
     return float(np.mean(scores)) if scores else 0.0
 
 
+MAX_BENCHMARK_ROWS = 25000
+
+
+def _subsample_for_cv(
+    X: pd.DataFrame, y: pd.Series, options: dict[str, Any]
+) -> tuple[pd.DataFrame, pd.Series]:
+    """Réduit un grand jeu de données de façon reproductible pour accélérer la CV."""
+    max_rows = int(options["max_rows"])
+    if len(X) <= max_rows:
+        return X, y
+    rng = np.random.default_rng(0)
+    if options.get("stratify") and y.nunique() > 1:
+        from sklearn.model_selection import train_test_split
+        idx, _ = train_test_split(
+            np.arange(len(X)), train_size=max_rows, stratify=y, random_state=0
+        )
+        idx = np.sort(idx)
+    else:
+        idx = np.sort(rng.choice(len(X), max_rows, replace=False))
+    return X.iloc[idx], y.iloc[idx]
+
+
+def _build_splits(
+    n_rows: int, y_values: np.ndarray, mode: dict[str, Any]
+) -> tuple[Any, str] | tuple[None, dict[str, Any]]:
+    """Construit le découpage de validation adapté au type de problème."""
+    from sklearn.model_selection import KFold, StratifiedKFold, TimeSeriesSplit
+
+    is_regression = mode["problem"] == "regression"
+    n_splits = 5 if n_rows >= 100 else 3
+    if mode.get("is_timeseries"):
+        return TimeSeriesSplit(n_splits=n_splits), "découpage chronologique (TimeSeriesSplit)"
+    if is_regression:
+        return KFold(n_splits=n_splits, shuffle=True, random_state=0), f"validation croisée {n_splits} plis"
+
+    counts = pd.Series(y_values).value_counts()
+    n_splits = min(n_splits, int(counts.min()))
+    if n_splits < 2:
+        return None, {"error": "Classe trop rare pour une validation croisée fiable.", "results": [], "validation": None}
+    return StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=0), f"validation croisée stratifiée {n_splits} plis"
+
+
+def _evaluate_spec(spec: Any, ctx: dict[str, Any]) -> dict[str, Any]:
+    """Évalue un candidat unique, avec plafond de taille propre aux algorithmes O(N²)."""
+    from sklearn.model_selection import cross_val_score
+
+    X_spec, y_spec = ctx["X"], ctx["y"]
+    splits = ctx["splits"]
+    is_regression = ctx["problem"] == "regression"
+
+    if not ctx["is_timeseries"] and spec.max_cv_rows and len(X_spec) > spec.max_cv_rows:
+        X_spec, y_spec = _subsample_for_cv(X_spec, y_spec, {"max_rows": spec.max_cv_rows, "stratify": not is_regression})
+        splitter, _ = _build_splits(len(X_spec), y_spec.to_numpy(), {"problem": ctx["problem"], "is_timeseries": False})
+        if splitter is None:
+            return {"key": spec.key, "label": spec.label, "family": spec.family, "status": "skipped", "reason": "classe trop rare"}
+        splits = list(splitter.split(X_spec, y_spec.to_numpy() if not is_regression else None))
+
+    build_ctx = {"n_rows": len(X_spec), "n_features": X_spec.shape[1]}
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        evaluation = attempt(
+            lambda: cross_val_score(
+                spec.build(build_ctx), X_spec, y_spec.to_numpy(), cv=splits, scoring=ctx["scoring"], n_jobs=1
+            )
+        )
+    if not evaluation:
+        return {"key": spec.key, "label": spec.label, "family": spec.family, "status": "error", "reason": evaluation.reason}
+
+    mean, std = float(np.mean(evaluation.value)), float(np.std(evaluation.value))
+    return {
+        "key": spec.key, "label": spec.label, "family": spec.family, "status": "ok",
+        "score": round(mean, 4), "std": round(std, 4),
+        "gain_vs_baseline": round(mean - ctx["baseline"], 4),
+        "fold_scores": [round(float(s), 4) for s in evaluation.value],
+        "strengths": spec.strengths, "caveat": spec.caveat,
+    }
+
+
 def compare_models(X: pd.DataFrame, y: pd.Series, problem: str,
                    is_timeseries: bool = False, budget_sec: float = 60.0,
                    keys: list[str] | None = None) -> dict[str, Any]:
@@ -39,68 +117,46 @@ def compare_models(X: pd.DataFrame, y: pd.Series, problem: str,
 
     Le decoupage respecte l'ordre du temps quand le jeu est temporel.
     """
-    from sklearn.model_selection import KFold, StratifiedKFold, TimeSeriesSplit
-
     n_rows, n_features = len(X), X.shape[1]
     is_regression = problem == "regression"
-    y_values = y.to_numpy()
 
-    n_splits = 5 if n_rows >= 100 else 3
-    if is_timeseries:
-        splitter = TimeSeriesSplit(n_splits=n_splits)
-        validation = "découpage chronologique (TimeSeriesSplit)"
-    elif is_regression:
-        splitter = KFold(n_splits=n_splits, shuffle=True, random_state=0)
-        validation = f"validation croisée {n_splits} plis"
-    else:
-        counts = pd.Series(y_values).value_counts()
-        n_splits = min(n_splits, int(counts.min()))
-        if n_splits < 2:
-            return {"error": "Classe trop rare pour une validation croisée fiable.",
-                    "results": [], "validation": None}
-        splitter = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=0)
-        validation = f"validation croisée stratifiée {n_splits} plis"
+    X_eval, y_eval = (X, y) if is_timeseries else _subsample_for_cv(
+        X, y, {"max_rows": MAX_BENCHMARK_ROWS, "stratify": not is_regression}
+    )
+    y_values = y_eval.to_numpy()
+    splitter, validation_or_err = _build_splits(
+        len(X_eval), y_values, {"problem": problem, "is_timeseries": is_timeseries}
+    )
+    if splitter is None:
+        return validation_or_err
 
-    splits = list(splitter.split(X, y_values if not is_regression else None))
+    validation = validation_or_err
+    if len(X_eval) < n_rows:
+        validation = f"{validation} (échantillon {len(X_eval):,}/{n_rows:,})".replace(",", " ")
+
+    splits = list(splitter.split(X_eval, y_values if not is_regression else None))
     baseline = _baseline_scores(y_values, "regression" if is_regression else "classification", splits)
     metric = "R²" if is_regression else "exactitude équilibrée"
     scoring = "r2" if is_regression else "balanced_accuracy"
+    eval_ctx = {
+        "X": X_eval, "y": y_eval, "problem": problem,
+        "is_timeseries": is_timeseries, "splits": splits,
+        "scoring": scoring, "baseline": baseline,
+    }
 
     selected = [s for s in CATALOG
                 if (keys is None or s.key in keys)
                 and s.applicable(problem, n_rows, n_features)[0]]
 
-    from sklearn.model_selection import cross_val_score
-
     results: list[dict[str, Any]] = []
     started = time.time()
-    context = {"n_rows": n_rows, "n_features": n_features}
 
     for spec in selected:
         if time.time() - started > budget_sec:
             results.append({"key": spec.key, "label": spec.label, "family": spec.family,
                             "status": "skipped", "reason": "budget de temps atteint"})
             continue
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            evaluation = attempt(
-                lambda: cross_val_score(spec.build(context), X, y_values, cv=splits,
-                                        scoring=scoring, n_jobs=1))
-        if not evaluation:
-            results.append({"key": spec.key, "label": spec.label, "family": spec.family,
-                            "status": "error", "reason": evaluation.reason})
-            continue
-
-        scores = evaluation.value
-        mean, std = float(np.mean(scores)), float(np.std(scores))
-        results.append({
-            "key": spec.key, "label": spec.label, "family": spec.family,
-            "status": "ok",
-            "score": round(mean, 4), "std": round(std, 4),
-            "gain_vs_baseline": round(mean - baseline, 4),
-            "fold_scores": [round(float(s), 4) for s in scores],
-            "strengths": spec.strengths, "caveat": spec.caveat,
-        })
+        results.append(_evaluate_spec(spec, eval_ctx))
 
     scored = [r for r in results if r["status"] == "ok"]
     scored.sort(key=lambda r: -r["score"])

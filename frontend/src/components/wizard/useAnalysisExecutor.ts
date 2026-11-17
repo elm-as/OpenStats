@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   useRunAnalysisMutation,
   useRunTestMutation,
   useTrainModelsMutation,
   useRunStationarityMutation,
   useRunAdvancedAnalysisMutation,
-  type StationarityResult,
 } from '../../store/api';
 import type {
   AnalysisCapability,
-  DescriptiveStats,
   CorrelationResult,
-  TestResult,
-  ModelResults,
+  DescriptiveStats,
 } from '../../types';
 import type { WizardStep } from './WizardTypes';
+import {
+  getWizardSnapshot,
+  subscribeWizardStore,
+  updateWizardSession,
+} from './wizardSessionStore';
 
 const ADVANCED_KEYS = new Set([
   'survival',
@@ -45,48 +47,53 @@ export function useAnalysisExecutor(datasetId: string) {
   const [trainModels, { isLoading: training }] = useTrainModelsMutation();
   const [runAdvancedAnalysis, { isLoading: runningAdvanced }] = useRunAdvancedAnalysisMutation();
 
-  const [descriptiveStats, setDescriptiveStats] = useState<DescriptiveStats | null>(null);
-  const [correlations, setCorrelations] = useState<CorrelationResult | null>(null);
-  const [vif, setVif] = useState<{ variable: string; vif: number; multicollinearity: string }[]>([]);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [stationarityResult, setStationarityResult] = useState<StationarityResult | null>(null);
-  const [modelResults, setModelResults] = useState<ModelResults | null>(null);
-  const [advancedResult, setAdvancedResult] = useState<{ key: string; data: any } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const session = useSyncExternalStore(
+    subscribeWizardStore,
+    () => getWizardSnapshot(datasetId),
+    () => getWizardSnapshot(undefined),
+  );
 
   const resetResults = () => {
-    setError(null);
-    setTestResult(null);
-    setStationarityResult(null);
-    setModelResults(null);
-    setDescriptiveStats(null);
-    setCorrelations(null);
-    setVif([]);
-    setAdvancedResult(null);
+    updateWizardSession(datasetId, {
+      error: null,
+      testResult: null,
+      stationarityResult: null,
+      modelResults: null,
+      descriptiveStats: null,
+      correlations: null,
+      vif: [],
+      advancedResult: null,
+    });
   };
 
   const dispatchAnalysis = async (opts: ExecuteAnalysisOptions) => {
     const { analysis, config, selectedModels, setWizardStep } = opts;
     if (analysis.key === 'descriptive_numeric' || analysis.key === 'descriptive_categorical') {
       const result = await runAnalysis(datasetId).unwrap();
-      setDescriptiveStats(result.descriptive_stats as DescriptiveStats);
-      setCorrelations(null);
-      setVif([]);
+      updateWizardSession(datasetId, {
+        descriptiveStats: result.descriptive_stats as DescriptiveStats,
+        correlations: null,
+        vif: [],
+      });
       return;
     }
     if (analysis.key === 'correlation_pearson' || analysis.key === 'correlation_spearman') {
       const result = await runAnalysis(datasetId).unwrap();
       const method = analysis.key === 'correlation_pearson' ? 'pearson' : 'spearman';
-      setCorrelations((result.correlations as Record<string, CorrelationResult>)?.[method] || null);
-      setDescriptiveStats(null);
-      setVif([]);
+      updateWizardSession(datasetId, {
+        correlations: (result.correlations as Record<string, CorrelationResult>)?.[method] || null,
+        descriptiveStats: null,
+        vif: [],
+      });
       return;
     }
     if (analysis.key === 'vif') {
       const result = await runAnalysis(datasetId).unwrap();
-      setVif(result.vif as typeof vif);
-      setDescriptiveStats(null);
-      setCorrelations(null);
+      updateWizardSession(datasetId, {
+        vif: result.vif as typeof session.vif,
+        descriptiveStats: null,
+        correlations: null,
+      });
       return;
     }
     if (TEST_TYPES[analysis.key]) {
@@ -95,17 +102,21 @@ export function useAnalysisExecutor(datasetId: string) {
         testType === 'compare_means'
           ? { test_type: testType, group_col: config.group_col, value_col: config.value_col }
           : { test_type: testType, col1: config.col1, col2: config.col2 };
-      setTestResult(await runTest({ id: datasetId, config: testConfig }).unwrap());
+      updateWizardSession(datasetId, {
+        testResult: await runTest({ id: datasetId, config: testConfig }).unwrap(),
+      });
       return;
     }
     if (analysis.key === 'test_stationarity') {
-      setStationarityResult(await runStationarity({ id: datasetId, col: config.col }).unwrap());
-      setTestResult(null);
+      updateWizardSession(datasetId, {
+        stationarityResult: await runStationarity({ id: datasetId, col: config.col }).unwrap(),
+        testResult: null,
+      });
       return;
     }
     if (analysis.key.startsWith('modeling_')) {
       if (!config.target_column) {
-        setError('Variable cible requise');
+        updateWizardSession(datasetId, { error: 'Variable cible requise' });
         return;
       }
       const res = await trainModels({
@@ -114,7 +125,7 @@ export function useAnalysisExecutor(datasetId: string) {
         models: selectedModels.length > 0 ? selectedModels : undefined,
         split_strategy: (config.split_strategy as any) || undefined,
       }).unwrap();
-      setModelResults(res);
+      updateWizardSession(datasetId, { modelResults: res });
       return;
     }
     if (analysis.key === 'timeseries' || analysis.key === 'timeseries_multivariate') {
@@ -123,17 +134,17 @@ export function useAnalysisExecutor(datasetId: string) {
     }
     if (ADVANCED_KEYS.has(analysis.key)) {
       const res = await runAdvancedAnalysis({ id: datasetId, analysis_key: analysis.key, params: config }).unwrap();
-      setAdvancedResult({ key: analysis.key, data: res.result });
+      updateWizardSession(datasetId, { advancedResult: { key: analysis.key, data: res.result } });
     }
   };
 
   const executeAnalysis = async (opts: ExecuteAnalysisOptions) => {
-    setError(null);
+    updateWizardSession(datasetId, { error: null });
     opts.setWizardStep('results');
     try {
       await dispatchAnalysis(opts);
     } catch (err: any) {
-      setError(err?.data?.error || err?.message || 'Erreur inconnue');
+      updateWizardSession(datasetId, { error: err?.data?.error || err?.message || 'Erreur inconnue' });
       opts.setWizardStep('results');
     }
   };
@@ -141,15 +152,15 @@ export function useAnalysisExecutor(datasetId: string) {
   const isLoading = Boolean(analyzing || testing || training || testingStationarity || runningAdvanced);
 
   return {
-    descriptiveStats,
-    correlations,
-    vif,
-    testResult,
-    stationarityResult,
-    modelResults,
-    advancedResult,
-    error,
-    setError,
+    descriptiveStats: session.descriptiveStats,
+    correlations: session.correlations,
+    vif: session.vif,
+    testResult: session.testResult,
+    stationarityResult: session.stationarityResult,
+    modelResults: session.modelResults,
+    advancedResult: session.advancedResult,
+    error: session.error,
+    setError: (error: string | null) => updateWizardSession(datasetId, { error }),
     resetResults,
     executeAnalysis,
     isLoading,

@@ -41,6 +41,7 @@ class ModelSpec:
     build: Callable[[dict[str, Any]], Any]
     requires: tuple[str, ...] = ()    # modules necessaires
     min_rows: int = MIN_ROWS
+    max_cv_rows: int | None = None    # plafond d'observations en validation croisee (O(N^2))
     strengths: str = ""
     caveat: str = ""
 
@@ -170,21 +171,22 @@ CATALOG: list[ModelSpec] = [
               caveat="Coefficients non interprétables directement."),
     ModelSpec("gbm_reg", "Gradient boosting", "boosting", ("regression",), _gbm_reg, min_rows=60,
               strengths="Souvent le plus performant sur données tabulaires."),
-    ModelSpec("xgb_reg", "XGBoost", "boosting", ("regression",), _xgb_reg,
-              requires=("xgboost",), min_rows=60,
-              strengths="Boosting optimisé, robuste aux valeurs manquantes."),
     ModelSpec("lgbm_reg", "LightGBM", "boosting", ("regression",), _lgbm_reg,
               requires=("lightgbm",), min_rows=80,
               strengths="Très rapide sur les grands jeux de données."),
+    ModelSpec("xgb_reg", "XGBoost", "boosting", ("regression",), _xgb_reg,
+              requires=("xgboost",), min_rows=60,
+              strengths="Boosting optimisé, robuste aux valeurs manquantes."),
 
     # ── Classification ──
     ModelSpec("logistic", "Régression logistique", "lineaire",
               ("classification_binaire", "classification_multiclasse"), _logistic,
               strengths="Rapports de cotes interprétables.",
               caveat="Suppose une frontière linéaire."),
-    ModelSpec("rf_clf", "Forêt aléatoire", "arbres",
-              ("classification_binaire", "classification_multiclasse"), _rf_clf,
-              strengths="Robuste, gère les frontières complexes."),
+    ModelSpec("lgbm_clf", "LightGBM", "boosting",
+              ("classification_binaire", "classification_multiclasse"), _lgbm_clf,
+              requires=("lightgbm",), min_rows=80,
+              strengths="Rapide, gère nativement les catégories."),
     ModelSpec("gbm_clf", "Gradient boosting", "boosting",
               ("classification_binaire", "classification_multiclasse"), _gbm_clf, min_rows=60,
               strengths="Généralement le plus précis sur données tabulaires."),
@@ -192,18 +194,19 @@ CATALOG: list[ModelSpec] = [
               ("classification_binaire", "classification_multiclasse"), _xgb_clf,
               requires=("xgboost",), min_rows=60,
               strengths="Boosting optimisé."),
-    ModelSpec("lgbm_clf", "LightGBM", "boosting",
-              ("classification_binaire", "classification_multiclasse"), _lgbm_clf,
-              requires=("lightgbm",), min_rows=80,
-              strengths="Rapide, gère nativement les catégories."),
+    ModelSpec("rf_clf", "Forêt aléatoire", "arbres",
+              ("classification_binaire", "classification_multiclasse"), _rf_clf,
+              strengths="Robuste, gère les frontières complexes."),
     ModelSpec("svm", "SVM (noyau RBF)", "arbres",
               ("classification_binaire", "classification_multiclasse"), _svm_clf, min_rows=50,
+              max_cv_rows=3000,
               strengths="Efficace en petite dimension avec frontière non linéaire.",
-              caveat="Coûteux au-delà de quelques milliers de lignes."),
+              caveat="Coûteux au-delà de quelques milliers de lignes (plafonné à 3 000 en CV)."),
     ModelSpec("knn", "k plus proches voisins", "arbres",
               ("classification_binaire", "classification_multiclasse"), _knn_clf,
+              max_cv_rows=8000,
               strengths="Aucune hypothèse de forme.",
-              caveat="Sensible à l'échelle et au bruit."),
+              caveat="Sensible à l'échelle et au bruit (plafonné à 8 000 en CV)."),
 ]
 
 CATALOG_BY_KEY = {spec.key: spec for spec in CATALOG}

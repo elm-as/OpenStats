@@ -187,12 +187,15 @@ class DatasetManager(
         """Retourne l'entité SQLAlchemy brute d'un dataset."""
         return db.session.get(Dataset, dataset_id)
 
-    def get_parquet_path(self, dataset_id: str, version: int = 2) -> str | None:
+    def get_parquet_path(self, dataset_id: str, version: int | None = None) -> str | None:
         """Retourne le chemin absolu vers le fichier Parquet pour l'analyse via DuckDB."""
         ds = db.session.get(Dataset, dataset_id)
         if ds is None:
             return None
-        path = storage._version_path(dataset_id, version)
+        resolved_version = version if version is not None else max(
+            (v.version_number for v in ds.versions), default=2
+        )
+        path = storage._version_path(dataset_id, resolved_version)
         if not path.exists():
             return None
         return str(path.absolute())

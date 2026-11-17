@@ -49,3 +49,23 @@ def _has_prep_ancestor(node_id: str, parents: dict[str, list[str]], node_map: di
             return True
         stack.extend(parents.get(curr, []))
     return False
+
+
+def _resolve_cleaned_flag(
+    node_id: str, parents: dict[str, list[str]], node_map: dict[str, Any]
+) -> bool:
+    """Utilise par défaut la dernière version nettoyée du dataset, alignée sur DatasetNode."""
+    if _has_prep_ancestor(node_id, parents, node_map):
+        return True
+    visited = set()
+    stack = [node_id, *parents.get(node_id, [])]
+    while stack:
+        curr = stack.pop()
+        if curr in visited:
+            continue
+        visited.add(curr)
+        node = node_map.get(curr, {})
+        if node.get("type") == "dataset" and bool((node.get("data") or {}).get("useRaw")):
+            return False
+        stack.extend(parents.get(curr, []))
+    return True

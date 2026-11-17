@@ -16,6 +16,7 @@ type Density = 'compact' | 'comfortable';
 
 interface ElectronBridge {
   isDesktop?: boolean;
+  send?: (channel: string, data?: unknown) => void;
   on?: (channel: string, handler: (action: string) => void) => (() => void) | void;
 }
 
@@ -57,6 +58,8 @@ export default function AppShell() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem('theme', theme); } catch { /* ignoré */ }
+    const bridge = (window as unknown as { electronAPI?: ElectronBridge }).electronAPI;
+    bridge?.send?.('openstats:set-theme', theme);
   }, [theme]);
 
   useEffect(() => {
@@ -86,6 +89,11 @@ export default function AppShell() {
   const goTo = useCallback((path: string) => navigate(buildHref(path)), [navigate, buildHref]);
 
   const handleMenuAction = useCallback((action: string) => {
+    if (action.startsWith('window:')) {
+      const bridge = (window as unknown as { electronAPI?: ElectronBridge }).electronAPI;
+      bridge?.send?.('openstats:window-action', action.slice('window:'.length));
+      return;
+    }
     if (action.startsWith('navigate:')) {
       goTo(action.slice('navigate:'.length));
       return;
@@ -201,6 +209,7 @@ export default function AppShell() {
           onSelect={workspace.selectDataset}
           onRefresh={workspace.refetch}
           onOpenPalette={() => setPaletteOpen(true)}
+          onMenuAction={handleMenuAction}
           theme={theme}
           onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))}
           density={density}

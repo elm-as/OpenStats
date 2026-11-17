@@ -7,11 +7,11 @@
 
 [![English](https://img.shields.io/badge/Lang-English-0f172a?style=for-the-badge)](README.md)
 [![Français](https://img.shields.io/badge/Lang-Fran%C3%A7ais-1e293b?style=for-the-badge)](README.fr.md)
-[![Release](https://img.shields.io/badge/Release-v1.0.0--rc.1-0891b2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/elm-as/OpenStats/releases/tag/v1.0.0-rc.1)
+[![Release](https://img.shields.io/badge/Release-v1.0.0--rc.2-0891b2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/elm-as/OpenStats/releases/tag/v1.0.0-rc.2)
 [![Windows Desktop](https://img.shields.io/badge/Download-Windows_.exe-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/elm-as/OpenStats/releases/latest)
 [![License AGPLv3](https://img.shields.io/badge/License-AGPLv3-10b981?style=for-the-badge)](#license)
 
-[**Download Windows Installer (`OpenStats_Setup_v1.0.0-rc.1.exe`)**](https://github.com/elm-as/OpenStats/releases/latest) · [**User Guide (FR)**](docs/USER_GUIDE.md) · [**Technical Architecture (FR)**](docs/TECHNICAL_ARCHITECTURE.md)
+[**Download Windows Installer (`OpenStats_Setup_v1.0.0-rc.2.exe`)**](https://github.com/elm-as/OpenStats/releases/latest) · [**User Guide (FR)**](docs/USER_GUIDE.md) · [**Technical Architecture (FR)**](docs/TECHNICAL_ARCHITECTURE.md)
 
 <br/>
 
@@ -29,7 +29,7 @@ Most tools force a trade-off between point-and-click simplicity (SPSS, Jamovi) a
 - **Session-Wide FDR Control** — The Adaptive Explorer ranks relationships by mutual information and applies **Benjamini-Hochberg (5% FDR)** across every test run so chance correlations aren't sold as findings.
 - **Publication-Grade Visuals (Dark & Light)** — Okabe-Ito colorblind-safe palette, Forest Plots (`coefplot` β ± 95% CI), Kaplan-Meier survival curves, Love Plots, VAR/IRF grids, and 3× HD PNG / SVG / CSV export.
 - **Visual Canvas -> Real Code** — Wire DuckDB SQL, cleaning, econometric models, and Python scripts visually, then export topologically ordered **`.py`**, **`.R`**, **`.ipynb`**, **PDF**, **DOCX**, or **PPTX**.
-- **Standalone Windows Desktop App** — Ships as a single Electron + PyInstaller installer (`OpenStats_Setup_v1.0.0-rc.1.exe`) with Python, DuckDB, Scikit-Learn, XGBoost, LightGBM, Statsmodels, and SHAP bundled inside.
+- **Standalone Windows Desktop App** — Ships as a single Electron + PyInstaller installer (`OpenStats_Setup_v1.0.0-rc.2.exe`) with Python, DuckDB, Scikit-Learn, XGBoost, LightGBM, Statsmodels, and SHAP bundled inside.
 
 ---
 
@@ -77,7 +77,7 @@ Most tools force a trade-off between point-and-click simplicity (SPSS, Jamovi) a
 
 ### Option 1 — Windows Desktop Installer (Recommended)
 
-Download and run **`OpenStats_Setup_v1.0.0-rc.1.exe`** from [**GitHub Releases**](https://github.com/elm-as/OpenStats/releases/latest). No Python or Node.js installation required.
+Download and run **`OpenStats_Setup_v1.0.0-rc.2.exe`** from [**GitHub Releases**](https://github.com/elm-as/OpenStats/releases/latest). No Python or Node.js installation required.
 
 ### Option 2 — Run from Source
 
@@ -96,7 +96,7 @@ cd frontend && npm install && npm run dev
 <summary><b>Build Desktop Installer & Run Verification Suites</b></summary>
 
 ```bash
-# Build PyInstaller backend + Electron + Inno Setup installer -> frontend/release/OpenStats_Setup_v1.0.0-rc.1.exe
+# Build PyInstaller backend + Electron + Inno Setup installer -> frontend/release/OpenStats_Setup_v1.0.0-rc.2.exe
 python scripts/build_installer.py --rebuild-backend
 
 # Run quality & test suites

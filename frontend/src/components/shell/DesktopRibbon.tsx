@@ -56,16 +56,16 @@ export default function DesktopRibbon({ activeDatasetId, buildHref }: Props) {
 
   return (
     <div
-      className="flex items-center gap-1 px-2 shrink-0 overflow-x-auto no-scrollbar select-none"
+      className="flex items-end gap-0.5 px-2 shrink-0 overflow-x-auto no-scrollbar select-none"
       style={{
-        height: 36,
-        background: 'var(--ui-bg-sunken)',
+        height: 32,
+        background: 'var(--ui-bg-panel)',
         borderBottom: '1px solid var(--ui-border)',
       }}
       role="navigation"
       aria-label="Ruban des modules statistiques"
     >
-      <div className="flex items-center gap-0.5 min-w-0">
+      <div className="flex items-end gap-0.5 min-w-0 h-full">
         {RIBBON_TABS.map(tab => {
           const active = isRibbonTabActive(tab.key, pathname, search);
           const Icon = tab.icon;
@@ -76,17 +76,20 @@ export default function DesktopRibbon({ activeDatasetId, buildHref }: Props) {
               key={tab.key}
               to={target}
               title={tab.hint}
-              className="ui-focusable flex items-center gap-1.5 px-2.5 rounded-[var(--ui-radius-sm)] shrink-0 transition-colors"
+              className="ui-focusable flex items-center gap-1.5 px-2.5 shrink-0 transition-colors"
               style={{
-                height: 26,
+                height: 30,
                 fontSize: 'var(--ui-fs-sm)',
-                fontWeight: active ? 700 : 600,
-                background: active ? 'var(--ui-bg-panel)' : 'transparent',
-                color: active ? 'var(--ui-accent-text)' : 'var(--ui-text-secondary)',
-                border: active ? '1px solid var(--ui-border-strong)' : '1px solid transparent',
+                fontWeight: active ? 600 : 500,
+                background: active ? 'var(--ui-bg-app)' : 'transparent',
+                color: active ? 'var(--ui-text)' : 'var(--ui-text-muted)',
+                borderTop: active ? '2px solid var(--ui-accent)' : '2px solid transparent',
+                borderLeft: active ? '1px solid var(--ui-border)' : '1px solid transparent',
+                borderRight: active ? '1px solid var(--ui-border)' : '1px solid transparent',
+                borderRadius: '2px 2px 0 0',
               }}
             >
-              <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: active ? 'var(--ui-accent)' : 'var(--ui-text-muted)' }} />
+              <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: active ? 'var(--ui-accent)' : 'var(--ui-text-faint)' }} />
               <span>{tab.label}</span>
             </Link>
           );
@@ -95,7 +98,7 @@ export default function DesktopRibbon({ activeDatasetId, buildHref }: Props) {
 
       <div className="flex-1 min-w-[12px]" />
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1 shrink-0 self-center">
         <Link
           to="/workflow"
           className="ui-btn ui-focusable"

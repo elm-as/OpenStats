@@ -10,6 +10,17 @@
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'tnum';
 }
 
+/* Ergonomie bureau : le chrome applicatif ne se sélectionne pas au clic-glissé. */
+.ui-root header,
+.ui-root [role='navigation'],
+.ui-root [role='menubar'],
+.ui-root [role='tablist'],
+.ui-btn,
+.ui-panel-header,
+.ui-label {
+  user-select: none;
+}
+
 /* Les chiffres d'un outil scientifique s'alignent toujours en largeur fixe. */
 .ui-num,
 .ui-table td,

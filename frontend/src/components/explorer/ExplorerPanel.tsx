@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Play, Square, Compass, RotateCcw, AlertCircle, Search } from 'lucide-react';
 import { HelpTip } from '../ui/Tooltip';
 import FindingCard from './FindingCard';
@@ -20,11 +20,10 @@ interface Props {
 
 export default function ExplorerPanel({ datasetId, datasetName }: Props) {
   const {
-    capabilities, loadingCapabilities, target, setTarget,
+    capabilities, loadingCapabilities, target, setTarget, budget, setBudget,
     running, trace, findings, facts, result, error, elapsed, run, stop, reset,
   } = useExplorer(datasetId);
 
-  const [budget, setBudget] = useState(45);
   const { setStatus } = useStatus();
 
   const columns = useMemo(() => {

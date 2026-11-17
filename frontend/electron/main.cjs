@@ -1,4 +1,9 @@
-const { app, BrowserWindow, Menu, shell, dialog } = require('electron');
+const { app, BrowserWindow, Menu, shell, dialog, ipcMain, nativeTheme } = require('electron');
+
+const TITLEBAR_PALETTE = {
+  dark: { color: '#05070b', symbolColor: '#b8c4d4' },
+  light: { color: '#eaedf2', symbolColor: '#334155' },
+};
 const path = require('path');
 const { spawn, execFile } = require('child_process');
 const http = require('http');
@@ -194,6 +199,10 @@ function loadDevOrFallback(url, fallbackPath) {
 }
 
 function createMainWindow(port) {
+  const isWin = process.platform === 'win32';
+  const initialTheme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+  const barColors = TITLEBAR_PALETTE[initialTheme];
+
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -202,7 +211,16 @@ function createMainWindow(port) {
     show: false,
     title: 'OpenStats Desktop',
     icon: path.join(__dirname, 'icon.ico'),
-    autoHideMenuBar: false,
+    backgroundColor: barColors.color,
+    autoHideMenuBar: isWin,
+    ...(isWin ? {
+      titleBarStyle: 'hidden',
+      titleBarOverlay: {
+        color: barColors.color,
+        symbolColor: barColors.symbolColor,
+        height: 32,
+      },
+    } : {}),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -270,6 +288,43 @@ function stopBackend() {
   }
   proc.kill();
 }
+
+ipcMain.on('openstats:set-theme', (_event, theme) => {
+  const next = theme === 'light' ? 'light' : 'dark';
+  nativeTheme.themeSource = next;
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const colors = TITLEBAR_PALETTE[next];
+  mainWindow.setBackgroundColor(colors.color);
+  if (typeof mainWindow.setTitleBarOverlay === 'function') {
+    mainWindow.setTitleBarOverlay({
+      color: colors.color,
+      symbolColor: colors.symbolColor,
+      height: 32,
+    });
+  }
+});
+
+ipcMain.on('openstats:window-action', (_event, action) => {
+  if (action === 'quit') {
+    app.quit();
+    return;
+  }
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const wc = mainWindow.webContents;
+  if (action === 'devtools') wc.toggleDevTools();
+  else if (action === 'fullscreen') mainWindow.setFullScreen(!mainWindow.isFullScreen());
+  else if (action === 'zoomIn') wc.setZoomLevel(wc.getZoomLevel() + 0.5);
+  else if (action === 'zoomOut') wc.setZoomLevel(wc.getZoomLevel() - 0.5);
+  else if (action === 'zoomReset') wc.setZoomLevel(0);
+  else if (action === 'about') {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'À propos d’OpenStats Desktop',
+      message: `OpenStats Desktop v${app.getVersion()}`,
+      detail: 'Plateforme d’analyse statistique et de Data Science locale.\nElmasCore — Licence AGPLv3.',
+    });
+  }
+});
 
 app.whenReady().then(async () => {
   createSplashScreen();

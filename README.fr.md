@@ -7,11 +7,11 @@
 
 [![English](https://img.shields.io/badge/Lang-English-1e293b?style=for-the-badge)](README.md)
 [![Français](https://img.shields.io/badge/Lang-Fran%C3%A7ais-0f172a?style=for-the-badge)](README.fr.md)
-[![Release](https://img.shields.io/badge/Version-v1.0.0--rc.1-0891b2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/elm-as/OpenStats/releases/tag/v1.0.0-rc.1)
+[![Release](https://img.shields.io/badge/Version-v1.0.0--rc.2-0891b2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/elm-as/OpenStats/releases/tag/v1.0.0-rc.2)
 [![Windows Desktop](https://img.shields.io/badge/T%C3%A9l%C3%A9charger-Windows_.exe-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/elm-as/OpenStats/releases/latest)
 [![Licence AGPLv3](https://img.shields.io/badge/Licence-AGPLv3-10b981?style=for-the-badge)](#licence)
 
-[**Télécharger l'installeur Windows (`OpenStats_Setup_v1.0.0-rc.1.exe`)**](https://github.com/elm-as/OpenStats/releases/latest) · [**Guide Utilisateur**](docs/USER_GUIDE.md) · [**Architecture Technique**](docs/TECHNICAL_ARCHITECTURE.md)
+[**Télécharger l'installeur Windows (`OpenStats_Setup_v1.0.0-rc.2.exe`)**](https://github.com/elm-as/OpenStats/releases/latest) · [**Guide Utilisateur**](docs/USER_GUIDE.md) · [**Architecture Technique**](docs/TECHNICAL_ARCHITECTURE.md)
 
 <br/>
 
@@ -29,7 +29,7 @@ Là où la plupart des outils imposent de choisir entre simplicité visuelle (SP
 - **Statistiques honnêtes (contrôle FDR)** — L'Explorateur Adaptatif applique la correction de **Benjamini-Hochberg à 5 %** sur l'ensemble de la session et affiche le nombre exact d'hypothèses testées.
 - **Graphiques de niveau publication (Clair & Sombre)** — Palette accessible Okabe-Ito, Forest Plots (`coefplot` β ± IC 95 %), courbes de survie Kaplan-Meier, Love Plots, grilles IRF/FEVD et exports HD PNG (`3×`) / SVG / CSV.
 - **Du Visuel au Code Reproductible** — Assemblez vos flux SQL DuckDB, nettoyages et modèles sur le Canvas Nodal, puis exportez en un clic vers **Python (`.py`)**, **R (`.R`)**, **Jupyter (`.ipynb`)**, **PDF**, **DOCX** ou **PPTX**.
-- **Application Desktop Windows Autonome** — Un seul installeur (`OpenStats_Setup_v1.0.0-rc.1.exe`) embarquant Python, DuckDB, Scikit-Learn, XGBoost, LightGBM, Statsmodels et SHAP sans prérequis système.
+- **Application Desktop Windows Autonome** — Un seul installeur (`OpenStats_Setup_v1.0.0-rc.2.exe`) embarquant Python, DuckDB, Scikit-Learn, XGBoost, LightGBM, Statsmodels et SHAP sans prérequis système.
 
 ---
 
@@ -77,7 +77,7 @@ Là où la plupart des outils imposent de choisir entre simplicité visuelle (SP
 
 ### Option 1 — Installeur Windows autonome (Recommandé)
 
-Téléchargez et lancez **`OpenStats_Setup_v1.0.0-rc.1.exe`** depuis [**GitHub Releases**](https://github.com/elm-as/OpenStats/releases/latest). Aucun prérequis Python ou Node.js requis.
+Téléchargez et lancez **`OpenStats_Setup_v1.0.0-rc.2.exe`** depuis [**GitHub Releases**](https://github.com/elm-as/OpenStats/releases/latest). Aucun prérequis Python ou Node.js requis.
 
 ### Option 2 — Lancer depuis les sources
 
@@ -96,7 +96,7 @@ cd frontend && npm install && npm run dev
 <summary><b>Compiler l'installeur Desktop et lancer les suites de tests</b></summary>
 
 ```bash
-# Compilation complète PyInstaller + Electron + Inno Setup -> frontend/release/OpenStats_Setup_v1.0.0-rc.1.exe
+# Compilation complète PyInstaller + Electron + Inno Setup -> frontend/release/OpenStats_Setup_v1.0.0-rc.2.exe
 python scripts/build_installer.py --rebuild-backend
 
 # Validation qualité & tests

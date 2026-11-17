@@ -152,11 +152,14 @@ export const DescriptiveStatsResultView = ({ resultData }: { resultData: any }) 
               return (
                 <tr key={colName} className="hover:bg-surface-800/50 transition-colors">
                   <td className="p-3 text-surface-100 font-bold sticky left-0 bg-surface-800/80 shadow-[1px_0_0_0_rgba(255,255,255,0.02)]">
-                    {colName}
+                    <span>{colName}</span>
                     {colStats.type && (
-                      <span className="ml-2 text-[9px] text-surface-500 uppercase bg-surface-900/50 px-1 py-0.5 rounded">
-                        {colStats.type}
-                      </span>
+                      <>
+                        {' '}
+                        <span className="ml-1 text-[9px] text-surface-500 uppercase bg-surface-900/50 px-1 py-0.5 rounded">
+                          {colStats.type}
+                        </span>
+                      </>
                     )}
                   </td>
                   {metricsList.map(m => (
